@@ -374,14 +374,14 @@
 
     function initBranchMap() {
         if (!branchMap) {
-            // Default ke Monas Jakarta
-            branchMap = L.map('branchMap').setView([-6.175392, 106.827153], 13);
+            // Default ke Malang
+            branchMap = L.map('branchMap').setView([-7.979700, 112.630400], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap'
             }).addTo(branchMap);
             
-            branchMarker = L.marker([-6.175392, 106.827153], {draggable: true}).addTo(branchMap);
+            branchMarker = L.marker([-7.979700, 112.630400], {draggable: true}).addTo(branchMap);
             
             branchMarker.on('dragend', function (e) {
                 const lat = branchMarker.getLatLng().lat.toFixed(6);
@@ -420,9 +420,9 @@
                 }
             }
         } else if (!val) {
-            // If empty, reset to Monas
-            branchMarker.setLatLng([-6.175392, 106.827153]);
-            branchMap.setView([-6.175392, 106.827153], 13);
+            // If empty, reset to Malang
+            branchMarker.setLatLng([-7.979700, 112.630400]);
+            branchMap.setView([-7.979700, 112.630400], 13);
         }
     }
 
