@@ -61,6 +61,19 @@
                 justify-content: center;
                 gap: 0px;
             }
+            /* Fix long submenu cutoff in mini sidebar style */
+            [data-sidebar-style="mini"] .dlabnav .metismenu > li > ul {
+                max-height: calc(100vh - 100px);
+                overflow-y: auto;
+            }
+            /* Styling scrollbar for the mini submenu */
+            [data-sidebar-style="mini"] .dlabnav .metismenu > li > ul::-webkit-scrollbar {
+                width: 5px;
+            }
+            [data-sidebar-style="mini"] .dlabnav .metismenu > li > ul::-webkit-scrollbar-thumb {
+                background: #ccc; 
+                border-radius: 5px;
+            }
             .waviy {
                 position: relative;
                 -webkit-box-reflect: below -20px linear-gradient(transparent, rgba(0,0,0,.1));
