@@ -8,7 +8,7 @@ class Command(BaseCommand):
     help = 'Load Provinces and Cities from CSV'
 
     def handle(self, *args, **kwargs):
-        csv_path = r'c:\dipalearning\data_provinsi_kabupaten_kota_indonesia.csv'
+        csv_path = '/app/data_provinsi_kabupaten_kota_indonesia.csv'
         
         if not os.path.exists(csv_path):
             self.stdout.write(self.style.ERROR(f'File {csv_path} not found.'))
