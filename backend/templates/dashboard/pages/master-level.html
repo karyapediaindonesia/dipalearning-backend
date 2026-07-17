@@ -43,8 +43,17 @@
                                 <td>{% if level.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>{% else %}<span class="badge light badge-warning">Nonaktif</span>{% endif %}</td>
                                 <td>
                                     <div class="d-flex">
-                                        <button class="btn btn-primary shadow btn-xs sharp me-1" 
-                                                data-obj='{"id":"{{ level.id }}", "course":"{{ level.course_id }}", "code":"{{ level.code|escapejs }}", "name":"{{ level.name|escapejs }}", "order":"{{ level.order }}", "prerequisite":"{{ level.prerequisite_id|default:"" }}", "use_course_duration":{{ level.use_course_duration|yesno:"true,false" }}, "custom_duration":"{{ level.custom_duration|default:"" }}", "estimated_sessions":"{{ level.estimated_sessions }}", "status":"{{ level.status }}"}'
+                                        <button class="btn btn-primary shadow btn-xs sharp me-1"
+                                                data-id="{{ level.id }}"
+                                                data-course="{{ level.course_id }}"
+                                                data-code="{{ level.code|escapejs }}"
+                                                data-name="{{ level.name|escapejs }}"
+                                                data-order="{{ level.order }}"
+                                                data-prerequisite="{{ level.prerequisite_id|default:'' }}"
+                                                data-use-course-duration="{{ level.use_course_duration|yesno:'true,false' }}"
+                                                data-custom-duration="{{ level.custom_duration|default:'' }}"
+                                                data-estimated-sessions="{{ level.estimated_sessions }}"
+                                                data-status="{{ level.status }}"
                                                 onclick="editLevel(this)" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </button>
@@ -116,10 +125,11 @@
     function showErrors(msgs) { $('#errorList').html(msgs.map(m => `<li>${m}</li>`).join('')); $('#errorBox').show(); }
     function resetForm() { $('#errorBox').hide(); $('#level_id').val(''); $('#course').val(''); $('#code').val(''); $('#name').val(''); $('#modalTitle').text('Tambah Level'); }
     function editLevel(btn) {
-        const d = $(btn).data('obj'); resetForm();
+        const d = $(btn).data(); resetForm();
         $('#level_id').val(d.id); $('#course').val(d.course); $('#code').val(d.code); $('#name').val(d.name); $('#order').val(d.order);
-        $('#use_course_duration').val(d.use_course_duration ? 'true' : 'false'); $('#custom_duration').val(d.custom_duration);
-        $('#estimated_sessions').val(d.estimated_sessions); $('#status').val(d.status); $('#modalTitle').text('Edit Level'); $('#levelModal').modal('show');
+        $('#use_course_duration').val(d.useCourseDuration === true || d.useCourseDuration === 'true' ? 'true' : 'false'); 
+        $('#custom_duration').val(d.customDuration);
+        $('#estimated_sessions').val(d.estimatedSessions); $('#status').val(d.status); $('#modalTitle').text('Edit Level'); $('#levelModal').modal('show');
     }
     function saveLevel() {
         const id = $('#level_id').val();
