@@ -439,6 +439,13 @@
             }
         });
 
+        // Trigger map resize when Alamat tab is shown
+        $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+            if (e.target.id === 'tab-alamat' && branchMap) {
+                branchMap.invalidateSize();
+            }
+        });
+
         $('#province').select2({
             dropdownParent: $('#branchModal'),
             placeholder: "Pilih Provinsi"
