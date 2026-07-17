@@ -43,7 +43,7 @@
                                 <td>{% if level.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>{% else %}<span class="badge light badge-warning">Nonaktif</span>{% endif %}</td>
                                 <td>
                                     <div class="d-flex">
-                                        <button class="btn btn-primary shadow btn-xs sharp me-1"
+                                        <button class="btn btn-primary shadow btn-xs sharp me-1 btn-edit-level"
                                                 data-id="{{ level.id }}"
                                                 data-course="{{ level.course_id }}"
                                                 data-code="{{ level.code|escapejs }}"
@@ -54,10 +54,13 @@
                                                 data-custom-duration="{{ level.custom_duration|default:'' }}"
                                                 data-estimated-sessions="{{ level.estimated_sessions }}"
                                                 data-status="{{ level.status }}"
-                                                onclick="editLevel(this)" title="Edit">
+                                                title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </button>
-                                        <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteLevel('{{ level.id }}', '{{ level.name|escapejs }}')" title="Hapus">
+                                        <button class="btn btn-danger shadow btn-xs sharp btn-delete-level"
+                                                data-id="{{ level.id }}"
+                                                data-name="{{ level.name|escapejs }}"
+                                                title="Hapus">
                                             <i class="fa fa-trash"></i>
                                         </button>
                                     </div>
@@ -107,7 +110,8 @@
 <script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script>
-    $(document).ready(function() { $('#levelTable').DataTable({
+    $(document).ready(function() {
+        $('#levelTable').DataTable({
             language: {
                 search:       "Cari:",
                 lengthMenu:   "Tampilkan _MENU_ data",
@@ -121,43 +125,65 @@
                     next:     '<i class="fa fa-angle-double-right"></i>'
                 }
             }
-        }); });
+        });
+
+        // Event delegation — bekerja meskipun DataTables rebuild DOM
+        $(document).on('click', '.btn-delete-level', function() {
+            const id   = $(this).data('id');
+            const name = $(this).data('name');
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: `Yakin ingin menghapus level "${name}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/v1/academics/levels/${id}/`, {
+                        method: 'DELETE',
+                        headers: {'X-CSRFToken': '{{ csrf_token }}'}
+                    }).then(r => {
+                        if (r.ok) Swal.fire('Terhapus!', 'Level telah dihapus.', 'success').then(() => location.reload());
+                        else Swal.fire('Error!', 'Gagal menghapus level.', 'error');
+                    }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error'));
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-edit-level', function() {
+            const d = $(this).data(); resetForm();
+            $('#level_id').val(d.id); $('#course').val(d.course); $('#code').val(d.code);
+            $('#name').val(d.name); $('#order').val(d.order);
+            $('#use_course_duration').val(d.useCourseDuration === true || d.useCourseDuration === 'true' ? 'true' : 'false');
+            $('#custom_duration').val(d.customDuration);
+            $('#estimated_sessions').val(d.estimatedSessions);
+            $('#status').val(d.status);
+            $('#modalTitle').text('Edit Level');
+            $('#levelModal').modal('show');
+        });
+    });
+
     function showErrors(msgs) { $('#errorList').html(msgs.map(m => `<li>${m}</li>`).join('')); $('#errorBox').show(); }
     function resetForm() { $('#errorBox').hide(); $('#level_id').val(''); $('#course').val(''); $('#code').val(''); $('#name').val(''); $('#modalTitle').text('Tambah Level'); }
-    function editLevel(btn) {
-        const d = $(btn).data(); resetForm();
-        $('#level_id').val(d.id); $('#course').val(d.course); $('#code').val(d.code); $('#name').val(d.name); $('#order').val(d.order);
-        $('#use_course_duration').val(d.useCourseDuration === true || d.useCourseDuration === 'true' ? 'true' : 'false'); 
-        $('#custom_duration').val(d.customDuration);
-        $('#estimated_sessions').val(d.estimatedSessions); $('#status').val(d.status); $('#modalTitle').text('Edit Level'); $('#levelModal').modal('show');
-    }
+
     function saveLevel() {
         const id = $('#level_id').val();
-        const data = { course: $('#course').val(), code: $('#code').val(), name: $('#name').val(), order: parseInt($('#order').val()), use_course_duration: $('#use_course_duration').val() === 'true', custom_duration: $('#custom_duration').val() ? parseInt($('#custom_duration').val()) : null, estimated_sessions: parseInt($('#estimated_sessions').val()), status: $('#status').val() };
-        const method = id ? 'PUT' : 'POST'; const url = id ? `/api/v1/academics/levels/${id}/` : '/api/v1/academics/levels/';
-        fetch(url, { method: method, headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
-    }
-    function deleteLevel(id, name) { 
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus level "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`/api/v1/academics/levels/${id}/`, {
-                    method: 'DELETE', 
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
-                }).then(r => {
-                    if (r.ok) Swal.fire('Terhapus!', 'Level telah dihapus.', 'success').then(() => location.reload());
-                    else Swal.fire('Error!', 'Gagal menghapus level.', 'error');
-                }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error'));
-            }
-        });
+        const data = {
+            course: $('#course').val(), code: $('#code').val(), name: $('#name').val(),
+            order: parseInt($('#order').val()),
+            use_course_duration: $('#use_course_duration').val() === 'true',
+            custom_duration: $('#custom_duration').val() ? parseInt($('#custom_duration').val()) : null,
+            estimated_sessions: parseInt($('#estimated_sessions').val()),
+            status: $('#status').val()
+        };
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/v1/academics/levels/${id}/` : '/api/v1/academics/levels/';
+        fetch(url, { method: method, headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) })
+            .then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
     }
 </script>
 {% endblock %}
+
