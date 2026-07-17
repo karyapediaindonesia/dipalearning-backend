@@ -715,6 +715,7 @@
 
         fetch(url, {
             method: method,
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
@@ -789,9 +790,10 @@
     };
 
     function deleteBranch(id, name) {
-        if(confirm(`Apakah Anda yakin ingin menghapus cabang "${name}"?`)) {
+        if (confirm(`Yakin ingin menghapus cabang ${name}?`)) {
             fetch(`/api/v1/branches/${id}/`, {
                 method: 'DELETE',
+                credentials: 'same-origin',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
                 }
