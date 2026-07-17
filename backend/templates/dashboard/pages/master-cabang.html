@@ -5,6 +5,7 @@
 <!-- Datatable -->
 <link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 <link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
     /* Highlight tab yang ada error */
     .nav-link.tab-error {
@@ -209,8 +210,9 @@
                                     <input type="text" class="form-control" id="postal_code" placeholder="Contoh: 12190">
                                 </div>
                                 <div class="col-md-12 mb-3">
-                                    <label class="form-label">Lokasi Peta</label>
-                                    <input type="text" class="form-control" id="map_location" placeholder="Contoh: https://maps.app.goo.gl/xxx atau -6.200, 106.816">
+                                    <label class="form-label">Lokasi Peta (Geser Pin atau Ketik Manual)</label>
+                                    <input type="text" class="form-control" id="map_location" placeholder="Contoh: -6.200, 106.816 atau link GMaps">
+                                    <div id="branchMap" style="height: 250px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
                                 </div>
                             </div>
                         </div>
@@ -366,8 +368,69 @@
 <!-- Datatable -->
 <script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
+    let branchMap, branchMarker;
+
+    function initBranchMap() {
+        if (!branchMap) {
+            // Default ke Monas Jakarta
+            branchMap = L.map('branchMap').setView([-6.175392, 106.827153], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(branchMap);
+            
+            branchMarker = L.marker([-6.175392, 106.827153], {draggable: true}).addTo(branchMap);
+            
+            branchMarker.on('dragend', function (e) {
+                const lat = branchMarker.getLatLng().lat.toFixed(6);
+                const lng = branchMarker.getLatLng().lng.toFixed(6);
+                $('#map_location').val(`${lat}, ${lng}`);
+            });
+
+            $('#map_location').on('change', function() {
+                const val = $(this).val();
+                if(val && val.includes(',')) {
+                    const coords = val.split(',');
+                    if(coords.length === 2) {
+                        const lat = parseFloat(coords[0]);
+                        const lng = parseFloat(coords[1]);
+                        if(!isNaN(lat) && !isNaN(lng)) {
+                            branchMarker.setLatLng([lat, lng]);
+                            branchMap.setView([lat, lng], 15);
+                        }
+                    }
+                }
+            });
+        }
+        
+        setTimeout(() => {
+            branchMap.invalidateSize();
+            const val = $('#map_location').val();
+            if(val && val.includes(',')) {
+                const coords = val.split(',');
+                if(coords.length === 2) {
+                    const lat = parseFloat(coords[0]);
+                    const lng = parseFloat(coords[1]);
+                    if(!isNaN(lat) && !isNaN(lng)) {
+                        branchMarker.setLatLng([lat, lng]);
+                        branchMap.setView([lat, lng], 15);
+                    }
+                }
+            } else if (!val) {
+                // If empty, reset to Monas
+                branchMarker.setLatLng([-6.175392, 106.827153]);
+                branchMap.setView([-6.175392, 106.827153], 13);
+            }
+        }, 200);
+    }
+
     $(document).ready(function() {
+        $('#branchModal').on('shown.bs.modal', function () {
+            initBranchMap();
+        });
+
         $('#province').select2({
             dropdownParent: $('#branchModal'),
             placeholder: "Pilih Provinsi"
