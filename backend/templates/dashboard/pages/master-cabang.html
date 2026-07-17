@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block additional_css %}
+<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
 <!-- Datatable -->
 <link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 <link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
@@ -365,6 +366,7 @@
 {% endblock %}
 
 {% block additional_js %}
+<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
 <!-- Datatable -->
 <script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
@@ -792,25 +794,36 @@
     };
 
     function deleteBranch(id, name) {
-        if (confirm(`Yakin ingin menghapus cabang ${name}?`)) {
-            fetch(`/api/v1/branches/${id}/`, {
-                method: 'DELETE',
-                credentials: 'same-origin',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert(`Gagal menghapus cabang "${name}". Status: ${response.status}`);
-                }
-            })
-            .catch(err => {
-                alert(`Gagal terhubung ke server: ${err.message}`);
-            });
-        }
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: `Yakin ingin menghapus cabang ${name}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/v1/branches/${id}/`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        Swal.fire('Terhapus!', 'Cabang telah dihapus.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error!', `Gagal menghapus cabang "${name}". Status: ${response.status}`, 'error');
+                    }
+                })
+                .catch(err => {
+                    Swal.fire('Error!', `Gagal terhubung ke server: ${err.message}`, 'error');
+                });
+            }
+        });
     }
 </script>
 {% endblock %}
