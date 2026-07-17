@@ -3,11 +3,12 @@ from rest_framework import serializers
 from .models import Course, Level, Package, AcademicYear, AcademicPeriod, BranchAcademicPeriod, StudyClass
 
 class CourseSerializer(serializers.ModelSerializer):
+    levels = LevelSerializer(many=True, read_only=True)
     class Meta:
         model = Course
         fields = [
             'id', 'code', 'name', 'category', 'learning_type', 'learning_mode',
-            'default_duration', 'status', 'notes',
+            'default_duration', 'status', 'notes', 'levels',
             'is_active', 'created_at', 'updated_at', 'version'
         ]
 
@@ -19,12 +20,7 @@ class LevelSerializer(serializers.ModelSerializer):
         model = Level
         fields = '__all__'
 
-class CourseSerializer(serializers.ModelSerializer):
-    levels = LevelSerializer(many=True, read_only=True)
 
-    class Meta:
-        model = Course
-        fields = '__all__'
 
 class PackageSerializer(serializers.ModelSerializer):
     class Meta:

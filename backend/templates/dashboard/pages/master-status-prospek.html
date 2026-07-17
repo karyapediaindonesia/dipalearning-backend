@@ -69,7 +69,7 @@
                                         <td>
                                             <div class="d-flex">
                                                 <button class="btn btn-primary shadow btn-xs sharp me-1" 
-                                                        data-id="{{ s.id }}"
+                                                        data-obj='{"id":"{{ s.id }}", "sequence":{{ s.sequence|default:1 }}, "code":"{{ s.code|escapejs }}", "name":"{{ s.name|escapejs }}", "probability":{{ s.probability|default:0 }}, "color":"{{ s.color|escapejs }}", "description":"{{ s.description|escapejs }}", "is_initial":{% if s.is_initial %}true{% else %}false{% endif %}, "is_success":{% if s.is_success %}true{% else %}false{% endif %}, "is_failed":{% if s.is_failed %}true{% else %}false{% endif %}, "allow_conversion":{% if s.allow_conversion %}true{% else %}false{% endif %}, "requires_followup":{% if s.requires_followup %}true{% else %}false{% endif %}, "status":{% if s.status %}true{% else %}false{% endif %}}'
                                                         onclick="editStatus(this)" title="Edit">
                                                     <i class="fas fa-pencil-alt"></i>
                                                 </button>
@@ -221,27 +221,25 @@
     }
 
     function editStatus(btn) {
-        const id = $(btn).data('id');
-        $.get(`/api/v1/students/prospect-statuses/${id}/`, function(data) {
-            resetForm();
-            $('#status_id').val(data.id);
-            $('#st_sequence').val(data.sequence);
-            $('#st_code').val(data.code);
-            $('#st_name').val(data.name);
-            $('#st_probability').val(data.probability);
-            $('#st_color').val(data.color);
-            $('#st_description').val(data.description);
-            
-            $('#st_is_initial').prop('checked', data.is_initial);
-            $('#st_is_success').prop('checked', data.is_success);
-            $('#st_is_failed').prop('checked', data.is_failed);
-            $('#st_allow_conversion').prop('checked', data.allow_conversion);
-            $('#st_requires_followup').prop('checked', data.requires_followup);
-            $('#st_status').prop('checked', data.status);
-            
-            $('#modalTitle').text('Edit Status Prospek');
-            $('#statusModal').modal('show');
-        });
+        const data = $(btn).data('obj');
+        resetForm();
+        $('#status_id').val(data.id);
+        $('#st_sequence').val(data.sequence);
+        $('#st_code').val(data.code);
+        $('#st_name').val(data.name);
+        $('#st_probability').val(data.probability);
+        $('#st_color').val(data.color);
+        $('#st_description').val(data.description);
+        
+        $('#st_is_initial').prop('checked', data.is_initial);
+        $('#st_is_success').prop('checked', data.is_success);
+        $('#st_is_failed').prop('checked', data.is_failed);
+        $('#st_allow_conversion').prop('checked', data.allow_conversion);
+        $('#st_requires_followup').prop('checked', data.requires_followup);
+        $('#st_status').prop('checked', data.status);
+        
+        $('#modalTitle').text('Edit Status Prospek');
+        $('#statusModal').modal('show');
     }
 
     function saveStatus() {
