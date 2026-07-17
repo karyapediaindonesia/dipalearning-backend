@@ -196,6 +196,19 @@
 <script>
     $(document).ready(function() {
         $('#statusTable').DataTable({
+            language: {
+                search:       "Cari:",
+                lengthMenu:   "Tampilkan _MENU_ data",
+                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
+                infoEmpty:    "Menampilkan 0 dari 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
+                zeroRecords:  "Tidak ada data ditemukan.",
+                emptyTable:   "Tidak ada data tersedia.",
+                paginate: {
+                    previous: '<i class="fa fa-angle-double-left"></i>',
+                    next:     '<i class="fa fa-angle-double-right"></i>'
+                }
+            }, 
             "order": [[0, "asc"]]
         });
     });
