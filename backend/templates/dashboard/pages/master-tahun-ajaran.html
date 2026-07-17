@@ -56,7 +56,8 @@
                                         <td>{{ y.start_year }} - {{ y.end_year }}</td>
                                         <td>
                                             <button class="btn btn-primary shadow btn-xs sharp me-1" 
-                                                    onclick="editYear({{ y.id }}, '{{ y.code }}', '{{ y.name }}', {{ y.start_year }}, {{ y.end_year }}, '{{ y.status }}')">
+                                                    data-obj='{"id": {{ y.id }}, "code": "{{ y.code|escapejs }}", "name": "{{ y.name|escapejs }}", "start_year": "{{ y.start_year|default_if_none:'' }}", "end_year": "{{ y.end_year|default_if_none:'' }}", "status": "{{ y.status }}"}'
+                                                    onclick="editYear(this)">
                                                 <i class="fas fa-pencil-alt"></i>
                                             </button>
                                         </td>
@@ -337,13 +338,14 @@
         $('#year_id').val('');
     }
 
-    function editYear(id, code, name, start, end, status) {
-        $('#year_id').val(id);
-        $('#year_code').val(code);
-        $('#year_name').val(name);
-        $('#year_start').val(start);
-        $('#year_end').val(end);
-        $('#year_status').val(status);
+    function editYear(btn) {
+        const data = $(btn).data('obj');
+        $('#year_id').val(data.id);
+        $('#year_code').val(data.code);
+        $('#year_name').val(data.name);
+        $('#year_start').val(data.start_year);
+        $('#year_end').val(data.end_year);
+        $('#year_status').val(data.status);
         $('#yearModal').modal('show');
     }
 
@@ -389,7 +391,8 @@
 
     function editPeriod(btn) {
         const id = $(btn).data('id');
-        $.get(`/api/v1/academics/academic-periods/${id}/`, function(data) {
+        $.get(`/api/v1/academics/academic-periods/${id}/`, function(res) {
+            const data = res.data || res; // fallback if it's not wrapped
             resetPeriodForm();
             $('#period_id').val(data.id);
             $('#p_code').val(data.code);
@@ -410,7 +413,7 @@
                 $('#p_is_global').prop('checked', true);
             } else {
                 $('#p_is_global').prop('checked', false);
-                const b_ids = data.branch_assignments.map(a => a.branch);
+                const b_ids = (data.branch_assignments || []).map(a => a.branch);
                 $('#p_branches').val(b_ids).trigger('change');
             }
             toggleBranchSelect();
