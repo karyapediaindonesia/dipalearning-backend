@@ -406,7 +406,9 @@
         }
         
         setTimeout(() => {
-            branchMap.invalidateSize();
+            if(branchMap) {
+                branchMap.invalidateSize();
+            }
             const val = $('#map_location').val();
             if(val && val.includes(',')) {
                 const coords = val.split(',');
@@ -429,6 +431,11 @@
     $(document).ready(function() {
         $('#branchModal').on('shown.bs.modal', function () {
             initBranchMap();
+            if (branchMap) {
+                setTimeout(function() {
+                    branchMap.invalidateSize();
+                }, 300);
+            }
         });
 
         $('#province').select2({
