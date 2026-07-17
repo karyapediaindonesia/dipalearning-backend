@@ -577,6 +577,7 @@
             if (result.isConfirmed) {
                 fetch(`/api/v1/students/prospects/${id}/`, {
                     method: 'DELETE',
+                    credentials: 'same-origin',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}'
                     }

@@ -345,6 +345,7 @@
 
         fetch(url, {
             method: method,
+            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
@@ -388,6 +389,7 @@
             if (result.isConfirmed) {
                 fetch(`/api/v1/branches/rooms/${id}/`, {
                     method: 'DELETE',
+                    credentials: 'same-origin',
                     headers: { 'X-CSRFToken': '{{ csrf_token }}' }
                 })
                 .then(response => {

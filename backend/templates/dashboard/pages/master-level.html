@@ -144,11 +144,12 @@
                 if (result.isConfirmed) {
                     fetch(`/api/v1/academics/levels/${id}/`, {
                         method: 'DELETE',
+                        credentials: 'same-origin',
                         headers: {'X-CSRFToken': '{{ csrf_token }}'}
                     }).then(r => {
                         if (r.ok) Swal.fire('Terhapus!', 'Level telah dihapus.', 'success').then(() => location.reload());
-                        else Swal.fire('Error!', 'Gagal menghapus level.', 'error');
-                    }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error'));
+                        else r.text().then(t => Swal.fire('Error!', 'Gagal menghapus level. Status: ' + r.status, 'error'));
+                    }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error'));
                 }
             });
         });
@@ -181,7 +182,7 @@
         };
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/v1/academics/levels/${id}/` : '/api/v1/academics/levels/';
-        fetch(url, { method: method, headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) })
+        fetch(url, { method: method, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) })
             .then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
     }
 </script>

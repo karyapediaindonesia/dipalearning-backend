@@ -138,7 +138,7 @@
         const id = $('#course_id').val();
         const data = { code: $('#code').val(), name: $('#name').val(), category: $('#category').val(), learning_type: $('#learning_type').val(), learning_mode: $('#learning_mode').val(), default_duration: parseInt($('#default_duration').val()), status: $('#status').val() };
         const method = id ? 'PUT' : 'POST'; const url = id ? `/api/v1/academics/courses/${id}/` : '/api/v1/academics/courses/';
-        fetch(url, { method: method, headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
+        fetch(url, { method: method, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
     }
     function deleteCourse(id, name) { 
         Swal.fire({
@@ -153,12 +153,13 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 fetch(`/api/v1/academics/courses/${id}/`, {
-                    method: 'DELETE', 
+                    method: 'DELETE',
+                    credentials: 'same-origin',
                     headers: {'X-CSRFToken': '{{ csrf_token }}'}
                 }).then(r => {
                     if (r.ok) Swal.fire('Terhapus!', 'Kursus telah dihapus.', 'success').then(() => location.reload());
-                    else Swal.fire('Error!', 'Gagal menghapus kursus.', 'error');
-                }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error'));
+                    else Swal.fire('Error!', 'Gagal menghapus kursus. Status: ' + r.status, 'error');
+                }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error'));
             }
         });
     }
