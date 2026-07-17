@@ -405,36 +405,37 @@
             });
         }
         
-        setTimeout(() => {
-            if(branchMap) {
-                branchMap.invalidateSize();
-            }
-            const val = $('#map_location').val();
-            if(val && val.includes(',')) {
-                const coords = val.split(',');
-                if(coords.length === 2) {
-                    const lat = parseFloat(coords[0]);
-                    const lng = parseFloat(coords[1]);
-                    if(!isNaN(lat) && !isNaN(lng)) {
-                        branchMarker.setLatLng([lat, lng]);
-                        branchMap.setView([lat, lng], 15);
-                    }
+        if(branchMap) {
+            branchMap.invalidateSize();
+        }
+        const val = $('#map_location').val();
+        if(val && val.includes(',')) {
+            const coords = val.split(',');
+            if(coords.length === 2) {
+                const lat = parseFloat(coords[0]);
+                const lng = parseFloat(coords[1]);
+                if(!isNaN(lat) && !isNaN(lng)) {
+                    branchMarker.setLatLng([lat, lng]);
+                    branchMap.setView([lat, lng], 15);
                 }
-            } else if (!val) {
-                // If empty, reset to Monas
-                branchMarker.setLatLng([-6.175392, 106.827153]);
-                branchMap.setView([-6.175392, 106.827153], 13);
             }
-        }, 200);
+        } else if (!val) {
+            // If empty, reset to Monas
+            branchMarker.setLatLng([-6.175392, 106.827153]);
+            branchMap.setView([-6.175392, 106.827153], 13);
+        }
     }
 
     $(document).ready(function() {
-        $('#branchModal').on('shown.bs.modal', function () {
+        // Initialize map as soon as modal starts opening to load tiles early
+        $('#branchModal').on('show.bs.modal', function () {
             initBranchMap();
+        });
+
+        // Resize and adjust view immediately when modal finishes opening
+        $('#branchModal').on('shown.bs.modal', function () {
             if (branchMap) {
-                setTimeout(function() {
-                    branchMap.invalidateSize();
-                }, 300);
+                branchMap.invalidateSize();
             }
         });
 
