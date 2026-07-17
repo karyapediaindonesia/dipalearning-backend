@@ -43,7 +43,7 @@
 	{% endblock %}
 	
         <style>
-            #preloader {
+            #splash-screen {
                 height: 100vh;
                 width: 100vw;
                 position: fixed;
@@ -56,6 +56,7 @@
                 align-items: center;
                 justify-content: center;
                 gap: 20px;
+                transition: opacity 0.5s ease-out;
             }
             .waviy {
                 position: relative;
@@ -83,7 +84,7 @@
         </style>
 </head>
 <body class="vh-100">
-    <div id="preloader">
+    <div id="splash-screen">
         <img src="{% static 'dashboard/images/logo-primary.webp' %}" alt="DIPA Learning Center" style="max-width: 250px;">
         <div class="waviy">
 		   <span style="--i:1">L</span>
@@ -194,6 +195,20 @@
     {% endfor %}
     
     {% block additional_js %}
+    <script>
+        // Sembunyikan splash screen setelah tepat 3 detik (3000 ms)
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.style.opacity = '0';
+                    setTimeout(function() {
+                        splash.style.display = 'none';
+                    }, 500); // Waktu untuk menyelesaikan transisi fade-out (0.5s)
+                }
+            }, 3000);
+        });
+    </script>
     {% endblock %}
     
 
