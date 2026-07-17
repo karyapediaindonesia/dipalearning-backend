@@ -46,13 +46,66 @@
                 window.location.href = "{% url 'dashboard:page_logout' %}";
             }
         </script>
+        <style>
+            #preloader {
+                height: 100vh;
+                width: 100vw;
+                position: fixed;
+                top: 0;
+                left: 0;
+                z-index: 999999;
+                background-color: #ffffff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .waviy {
+                position: relative;
+                -webkit-box-reflect: below -20px linear-gradient(transparent, rgba(0,0,0,.1));
+                font-size: 60px;
+                font-weight: 300;
+            }
+            .waviy span {
+                font-family: 'Poppins', sans-serif;
+                position: relative;
+                display: inline-block;
+                color: #4f7086;
+                text-transform: uppercase;
+                animation: waviy 1s infinite;
+                animation-delay: calc(.1s * var(--i));
+            }
+            @keyframes waviy {
+                0%,40%,100% {
+                    transform: translateY(0)
+                }
+                20% {
+                    transform: translateY(-20px)
+                }
+            }
+        </style>
     </head>
 <body>
 
     <!--*******************
-        Preloader removed for FCP/LCP optimization
+        Preloader start
     ********************-->
-
+    <div id="preloader">
+        <div class="waviy">
+		   <span style="--i:1">L</span>
+		   <span style="--i:2">o</span>
+		   <span style="--i:3">a</span>
+		   <span style="--i:4">d</span>
+		   <span style="--i:5">i</span>
+		   <span style="--i:6">n</span>
+		   <span style="--i:7">g</span>
+		   <span style="--i:8">.</span>
+		   <span style="--i:9">.</span>
+		   <span style="--i:10">.</span>
+		</div>
+    </div>
+    <!--*******************
+        Preloader end
+    ********************-->
     <!--**********************************
         Main wrapper start
     ***********************************-->
@@ -151,5 +204,32 @@
     {% block additional_js %}
     {% endblock %}
 
-</body>
+        <!-- Smooth Transition Script -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var menuLinks = document.querySelectorAll('.metismenu a:not([href="javascript:void(0)"]):not([href="javascript:void()"]):not([href="#"])');
+                menuLinks.forEach(function(link) {
+                    link.addEventListener('click', function(e) {
+                        var preloader = document.createElement('div');
+                        preloader.id = 'preloader';
+                        preloader.innerHTML = `
+                            <div class="waviy">
+                               <span style="--i:1">L</span>
+                               <span style="--i:2">o</span>
+                               <span style="--i:3">a</span>
+                               <span style="--i:4">d</span>
+                               <span style="--i:5">i</span>
+                               <span style="--i:6">n</span>
+                               <span style="--i:7">g</span>
+                               <span style="--i:8">.</span>
+                               <span style="--i:9">.</span>
+                               <span style="--i:10">.</span>
+                            </div>
+                        `;
+                        document.body.appendChild(preloader);
+                    });
+                });
+            });
+        </script>
+    </body>
 </html>
