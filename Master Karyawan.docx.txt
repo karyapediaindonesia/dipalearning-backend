@@ -1,0 +1,369 @@
+Untuk SIM-DIPA Learning Center, Master Karyawan berfungsi sebagai pusat data seluruh orang yang bekerja atau berkontribusi dalam operasional DIPA.
+Namun perlu dibedakan:
+Master Karyawan → data identitas dan kepegawaian.
+User Sistem → akun login dan hak akses aplikasi.
+Coach Assignment → penempatan coach mengajar di cabang/kursus.
+Payroll → perhitungan gaji/honor.
+Jadi Master Karyawan jangan dicampur dengan akun, jadwal, atau transaksi.
+Master Karyawan
+Struktur form paling logis:
+Identitas Karyawan
+Data Kontak
+Data Kepegawaian
+Penempatan Organisasi
+Data Pekerjaan
+Data Pembayaran/Honor (opsional)
+Dokumen Karyawan
+Status dan Riwayat
+1. Identitas Karyawan
+Berisi identitas dasar karyawan.
+Field
+Keterangan
+Wajib
+ID Karyawan
+Generate sistem
+Ya
+Nomor Karyawan
+Kode unik pegawai
+Ya
+Nama Lengkap
+Nama sesuai identitas
+Ya
+Nama Panggilan
+Untuk komunikasi
+Opsional
+Foto Karyawan
+Foto profil
+Opsional
+Jenis Kelamin
+L/P
+Ya
+Tempat Lahir
+Identitas
+Opsional
+Tanggal Lahir
+Identitas
+Opsional
+NIK
+Identitas resmi
+Disarankan
+NPWP
+Pajak
+Opsional
+Contoh:
+Nomor Karyawan:
+EMP-2026-0001
+Nama:
+Sarah Wijaya
+Jabatan:
+Coach Bahasa Inggris
+2. Data Kontak
+Untuk komunikasi internal.
+Field
+Keterangan
+Nomor HP
+Kontak utama
+WhatsApp
+Komunikasi operasional
+Email Pribadi
+Kontak pribadi
+Email Kerja
+Email perusahaan
+Alamat Lengkap
+Domisili
+3. Data Kepegawaian
+Bagian inti.
+Field
+Keterangan
+Status Karyawan
+Aktif/nonaktif
+Jenis Karyawan
+Tetap/kontrak/freelance
+Tanggal Bergabung
+Join date
+Tanggal Keluar
+Jika berhenti
+Masa Kerja
+Otomatis
+Nomor Kontrak
+Jika ada
+Periode Kontrak
+Jika ada
+Jenis Karyawan
+Contoh:
+Jenis
+Contoh
+Full Time
+Admin tetap
+Part Time
+Coach tertentu
+Freelance
+Coach eksternal
+Intern
+Magang
+4. Jabatan dan Struktur Organisasi
+Karyawan harus memiliki jabatan.
+Contoh:
+Owner
+ |
+Branch Manager
+ |
+ ├── Academic Admin
+ ├── Front Admin
+ ├── Finance
+ ├── Coach
+ └── Back Admin
+Field:
+Field
+Keterangan
+Jabatan
+Posisi karyawan
+Departemen
+Bagian kerja
+Atasan Langsung
+Supervisor
+Level Jabatan
+Hirarki
+Contoh:
+Nama
+Jabatan
+Budi
+Branch Manager
+Ani
+Academic Admin
+Sarah
+Coach
+5. Penempatan Cabang
+Karena SIM-DIPA multi-cabang, karyawan dapat bekerja di satu atau beberapa cabang.
+Jangan:
+employee.branch_id
+karena terlalu terbatas.
+Gunakan:
+employee_branch_assignment
+Data:
+Field
+Keterangan
+Karyawan
+Referensi
+Cabang
+Lokasi kerja
+Jabatan di cabang
+Jika berbeda
+Status
+Aktif/nonaktif
+Tanggal mulai
+Efektif
+Tanggal selesai
+Jika pindah
+Contoh:
+Sarah
+Cabang:
+Surabaya Barat
+Peran:
+Coach
+Mulai:
+1 Juli 2026
+6. Data Khusus Coach
+Karena DIPA Learning Center adalah lembaga kursus, Coach memiliki atribut tambahan.
+Tidak semua karyawan memiliki ini.
+Jika jabatan = Coach
+Tambahkan:
+Field
+Keterangan
+Kode Coach
+Identitas pengajar
+Spesialisasi Kursus
+Bahasa Inggris, Matematika, dll
+Level Mengajar
+Beginner/Advanced
+Status Mengajar
+Aktif/nonaktif
+Sertifikasi
+Jika ada
+Pengalaman
+Tahun pengalaman
+Bio Singkat
+Untuk profil
+Contoh:
+Coach:
+Nama:
+Sarah
+Spesialisasi:
+English
+Level:
+Beginner - Advanced
+7. Data Pembayaran/Honor
+Opsional, tetapi berguna untuk tahap Finance.
+Field
+Keterangan
+Jenis Pembayaran
+Gaji/honor
+Metode Pembayaran
+Transfer/tunai
+Bank
+Rekening
+Nomor Rekening
+Pembayaran
+Nama Pemilik Rekening
+Validasi
+Catatan:
+Jangan simpan nominal gaji di Master Karyawan.
+Karena:
+Bisa berubah.
+Berbeda periode.
+Berbeda cabang.
+Lebih baik:
+employee_compensation_history
+8. Dokumen Karyawan
+Dokumen administrasi.
+Dokumen
+Keterangan
+KTP
+Identitas
+KK
+Administrasi
+Ijazah
+Pendidikan
+Sertifikat
+Kompetensi
+Kontrak Kerja
+Legal
+NPWP
+Pajak
+Data:
+Field
+Jenis dokumen
+Nomor dokumen
+File
+Tanggal upload
+Status verifikasi
+9. Status Karyawan
+Gunakan status:
+Status
+Arti
+Draft
+Belum lengkap
+Active
+Masih bekerja
+Leave
+Cuti panjang
+Suspended
+Dinonaktifkan sementara
+Resigned
+Mengundurkan diri
+Terminated
+Berakhir hubungan kerja
+10. Riwayat Perubahan Karyawan
+Karena karyawan dapat berubah:
+Contoh:
+01 Juli 2026
+Sebelumnya:
+Coach
+Menjadi:
+Academic Coordinator
+Cabang:
+Surabaya Barat
+Data:
+Field
+Karyawan
+Jenis perubahan
+Nilai lama
+Nilai baru
+Tanggal
+Diubah oleh
+Form Master Karyawan (UI)
+================================
+MASTER KARYAWAN
+================================
+1. IDENTITAS
+Nomor Karyawan
+[ EMP-00001 ]
+Nama Lengkap
+[................]
+NIK
+[................]
+Foto
+[ Upload ]
+================================
+2. KONTAK
+HP
+[................]
+WhatsApp
+[................]
+Email
+[................]
+================================
+3. KEPEGAWAIAN
+Jenis Karyawan
+[ Full Time ▼ ]
+Tanggal Bergabung
+[................]
+Status
+[ Active ▼ ]
+================================
+4. ORGANISASI
+Jabatan
+[ Coach ▼ ]
+Departemen
+[ Akademik ▼ ]
+Cabang
+[ Surabaya Barat ▼ ]
+================================
+5. KHUSUS COACH
+☑ Pengajar
+Kursus:
+[English]
+Level:
+[Beginner]
+================================
+6. DOKUMEN
++ Upload
+================================
+[Simpan]
+Struktur Database
+employees
+│
+├── employee_id
+├── employee_no
+├── name
+├── nik
+├── gender
+├── birth_date
+├── phone
+├── email
+├── address
+├── employee_type
+├── join_date
+├── status
+│
+├── employee_positions
+│
+├── employee_branch_assignments
+│
+├── coach_profiles
+│
+├── employee_documents
+│
+└── employee_history
+Kesimpulan untuk SIM-DIPA
+Master Karyawan minimal berisi:
+Wajib:
+Nomor karyawan.
+Nama.
+Kontak.
+Jenis karyawan.
+Jabatan.
+Cabang penempatan.
+Status aktif/nonaktif.
+Tambahan penting untuk DIPA:
+Spesialisasi coach.
+Kursus yang dapat diajar.
+Level yang dapat diajar.
+Dokumen.
+Riwayat perubahan.
+Sedangkan:
+User login → modul User & Role.
+Jadwal mengajar → modul Scheduling.
+Honor/gaji → Payroll.
+Kelas yang diajar → Assignment Coach.
+Dengan pemisahan ini, Master Karyawan tetap bersih dan dapat menjadi dasar untuk seluruh modul SIM-DIPA.

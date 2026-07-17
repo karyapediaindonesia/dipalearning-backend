@@ -1,0 +1,276 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Status Prospek</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h4 class="card-title">Daftar Status Prospek (Pipeline)</h4>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal" onclick="resetForm()">
+                            <i class="fa fa-plus"></i> Tambah Status
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="statusTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th style="width:50px">Urutan</th>
+                                        <th>Kode</th>
+                                        <th>Nama Status</th>
+                                        <th>Probabilitas</th>
+                                        <th>Label</th>
+                                        <th>Properties</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for s in statuses %}
+                                    <tr>
+                                        <td class="text-center">{{ s.sequence }}</td>
+                                        <td><strong>{{ s.code }}</strong></td>
+                                        <td>{{ s.name }}</td>
+                                        <td>
+                                            <div class="progress" style="background: rgba(0,0,0,0.1)">
+                                                <div class="progress-bar bg-{{ s.color }}" style="width: {{ s.probability }}%;" role="progressbar">
+                                                    {{ s.probability }}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{{ s.color }} light">{{ s.name }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                {% if s.is_initial %}<span class="badge badge-xs badge-info">Initial</span>{% endif %}
+                                                {% if s.is_success %}<span class="badge badge-xs badge-success">Success</span>{% endif %}
+                                                {% if s.is_failed %}<span class="badge badge-xs badge-danger">Failed</span>{% endif %}
+                                                {% if s.allow_conversion %}<span class="badge badge-xs badge-warning">Allow Convert</span>{% endif %}
+                                                {% if s.requires_followup %}<span class="badge badge-xs badge-primary">Requires Follow-up</span>{% endif %}
+                                                {% if not s.status %}<span class="badge badge-xs badge-dark">Nonaktif</span>{% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-id="{{ s.id }}"
+                                                        onclick="editStatus(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteStatus('{{ s.id }}', '{{ s.name|escapejs }}')" title="Hapus">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Status -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Form Status Prospek</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <input type="hidden" id="status_id">
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Urutan <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="st_sequence" required value="1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Kode <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="st_code" required placeholder="Ex: NEW">
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label">Nama Status <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="st_name" required placeholder="Ex: Prospek Baru">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Probabilitas Konversi (%)</label>
+                            <input type="number" class="form-control" id="st_probability" min="0" max="100" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Warna Label</label>
+                            <select class="form-control" id="st_color">
+                                <option value="primary">Primary (Biru)</option>
+                                <option value="secondary">Secondary (Ungu)</option>
+                                <option value="success">Success (Hijau)</option>
+                                <option value="danger">Danger (Merah)</option>
+                                <option value="warning">Warning (Kuning)</option>
+                                <option value="info">Info (Cyan)</option>
+                                <option value="light">Light (Abu Muda)</option>
+                                <option value="dark">Dark (Hitam)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Deskripsi</label>
+                            <textarea class="form-control" id="st_description" rows="2"></textarea>
+                        </div>
+                        
+                        <hr class="mt-2 mb-3">
+                        <div class="col-12 mb-2"><strong>Atribut/Flags</strong></div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="st_is_initial">
+                                <label class="form-check-label" for="st_is_initial">Status Awal (Initial)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="st_is_success">
+                                <label class="form-check-label" for="st_is_success">Sukses (Konversi)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="st_is_failed">
+                                <label class="form-check-label" for="st_is_failed">Gagal (Lost)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="st_allow_conversion">
+                                <label class="form-check-label" for="st_allow_conversion">Bisa Daftar Siswa</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="st_requires_followup">
+                                <label class="form-check-label" for="st_requires_followup">Wajib Follow-up</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="st_status" checked>
+                                <label class="form-check-label" for="st_status">Aktif</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveStatus()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#statusTable').DataTable({
+            "order": [[0, "asc"]]
+        });
+    });
+
+    function resetForm() {
+        $('#statusForm')[0].reset();
+        $('#status_id').val('');
+        $('#st_sequence').val($('#statusTable tbody tr').length + 1);
+        $('#modalTitle').text('Tambah Status Prospek');
+    }
+
+    function editStatus(btn) {
+        const id = $(btn).data('id');
+        $.get(`/api/v1/students/prospect-statuses/${id}/`, function(data) {
+            resetForm();
+            $('#status_id').val(data.id);
+            $('#st_sequence').val(data.sequence);
+            $('#st_code').val(data.code);
+            $('#st_name').val(data.name);
+            $('#st_probability').val(data.probability);
+            $('#st_color').val(data.color);
+            $('#st_description').val(data.description);
+            
+            $('#st_is_initial').prop('checked', data.is_initial);
+            $('#st_is_success').prop('checked', data.is_success);
+            $('#st_is_failed').prop('checked', data.is_failed);
+            $('#st_allow_conversion').prop('checked', data.allow_conversion);
+            $('#st_requires_followup').prop('checked', data.requires_followup);
+            $('#st_status').prop('checked', data.status);
+            
+            $('#modalTitle').text('Edit Status Prospek');
+            $('#statusModal').modal('show');
+        });
+    }
+
+    function saveStatus() {
+        const id = $('#status_id').val();
+        
+        const payload = {
+            sequence: parseInt($('#st_sequence').val()),
+            code: $('#st_code').val(),
+            name: $('#st_name').val(),
+            probability: parseInt($('#st_probability').val()),
+            color: $('#st_color').val(),
+            description: $('#st_description').val(),
+            is_initial: $('#st_is_initial').is(':checked'),
+            is_success: $('#st_is_success').is(':checked'),
+            is_failed: $('#st_is_failed').is(':checked'),
+            allow_conversion: $('#st_allow_conversion').is(':checked'),
+            requires_followup: $('#st_requires_followup').is(':checked'),
+            status: $('#st_status').is(':checked')
+        };
+
+        const url = id ? `/api/v1/students/prospect-statuses/${id}/` : '/api/v1/students/prospect-statuses/';
+        const method = id ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url, type: method, contentType: 'application/json',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: JSON.stringify(payload),
+            success: function() { location.reload(); },
+            error: function(xhr) { alert('Error: ' + xhr.responseText); }
+        });
+    }
+
+    function deleteStatus(id, name) {
+        if(confirm(`Yakin ingin menghapus status ${name}?`)) {
+            $.ajax({
+                url: `/api/v1/students/prospect-statuses/${id}/`,
+                type: 'DELETE',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                success: function() { location.reload(); },
+                error: function(xhr) { alert('Gagal menghapus. Mungkin sudah ada prospek yang menggunakan status ini.'); }
+            });
+        }
+    }
+</script>
+{% endblock %}

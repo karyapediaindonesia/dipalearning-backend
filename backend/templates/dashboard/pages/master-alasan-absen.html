@@ -1,0 +1,248 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+
+
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title">Data Master Alasan Ketidakhadiran</h4>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reasonModal" onclick="resetForm()">
+                    <i class="fa fa-plus me-2"></i>Tambah Alasan
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="reasonTable" class="display" style="min-width: 845px">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kode</th>
+                                <th>Nama Alasan</th>
+                                <th>Berlaku Untuk</th>
+                                <th>Klasifikasi</th>
+                                <th>Hak Make-up</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reason in reasons %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong>{{ reason.code }}</strong></td>
+                                <td>{{ reason.name }}</td>
+                                <td>{{ reason.get_applies_to_display }}</td>
+                                <td>{{ reason.get_classification_display }}</td>
+                                <td>{{ reason.get_is_makeup_eligible_display }}</td>
+                                <td>
+                                    {% if reason.status == 'ACTIVE' %}
+                                    <span class="badge light badge-success">Aktif</span>
+                                    {% else %}
+                                    <span class="badge light badge-danger">Nonaktif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex">
+                                        <a href="javascript:void(0)" class="btn btn-primary shadow btn-xs sharp me-1" onclick="editReason('{{ reason.id }}')" title="Edit"><i class="fas fa-pencil-alt"></i></a>
+                                        <a href="javascript:void(0)" class="btn btn-danger shadow btn-xs sharp" onclick="deleteReason('{{ reason.id }}')" title="Hapus"><i class="fa fa-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah/Edit -->
+<div class="modal fade" id="reasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Form Alasan Ketidakhadiran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="reasonForm">
+                <div class="modal-body">
+                    <input type="hidden" id="reason_id" name="id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kode Alasan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="code" name="code" placeholder="Contoh: SAKIT" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Alasan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Contoh: Sakit (dengan Surat Dokter)" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Berlaku Untuk <span class="text-danger">*</span></label>
+                            <select class="default-select form-control wide" id="applies_to" name="applies_to" required>
+                                <option value="STUDENT">Siswa</option>
+                                <option value="COACH">Coach</option>
+                                <option value="BOTH">Keduanya</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Klasifikasi <span class="text-danger">*</span></label>
+                            <select class="default-select form-control wide" id="classification" name="classification" required>
+                                <option value="EXCUSED">Excused (Diterima)</option>
+                                <option value="UNEXCUSED">Unexcused (Ditolak)</option>
+                                <option value="PENDING_VERIFICATION">Menunggu Verifikasi</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kebijakan Make-up <span class="text-danger">*</span></label>
+                            <select class="default-select form-control wide" id="is_makeup_eligible" name="is_makeup_eligible" required>
+                                <option value="ELIGIBLE">Berhak Make-up</option>
+                                <option value="NOT_ELIGIBLE">Tidak Berhak Make-up</option>
+                                <option value="REQUIRES_APPROVAL">Memerlukan Persetujuan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="default-select form-control wide" id="status" name="status">
+                                <option value="ACTIVE">Aktif</option>
+                                <option value="INACTIVE">Nonaktif</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Catatan</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Contoh: Berlaku jika siswa sakit lebih dari 3 hari."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.css' %}"></script>
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
+<script>
+    const apiBaseUrl = '/api/v1/attendance/absence-reasons/';
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    $.ajaxSetup({ headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+
+    $(document).ready(function() {
+        $('#reasonTable').DataTable({
+            language: {
+                search:       "Cari:",
+                lengthMenu:   "Tampilkan _MENU_ data",
+                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
+                zeroRecords:  "Tidak ada data ditemukan.",
+                emptyTable:   "Tidak ada data. Klik tombol Tambah.",
+                paginate: {
+                    previous: '<i class="fa fa-angle-double-left"></i>',
+                    next:     '<i class="fa fa-angle-double-right"></i>'
+                }
+            }
+        });
+
+        $('#reasonForm').on('submit', function(e) {
+            e.preventDefault();
+            const id = $('#reason_id').val();
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? apiBaseUrl + id + '/' : apiBaseUrl;
+            
+            const data = {
+                code: $('#code').val(),
+                name: $('#name').val(),
+                applies_to: $('#applies_to').val(),
+                classification: $('#classification').val(),
+                is_makeup_eligible: $('#is_makeup_eligible').val(),
+                status: $('#status').val(),
+                notes: $('#notes').val()
+            };
+
+            $('#btnSave').prop('disabled', true);
+            $.ajax({
+                url: url, type: method, contentType: 'application/json', data: JSON.stringify(data),
+                success: function() {
+                    Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload());
+                },
+                error: function(xhr) {
+                    $('#btnSave').prop('disabled', false);
+                    let errMsg = 'Terjadi kesalahan.';
+                    if(xhr.responseJSON) errMsg = Object.values(xhr.responseJSON).join('\n');
+                    Swal.fire('Error!', errMsg, 'error');
+                }
+            });
+        });
+    });
+
+    function resetForm() {
+        $('#reasonForm')[0].reset();
+        $('#reason_id').val('');
+        $('#applies_to').val('STUDENT').niceSelect('update');
+        $('#classification').val('EXCUSED').niceSelect('update');
+        $('#is_makeup_eligible').val('ELIGIBLE').niceSelect('update');
+        $('#status').val('ACTIVE').niceSelect('update');
+    }
+
+    function editReason(id) {
+        $.get(apiBaseUrl + id + '/', function(data) {
+            $('#reason_id').val(data.id);
+            $('#code').val(data.code);
+            $('#name').val(data.name);
+            $('#applies_to').val(data.applies_to).niceSelect('update');
+            $('#classification').val(data.classification).niceSelect('update');
+            $('#is_makeup_eligible').val(data.is_makeup_eligible).niceSelect('update');
+            $('#status').val(data.status).niceSelect('update');
+            $('#notes').val(data.notes);
+            $('#reasonModal').modal('show');
+        });
+    }
+
+    function deleteReason(id) {
+        Swal.fire({
+            title: 'Hapus data?', text: "Data akan dihapus secara soft-delete.", icon: 'warning',
+            showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: apiBaseUrl + id + '/', type: 'DELETE',
+                    success: function() { Swal.fire('Terhapus!', '', 'success').then(() => location.reload()); },
+                    error: function() { Swal.fire('Error!', '', 'error'); }
+                });
+            }
+        });
+    }
+</script>
+{% endblock %}

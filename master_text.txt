@@ -1,0 +1,511 @@
+Setiap master berikut perlu dipisahkan antara:
+Data yang benar-benar menjadi identitas master.
+Aturan penggunaan master.
+Data transaksi atau relasi yang tidak boleh dicampurkan ke dalam master.
+SRS menetapkan bahwa master harus dapat dicari, difilter, dipaginasi, diekspor sesuai izin, serta mendukung status aktif/nonaktif. Master yang telah digunakan dalam transaksi tidak boleh dihapus secara fisik karena data historis harus tetap dapat dirujuk.
+Ketentuan umum seluruh master
+Field berikut berlaku umum dan tidak perlu dijelaskan ulang pada setiap master:
+Status umum cukup:
+ACTIVE: dapat digunakan.
+INACTIVE: tidak dapat dipakai pada transaksi baru, tetapi histori tetap tersedia.
+DRAFT dapat ditambahkan untuk master yang memerlukan persiapan atau persetujuan, seperti daftar harga dan kalender akademik.
+
+1. Master Ruangan
+Tujuan
+Master Ruangan menyimpan identitas ruang fisik yang digunakan untuk pembelajaran atau kegiatan operasional. Ruangan bersifat per cabang, karena kode, kapasitas, dan lokasi ruang hanya berlaku di cabang tersebut.
+SRS mengharuskan setiap ruang terkait dengan cabang, memiliki kapasitas dan status penggunaan. Jadwal tidak boleh menggunakan ruang nonaktif atau melebihi kapasitas tanpa override berizin.
+Pembagian form
+A. Identitas Ruangan
+Pilihan jenis ruangan yang rasional:
+Ruang kelas.
+Ruang privat.
+Ruang kelompok.
+Laboratorium.
+Ruang rapat.
+Aula/multifungsi.
+Ruang administrasi.
+Lainnya.
+B. Lokasi dan Kapasitas
+Kapasitas ideal berguna untuk perencanaan kelas, sedangkan kapasitas maksimal merupakan batas fisik yang tidak boleh dilampaui tanpa izin khusus.
+C. Fasilitas Ruangan
+Contoh fasilitas:
+AC.
+Proyektor.
+Televisi.
+Whiteboard.
+Komputer.
+Speaker.
+Koneksi internet.
+CCTV.
+Meja khusus.
+Akses kursi roda.
+D. Status dan Administrasi
+Status yang disarankan:
+ACTIVE.
+INACTIVE.
+MAINTENANCE.
+Aturan utama
+Kombinasi cabang + kode ruangan harus unik.
+Kapasitas harus lebih dari nol.
+Kapasitas ideal tidak boleh melebihi kapasitas maksimal.
+Ruangan INACTIVE atau MAINTENANCE tidak dapat dipilih pada jadwal baru.
+Ruangan yang sudah digunakan dalam jadwal tidak boleh dihapus.
+Bukan bagian Master Ruangan
+Data berikut tidak disimpan di Master Ruangan:
+Jadwal penggunaan.
+Kelas yang sedang menggunakan ruang.
+Daftar siswa.
+Coach.
+Status kosong atau terpakai saat ini.
+Riwayat pemindahan kelas.
+Status kosong atau terpakai dihitung dari jadwal, bukan disimpan sebagai field master.
+
+2. Master Kursus
+Tujuan
+Master Kursus menyimpan jenis program pembelajaran utama, misalnya Bahasa Inggris, Matematika, Coding, atau Calistung. Kursus sebaiknya menjadi master global, bukan dibuat ulang untuk setiap cabang.
+Ketersediaan kursus di cabang tertentu dapat diatur melalui relasi tersendiri.
+Pembagian form
+A. Identitas Kursus
+Contoh kategori:
+Akademik.
+Bahasa.
+Teknologi.
+Kreativitas.
+Persiapan sekolah.
+Pengembangan diri.
+Program khusus.
+B. Karakteristik Pembelajaran
+Tipe pembelajaran dapat berupa:
+Individual.
+Kelompok.
+Individual dan kelompok.
+Mode pembelajaran:
+Tatap muka.
+Online.
+Hybrid.
+Durasi pada kursus adalah durasi default. Jika level tertentu memiliki durasi berbeda, dapat digunakan field override pada Master Level.
+C. Informasi Akademik
+D. Status dan Administrasi
+Aturan utama
+Kode kursus unik secara global.
+Durasi per pertemuan harus lebih dari nol.
+Kursus nonaktif tidak dapat digunakan untuk membuat kelas atau enrollment baru.
+Kursus yang sudah memiliki level, kelas, paket, atau transaksi tidak boleh dihapus.
+Menonaktifkan kursus tidak otomatis menonaktifkan histori kelas.
+Bukan bagian Master Kursus
+Level.
+Harga.
+Paket.
+Coach.
+Cabang.
+Jadwal.
+Kapasitas kelas.
+Jumlah siswa.
+Level dibuat dalam master tersendiri dan direlasikan ke kursus.
+
+3. Master Level
+Tujuan
+Master Level menyimpan tahapan pembelajaran dalam satu kursus. Contoh:
+Kursus Bahasa Inggris
+├── Beginner
+├── Elementary
+├── Intermediate
+└── Advanced
+Level tidak boleh berdiri tanpa kursus induk.
+Pembagian form
+A. Identitas Level
+B. Kompetensi dan Prasyarat
+Level pertama tidak harus memiliki prasyarat. Level lanjutan dapat menunjuk level sebelumnya.
+C. Pengaturan Pembelajaran
+Jika Gunakan Durasi Kursus aktif, sistem mengambil durasi dari Master Kursus. Jika tidak, durasi khusus level harus diisi.
+Estimasi pertemuan bukan kuota siswa. Field tersebut hanya memberikan gambaran akademik.
+D. Status dan Administrasi
+Aturan utama
+Kombinasi kursus + kode level harus unik.
+Urutan level harus bilangan positif.
+Level prasyarat harus berasal dari kursus yang sama.
+Level tidak boleh menjadi prasyarat bagi dirinya sendiri.
+Level nonaktif tidak tersedia untuk kelas atau enrollment baru.
+Level yang sudah digunakan tidak boleh dihapus fisik.
+Bukan bagian Master Level
+Harga level.
+Paket level.
+Jadwal.
+Kelas aktif.
+Coach yang mengajar.
+Siswa yang berada pada level tersebut.
+
+4. Master Paket
+Tujuan
+Master Paket mendefinisikan jumlah kuota pertemuan yang dibeli siswa, misalnya paket 4, 8, atau 12 pertemuan.
+SRS menyebutkan bahwa paket harus memiliki jumlah pertemuan positif, masa berlaku, serta status. Paket tambahan di luar 4, 8, dan 12 harus dapat dikonfigurasi.
+Pembagian form
+A. Identitas Paket
+Jenis paket dapat berupa:
+Reguler.
+Trial.
+Tambahan.
+Khusus.
+Corporate.
+Jenis paket bukan jenis harga atau promo.
+B. Cakupan Paket
+Pilihan Berlaku Untuk:
+Semua kursus.
+Kursus tertentu.
+Level tertentu.
+Jika level dipilih, kursus otomatis mengikuti kursus induk level tersebut.
+C. Kuota dan Masa Berlaku
+Dasar mulai berlaku dapat berupa:
+Tanggal pembayaran diverifikasi.
+Tanggal enrollment aktif.
+Tanggal pertemuan pertama.
+Pemilihan final harus mengikuti kebijakan DIPA karena masa berlaku dan aktivasi kuota termasuk parameter yang perlu disahkan.
+D. Status dan Administrasi
+Aturan utama
+Kode paket unik.
+Jumlah pertemuan harus lebih dari nol.
+Masa berlaku harus lebih dari nol.
+Paket untuk level tertentu wajib memiliki kursus dan level.
+Paket nonaktif tidak dapat ditambahkan ke invoice baru.
+Perubahan jumlah pertemuan paket yang telah digunakan tidak boleh mengubah kuota historis.
+Jika struktur paket berubah signifikan, buat paket atau versi baru.
+Bukan bagian Master Paket
+Harga.
+Diskon.
+Cabang.
+Saldo kuota siswa.
+Tanggal kedaluwarsa aktual siswa.
+Pembayaran.
+Invoice.
+Riwayat penggunaan kuota.
+Harga ditempatkan dalam Master Daftar Harga.
+
+5. Master Daftar Harga
+Tujuan
+Daftar Harga menentukan harga paket berdasarkan cabang, kursus, level, paket, mata uang, dan periode berlaku.
+SRS mengharuskan harga berversi dan tidak boleh terdapat periode aktif yang saling tumpang tindih pada kombinasi yang sama.
+Desain yang paling rasional adalah header–detail.
+A. Header Daftar Harga
+1. Identitas Daftar Harga
+2. Periode Berlaku
+Status yang disarankan:
+DRAFT.
+SCHEDULED.
+ACTIVE.
+EXPIRED.
+INACTIVE.
+B. Detail Harga
+Satu header dapat mempunyai banyak item harga.
+Contoh:
+Aturan utama
+Harga tidak boleh negatif.
+Tanggal akhir tidak boleh lebih kecil dari tanggal mulai.
+Kombinasi berikut tidak boleh memiliki periode aktif yang bertumpang tindih:
+Cabang + Kursus + Level + Paket + Mata Uang
+Daftar harga DRAFT dapat diedit.
+Daftar harga aktif sebaiknya tidak diedit langsung.
+Perubahan harga aktif dilakukan dengan membuat versi baru.
+Harga lama tetap disimpan untuk invoice historis.
+Invoice mengambil nilai harga saat diterbitkan dan tidak berubah ketika daftar harga diperbarui.
+Bukan bagian Master Daftar Harga
+Diskon aktual siswa.
+Harga hasil negosiasi transaksi.
+Invoice.
+Pembayaran.
+Saldo kuota.
+Promo atau voucher.
+Diskon dan promo sebaiknya dikelola dalam aturan diskon tersendiri.
+
+6. Master Kalender Akademik
+Tujuan
+Master Kalender Akademik menentukan periode operasional akademik per cabang. Kalender berfungsi sebagai kerangka waktu untuk pendaftaran, pembelajaran, evaluasi, dan penutupan periode.
+Kalender Akademik berbeda dari jadwal kelas. Kalender hanya menentukan periode dan kejadian akademik utama.
+Struktur yang disarankan
+Gunakan struktur header–detail:
+Kalender Akademik
+└── Detail Kegiatan Kalender
+A. Header Kalender Akademik
+1. Identitas dan Cakupan
+Jenis periode dapat berupa:
+Tahunan.
+Semester.
+Kuartal.
+Term.
+Periode khusus.
+2. Rentang Periode
+3. Status dan Administrasi
+Status:
+DRAFT.
+ACTIVE.
+CLOSED.
+INACTIVE.
+B. Detail Kegiatan Kalender
+Contoh kegiatan:
+Masa pendaftaran.
+Awal pembelajaran.
+Evaluasi.
+Pertemuan orang tua.
+Pelatihan coach.
+Masa make-up.
+Penutupan periode.
+Kegiatan khusus.
+Aturan utama
+Tanggal mulai harus lebih awal dari tanggal selesai.
+Semua detail kegiatan harus berada dalam rentang kalender, kecuali diizinkan secara eksplisit.
+Pada cabang dan cakupan yang sama tidak boleh ada dua kalender utama aktif yang tumpang tindih.
+Kalender CLOSED tidak dapat digunakan untuk transaksi akademik baru.
+Menutup kalender tidak boleh menghapus kelas atau presensi historis.
+Bukan bagian Master Kalender Akademik
+Jadwal kelas mingguan.
+Coach.
+Ruang.
+Peserta kelas.
+Presensi.
+Jadwal make-up individual.
+
+7. Master Hari Libur
+Tujuan
+Master Hari Libur menyimpan tanggal tertentu ketika kegiatan operasional atau pembelajaran tidak berjalan normal.
+Perbedaannya dengan Kalender Akademik:
+Pembagian form
+A. Identitas Hari Libur
+Jenis hari libur:
+Nasional.
+Cuti bersama.
+Libur akademik.
+Libur cabang.
+Kegiatan internal.
+Maintenance.
+Keadaan khusus.
+B. Tanggal dan Waktu
+C. Dampak Operasional
+Pilihan dampak:
+Cabang tutup total.
+Tidak ada kelas, admin tetap buka.
+Operasional terbatas.
+Hanya kegiatan tertentu yang ditutup.
+Kebijakan jadwal:
+Blokir jadwal.
+Berikan peringatan.
+Izinkan dengan override.
+D. Status dan Administrasi
+Aturan utama
+Tanggal akhir tidak boleh sebelum tanggal mulai.
+Untuk implementasi database, rentang beberapa hari dapat dibuat sebagai detail tanggal harian agar validasi jadwal lebih sederhana.
+Kombinasi cabang + tanggal + jenis tidak boleh duplikat.
+Hari libur nasional dapat dimasukkan ke seluruh cabang melalui fitur salin/bulk, tetapi record akhir tetap terhubung ke cabang.
+Jadwal pada tanggal terblokir harus ditolak atau memerlukan override.
+Bukan bagian Master Hari Libur
+Jadwal pengganti.
+Coach pengganti.
+Pemindahan ruang.
+Daftar siswa terdampak.
+Notifikasi aktual.
+Semua itu merupakan proses lanjutan setelah hari libur ditetapkan.
+
+8. Master Alasan Ketidakhadiran
+Tujuan
+Master ini menyediakan alasan standar agar pencatatan ketidakhadiran konsisten dan dapat digunakan untuk laporan, make-up, kuota, serta audit.
+Alasan berbeda dari status kehadiran:
+Status: hadir, terlambat, tidak hadir, izin.
+Alasan: sakit, acara sekolah, urusan keluarga, tanpa pemberitahuan, dan sebagainya.
+Pembagian form
+A. Identitas Alasan
+Pilihan berlaku untuk:
+Siswa.
+Coach.
+Keduanya.
+B. Klasifikasi
+Kategori:
+EXCUSED — ketidakhadiran dengan alasan yang diterima.
+UNEXCUSED — ketidakhadiran tanpa alasan yang diterima.
+PENDING_VERIFICATION — menunggu verifikasi.
+Contoh kelompok alasan:
+Kesehatan.
+Sekolah/akademik.
+Keluarga.
+Transportasi.
+Cuaca/bencana.
+Tanpa pemberitahuan.
+Kesalahan operasional.
+Lainnya.
+C. Bukti dan Pemberitahuan
+Contoh bukti:
+Surat dokter.
+Surat sekolah.
+Foto/dokumen.
+Surat orang tua.
+Dokumen lainnya.
+D. Dampak Kebijakan
+Kebijakan make-up:
+Berhak make-up.
+Tidak berhak make-up.
+Memerlukan persetujuan.
+Kebijakan kuota:
+Kuota dikonsumsi.
+Kuota tidak dikonsumsi.
+Ditentukan setelah verifikasi.
+Karena kelayakan make-up dan waktu konsumsi kuota merupakan keputusan bisnis penting, nilai finalnya harus disahkan oleh Owner dan Operasional sebelum diterapkan permanen.
+E. Status dan Administrasi
+Aturan utama
+Kode alasan unik.
+Alasan yang pernah digunakan tidak boleh dihapus.
+Alasan nonaktif tidak tersedia untuk presensi baru.
+Jika wajib bukti aktif, jenis bukti harus diisi.
+Jika pemberitahuan awal wajib, batas waktunya harus diisi.
+Hasil akhir make-up dan kuota tetap divalidasi oleh business rule, bukan hanya berdasarkan pilihan UI.
+Bukan bagian Master Alasan
+Nama siswa.
+Tanggal ketidakhadiran.
+Jadwal yang tidak dihadiri.
+Dokumen bukti aktual.
+Persetujuan aktual.
+Permintaan make-up aktual.
+
+9. Master Metode Pembayaran
+Tujuan
+Master Metode Pembayaran menentukan jenis kanal pembayaran yang dapat dipilih ketika mencatat transaksi.
+Metode pembayaran sebaiknya bersifat global, sedangkan rekening tujuan dan ketersediaannya di setiap cabang disimpan dalam relasi tersendiri.
+Pembagian form
+A. Identitas Metode
+Jenis metode:
+Tunai.
+Transfer bank.
+Kartu debit/kredit.
+EDC.
+QRIS.
+Virtual account.
+Payment gateway.
+Saldo/kredit pelanggan.
+Lainnya.
+B. Cara Pemrosesan
+Mode pemrosesan:
+Manual.
+Semiotomatis.
+Otomatis.
+Payment gateway belum menjadi baseline, tetapi struktur metode dapat disiapkan untuk pengembangan berikutnya.
+C. Ketentuan Tambahan
+D. Status dan Administrasi
+Aturan utama
+Kode metode pembayaran unik.
+Metode nonaktif tidak dapat digunakan pada pembayaran baru.
+Metode yang pernah digunakan tidak boleh dihapus.
+Jika referensi wajib, pembayaran tidak dapat disimpan tanpa nomor referensi.
+Jika referensi unik, sistem harus menolak nomor referensi duplikat pada kanal yang sama.
+Pembayaran yang memerlukan verifikasi harus berstatus PENDING sebelum diverifikasi.
+Bukan bagian Master Metode Pembayaran
+Nomor rekening cabang.
+Nama bank tujuan cabang.
+Saldo bank.
+Bukti pembayaran aktual.
+Nomor referensi transaksi.
+Nilai pembayaran.
+Verifier aktual.
+Rekening tujuan disimpan melalui relasi:
+Cabang + Metode Pembayaran + Rekening/Kas
+
+10. Master Kategori Biaya
+Tujuan
+Master Kategori Biaya mengelompokkan pengeluaran agar pencatatan, approval, jurnal, dan laporan konsisten.
+Kategori biaya sebaiknya bersifat hierarkis.
+Contoh:
+Biaya Operasional
+├── Listrik
+├── Internet
+├── Air
+└── Kebersihan
+
+Biaya Akademik
+├── Bahan Ajar
+├── Pelatihan Coach
+└── Kegiatan Siswa
+Pembagian form
+A. Identitas Kategori
+B. Klasifikasi Biaya
+Kelompok biaya:
+Operasional/OPEX.
+Investasi/CAPEX.
+Harga pokok/COGS.
+Administrasi.
+Akademik.
+Pemasaran.
+HR.
+Inventaris.
+Lainnya.
+Sifat biaya:
+Tetap.
+Variabel.
+Berkala.
+Satu kali.
+Kategori induk biasanya tidak digunakan langsung untuk transaksi. Hanya kategori paling bawah atau leaf yang dapat dipilih.
+C. Akuntansi dan Dokumen
+Jika mapping COA berbeda per cabang, gunakan tabel relasi:
+Kategori Biaya + Cabang + Akun COA
+D. Kontrol dan Administrasi
+Batas nominal dan siapa approver tidak sebaiknya disimpan di Master Kategori Biaya. Data tersebut masuk ke Approval Matrix.
+Aturan utama
+Kode kategori unik.
+Kategori tidak boleh menjadi induk bagi dirinya sendiri.
+Struktur induk-anak tidak boleh membentuk siklus.
+Kategori induk yang memiliki anak sebaiknya tidak dapat digunakan untuk transaksi.
+Kategori yang telah digunakan tidak dapat dihapus.
+Kategori nonaktif tetap tampil pada transaksi lama.
+Bukan bagian Master Kategori Biaya
+Nominal pengeluaran.
+Tanggal pengeluaran.
+Vendor aktual.
+Cabang transaksi.
+Bukti aktual.
+Approver aktual.
+Anggaran cabang.
+Status pembayaran.
+
+11. Master Barang
+Tujuan
+Master Barang menyimpan identitas produk atau barang yang dibeli, digunakan, disimpan, atau dijual oleh DIPA.
+SRS mengharuskan barang memiliki SKU unik, nama, kategori, satuan, harga, status, dan batas stok minimum. Barang yang sudah memiliki transaksi tidak boleh dihapus.
+Pembagian form
+A. Identitas Barang
+B. Klasifikasi Barang
+Jenis barang:
+Barang dagang.
+Bahan ajar.
+Buku/modul.
+Merchandise.
+Barang habis pakai.
+Perlengkapan operasional.
+Aset/peralatan.
+Barang nonstok.
+Kategori Barang dan Satuan Barang idealnya menjadi master tersendiri.
+C. Pengaturan Inventaris
+Minimum stok pada Master Barang adalah nilai default. Nilai sebenarnya dapat berbeda per gudang melalui:
+Barang + Gudang + Minimum Stok
+D. Harga dan Akuntansi
+Harga beli default bukan nilai persediaan aktual. Nilai aktual berasal dari transaksi penerimaan dan metode moving average.
+E. Status dan Administrasi
+Aturan utama
+SKU harus unik.
+Barcode harus unik jika digunakan.
+Satuan dasar wajib dipilih.
+Minimum stok tidak boleh negatif.
+Barang nonstok tidak menghasilkan kartu stok.
+Barang yang telah bertransaksi tidak dapat dihapus.
+Perubahan nama atau kategori tidak boleh mengubah transaksi historis.
+Barang nonaktif tidak dapat digunakan pada penerimaan, pengeluaran, atau invoice baru.
+Stok negatif tetap dicegah oleh aturan transaksi, bukan oleh Master Barang.
+Bukan bagian Master Barang
+Jumlah stok saat ini.
+Stok per cabang.
+Stok per gudang.
+Mutasi stok.
+Vendor aktual.
+Harga pembelian aktual.
+Nomor invoice pembelian.
+Barang dalam perjalanan.
+Hasil stock opname.
+Saldo stok harus dihitung dari ledger transaksi, bukan disimpan sebagai informasi manual dalam Master Barang.
+
+Klasifikasi cakupan master
+Relasi cabang yang tidak dimasukkan langsung ke master global
+Dengan desain tersebut, master tidak tercampur dengan transaksi, tidak menimbulkan data ganda antar-cabang, dan tetap siap untuk ekspansi SIM-DIPA dari tiga menjadi tujuh cabang.
+

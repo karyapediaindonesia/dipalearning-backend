@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% load static custom_tags %}
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="keywords" content="" />
+        <meta name="author" content="" />
+        <meta name="robots" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{{ dz_array.public.description }}" />
+        <meta property="og:title" content="{{ dz_array.public.og_title }}" />
+        <meta property="og:description" content="{{ dz_array.public.og_description }}" />
+        <meta property="og:image" content="{{ dz_array.public.og_image }}" />
+        <meta name="format-detection" content="telephone=no">
+        
+        <!-- PAGE TITLE HERE -->
+        <title>Dipa Learning Center</title>
+        
+        <!-- Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;600;700;900&family=Montserrat:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+        
+        <!-- FAVICONS ICON -->
+        <link rel="shortcut icon" type="image/png" href="{% static dz_array.public.favicon  %}" />
+        {% for cssurl in dz_array.pagelevel.dashboard.views.css|getdata:request.path %}
+        <link rel="stylesheet" href="{% static cssurl %}" >
+        {% endfor %}
+        {% for cssurl in dz_array.global.css %}
+        {% if 'icons' in cssurl or 'vendor/animate' in cssurl or 'vendor/aos' in cssurl %}
+        <link rel="stylesheet" href="{% static cssurl %}" media="print" onload="this.media='all'">
+        <noscript><link rel="stylesheet" href="{% static cssurl %}"></noscript>
+        {% else %}
+        <link rel="stylesheet" href="{% static cssurl %}">
+        {% endif %}
+        {% endfor %}
+        
+        {% block additional_css %}
+        {% endblock %}
+        
+        <script>
+            // Aturan 1 Tab = 1 Session
+            // Jika tab tidak memiliki flag tab_active (berarti tab baru tanpa proses login), paksa logout
+            if (!sessionStorage.getItem('tab_active')) {
+                window.location.href = "{% url 'dashboard:page_logout' %}";
+            }
+        </script>
+    </head>
+<body>
+
+    <!--*******************
+        Preloader removed for FCP/LCP optimization
+    ********************-->
+
+    <!--**********************************
+        Main wrapper start
+    ***********************************-->
+    <div id="main-wrapper" class="show">
+
+        <!--**********************************
+            Nav header start
+        ***********************************-->
+
+        {% include 'dashboard/elements/nav-header.html' %}
+
+        <!--**********************************
+            Nav header end
+        ***********************************-->
+		
+		<!--**********************************
+            Chat box start
+        ***********************************-->
+
+        {% include 'dashboard/elements/chatbox.html' %}
+
+		<!--**********************************
+            Chat box End
+        ***********************************-->
+		
+		<!--**********************************
+            Header start
+        ***********************************-->
+
+        {% include 'dashboard/elements/header.html' %}
+
+        <!--**********************************
+            Header end ti-comment-alt
+        ***********************************-->
+
+        <!--**********************************
+            Sidebar start
+        ***********************************-->
+
+        {% include 'dashboard/elements/sidebar.html' %}
+        <!--**********************************
+            Sidebar end
+        ***********************************-->
+		
+		<!--**********************************
+            Content body start
+        ***********************************-->
+      {% block content %}
+      {% endblock %}
+        <!--**********************************
+            Content body end
+        ***********************************-->
+		
+		
+		
+        <!--**********************************
+            Footer start
+        ***********************************-->
+
+        {% include 'dashboard/elements/footer.html' %}
+        <!--**********************************
+            Footer end
+        ***********************************-->
+
+		<!--**********************************
+           Support ticket button start
+        ***********************************-->
+		
+        <!--**********************************
+           Support ticket button end
+        ***********************************-->
+
+
+	</div>
+    <!--**********************************
+        Main wrapper end
+    ***********************************-->
+
+    <!--**********************************
+        Scripts
+    ***********************************-->
+    <!-- Required vendors -->
+
+    {% for jsurl in dz_array.global.js.top %}
+    <script src="{% static jsurl %}"></script>
+    {% endfor %}
+    
+    {% for jsurl in dz_array.pagelevel.dashboard.views.js|getdata:request.path %}
+    <script src="{% static jsurl %}"></script>
+    {% endfor %}
+    
+    {% for jsurl in dz_array.global.js.bottom %}
+    <script src="{% static jsurl %}"></script>
+    {% endfor %}
+    
+    {% block additional_js %}
+    {% endblock %}
+
+</body>
+</html>

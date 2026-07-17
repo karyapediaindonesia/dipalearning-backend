@@ -1,0 +1,395 @@
+SOFTWARE REQUIREMENTS
+SPECIFICATION (SRS)
+SISTEM INFORMASI MANAJEMEN
+DIPA LEARNING CENTER
+DIPA Learning Design System  •  Smart  •  Friendly  •  Energetic  •  Educational
+KONTROL DOKUMEN
+Riwayat Revisi
+Persetujuan Dokumen
+DAFTAR ISI
+1. RINGKASAN EKSEKUTIF
+Sistem Informasi Manajemen DIPA Learning Center (SIM-DIPA) adalah aplikasi berbasis web yang mengintegrasikan proses akademik, operasional, keuangan, sumber daya manusia, inventaris, dan pelaporan untuk mendukung kondisi saat ini sekitar 1.000 siswa aktif, 8–9 jenis kursus, 3 cabang operasional, serta rencana ekspansi sampai 7 cabang.
+Dokumen ini menjadi kontrak kebutuhan antara stakeholder bisnis dan tim teknis. Setiap kebutuhan diberi identitas, prioritas, kriteria penerimaan, aturan data, hak akses, serta hubungan ke pengujian dan fase pengembangan. Sistem dirancang modular agar dapat dibangun bertahap tanpa mengorbankan integritas arsitektur keseluruhan.
+Masalah utama: proses manual, data tidak sinkron, ketidaksesuaian pembayaran dan invoice, absensi belum terkait kuota, perhitungan insentif manual, pengolahan ulang laporan, dan kesulitan monitoring multi-cabang.
+Solusi inti: single source of truth berbasis PostgreSQL, REST API NestJS, frontend Next.js, RBAC, audit trail, kuota terintegrasi, absensi tiga lapis, make-up class, payroll, inventaris, dan dashboard eksekutif.
+Prinsip implementasi: secure by design, modular, API-first, branch-aware, traceable, paperless, responsive, dan dapat dikembangkan ke mobile app, payment gateway, WhatsApp, serta integrasi lain.
+Target hasil: proses lebih cepat dan terkendali, data dapat diaudit, pengurangan kuota akurat, laporan tersedia real-time, serta keputusan manajemen berbasis data.
+Gambar 1. Konteks sistem dan hubungan dengan pengguna serta layanan eksternal.
+2. PENDAHULUAN
+2.1 Tujuan Dokumen
+Mendefinisikan kebutuhan perangkat lunak secara lengkap dan terukur agar dapat digunakan sebagai panduan desain, pengembangan, pengujian, deployment, pelatihan, dan penerimaan SIM-DIPA.
+2.2 Audiens Dokumen
+2.3 Konvensi Requirement
+2.4 Prioritas
+Must: wajib untuk baseline modul.
+Should: penting, dapat dijadwalkan setelah kebutuhan Must dalam fase yang sama.
+Could: peningkatan yang dapat ditunda tanpa menghambat proses inti.
+Won’t (v1): secara eksplisit di luar baseline versi pertama.
+2.5 Definisi Selesai Tingkat Requirement
+Implementasi tersedia pada environment pengujian.
+Unit, integration, dan end-to-end test lulus.
+Hak akses dan audit log terverifikasi.
+Tidak terdapat defect Critical/High yang terbuka.
+Dokumentasi API dan perubahan database diperbarui.
+Kriteria penerimaan requirement ditandatangani pada UAT.
+3. KONTEKS BISNIS DAN RUANG LINGKUP
+3.1 Kondisi Saat Ini
+3.2 Tujuan Bisnis
+Menyediakan single source of truth untuk data siswa, jadwal, kuota, transaksi, karyawan, stok, dan laporan.
+Menghubungkan pembayaran → invoice → kuota → absensi → laporan keuangan secara dapat ditelusuri.
+Mencegah absensi saat kuota nol melalui auto-lock dan memberikan jalur pembelian paket.
+Menyediakan absensi tiga lapis: datang, masuk kelas, dan pulang.
+Mengotomasi make-up class, payroll, minimum stock alert, dan reminder operasional.
+Menyediakan dashboard real-time per cabang dan konsolidasi seluruh cabang.
+3.3 Ruang Lingkup Baseline
+3.4 Di Luar Cakupan Baseline v1
+Aplikasi native iOS/Android; baseline menggunakan web responsif.
+Payment gateway otomatis; disiapkan extension point dan webhook.
+Integrasi WhatsApp Business API; baseline dapat menggunakan in-app/email dan desain adapter.
+Integrasi Dapodik atau sistem pemerintah lain.
+Biometrik/face recognition untuk absensi.
+Perhitungan pajak kompleks dan e-faktur.
+Learning content delivery penuh seperti LMS video/quiz; fokus baseline adalah manajemen kursus dan operasional.
+3.5 Asumsi dan Dependensi
+Setiap cabang memiliki koneksi internet dan minimal satu perangkat admin.
+Data master awal tersedia dalam Excel/CSV dan dapat dibersihkan sebelum migrasi.
+Setiap siswa memiliki identitas unik; satu siswa dapat dikaitkan dengan satu atau lebih orang tua/wali.
+Tanggal/waktu disimpan UTC dan ditampilkan pada zona Asia/Jakarta; mata uang IDR dan locale id-ID.
+Kebijakan refund, diskon, kuota kedaluwarsa, dan approval override harus disahkan sebelum UAT modul terkait.
+4. STAKEHOLDER, PENGGUNA, DAN HAK AKSES
+4.1 Daftar Role
+4.2 Model Otorisasi
+RBAC: permission diberikan ke role, role diberikan ke user.
+Scope-based authorization: SELF, OWN_CLASS, OWN_BRANCH, ASSIGNED_BRANCHES, ALL_BRANCHES.
+Action-level permission: VIEW, CREATE, UPDATE, DELETE, APPROVE, VOID, EXPORT, OVERRIDE.
+Prinsip least privilege dan separation of duties, terutama invoice/payment, payroll, dan adjustment stok.
+Setiap akses lintas cabang harus eksplisit dan tercatat pada audit log.
+4.3 Matriks Hak Akses Operasional
+4.4 Matriks Hak Akses Back Office
+5. ARSITEKTUR DAN STRUKTUR MODULAR
+5.1 Arsitektur Teknologi
+Gambar 2. Arsitektur logis SIM-DIPA.
+5.2 Struktur Monorepo
+Struktur folder yang direkomendasikan:
+sim-dipa/
+├── apps/
+│   ├── api/                 # NestJS REST API
+│   ├── web/                 # Next.js frontend
+│   └── worker/              # Queue, report, reminder, payroll jobs
+├── packages/
+│   ├── contracts/           # DTO/schema bersama dan API types
+│   ├── ui/                  # Komponen design system
+│   ├── config/              # ESLint, TSConfig, environment schema
+│   └── utils/               # Utility tanpa business state
+├── prisma/
+│   ├── schema.prisma
+│   ├── migrations/
+│   └── seed/
+├── docs/
+│   ├── srs/
+│   ├── api/
+│   ├── architecture/
+│   └── runbook/
+├── infra/
+│   ├── docker/
+│   ├── nginx/
+│   ├── monitoring/
+│   └── backup/
+├── scripts/                 # import, export, migration, maintenance
+├── tests/                   # contract, e2e, load, security
+├── docker-compose.yml
+├── .env.example
+└── README.md
+5.3 Modul dan Batas Dependensi
+5.4 Prinsip Teknis
+API-first dan versioned endpoint (/api/v1).
+TypeScript strict mode; DTO tervalidasi pada boundary.
+Database transaction untuk payment, quota deduction, payroll posting, stock transfer, dan journal posting.
+Idempotency key untuk operasi finansial dan absensi agar tidak terjadi duplikasi.
+Outbox/event pattern untuk notifikasi dan integrasi yang memerlukan konsistensi.
+Soft delete untuk master; transaksi finansial/ledger tidak dihapus, hanya void/reversal.
+Semua tabel domain memiliki created_at, updated_at, dan identifier UUID/ULID sesuai standar proyek.
+6. Kebutuhan Fungsional
+Bagian ini merupakan spesifikasi minimum yang harus diimplementasikan. Setiap kebutuhan memiliki pengenal unik untuk kebutuhan pengembangan, pengujian, pelacakan perubahan, dan penerimaan pengguna.
+6.1 Autentikasi dan Manajemen Sesi
+6.2 Pengguna, Peran, Izin, dan Cabang
+6.3 Master Data
+6.4 Siswa, Orang Tua, Coach, dan Pendaftaran
+6.5 Kelas dan Penjadwalan
+6.6 Paket dan Manajemen Kuota
+6.7 Presensi Tiga Lapis
+6.8 Make-up Class
+6.9 Billing, Invoice, Pembayaran, dan Rekonsiliasi
+6.10 Keuangan dan Akuntansi
+6.11 HR, Strata Gaji, Insentif, dan Payroll
+6.12 Inventaris
+6.13 Notifikasi
+6.14 Dashboard dan Pelaporan
+6.15 Audit, Konfigurasi, dan Administrasi Sistem
+7. Spesifikasi Use Case
+Use case berikut merinci interaksi utama yang wajib didukung. Detail layar dapat berubah selama desain UI/UX, tetapi tujuan, aturan bisnis, hasil, dan kontrol tidak boleh hilang tanpa change request.
+UC-01 — Login dan Membuka Dashboard
+UC-02 — Mendaftarkan Siswa dan Enrollment
+UC-03 — Membuat Invoice Paket
+UC-04 — Mencatat dan Memverifikasi Pembayaran hingga Kuota Aktif
+UC-05 — Check-in Kedatangan Siswa
+UC-06 — Validasi Masuk Kelas, Pulang, dan Konsumsi Kuota
+UC-07 — Menjadwalkan dan Menyelesaikan Make-up Class
+UC-08 — Mengubah Jadwal atau Coach
+UC-09 — Menghitung dan Menyetujui Payroll
+UC-10 — Transfer Stok Antar-Cabang
+UC-11 — Menghasilkan dan Mengekspor Laporan
+UC-12 — Orang Tua Memantau Anak
+8. Aturan Bisnis, Status, dan Formula
+8.1 Aturan Bisnis Utama
+8.2 State Machine Entitas Kritis
+8.3 Formula dan Pembulatan
+9. Alur Proses Bisnis
+Diagram berikut menjadi baseline BPMN/flowchart. Implementasi harus mempertahankan kontrol validasi, approval, audit, dan rekonsiliasi yang dinyatakan dalam uraian.
+9.1 Pembelian Paket, Pembayaran, dan Aktivasi Kuota
+Gambar 9-1. Alur pembelian paket hingga kuota aktif
+Titik kontrol utama: harga efektif, invoice immutable setelah terbit, verifikasi pembayaran, posting atomik ke alokasi–kuota–jurnal, serta notifikasi dan kuitansi.
+9.2 Presensi Tiga Lapis dan Konsumsi Kuota
+Gambar 9-2. Check-in Admin Depan, validasi Coach, dan checkout Admin Belakang
+Exception wajib dimonitor: datang tetapi tidak masuk kelas, masuk kelas tetapi belum pulang, kuota tidak valid, presensi ganda, dan koreksi setelah status final.
+9.3 Make-up Class
+Gambar 9-3. Alur permintaan, penjadwalan, reminder, dan penyelesaian make-up
+SLA baseline 3–4 hari kerja dan target minggu yang sama harus dapat dikonfigurasi. Penjadwalan wajib memeriksa bentrok dan tidak boleh menggandakan konsumsi kuota.
+9.4 Payroll Coach
+Gambar 9-4. Perhitungan strata, meeting percentage, approval, dan pembayaran payroll
+Cut-off data, versi formula, maker-checker, dan keterlacakan ke attendance merupakan kontrol utama agar payroll dapat diaudit.
+9.5 Inventaris dan Transfer Antar-Cabang
+Gambar 9-5. Siklus stok masuk, keluar, transfer, dan stock opname
+Transaksi stok harus posted, tidak diubah langsung, dan direkonsiliasi melalui kartu stok serta stock opname.
+9.6 RACI Proses Utama
+10. Desain Data dan Basis Data
+10.1 Prinsip Desain Data
+PostgreSQL digunakan sebagai source of truth transaksional; Prisma ORM digunakan untuk schema, migration, dan akses type-safe.
+Primary key direkomendasikan UUID; seluruh tabel transaksi memiliki created_at, updated_at, created_by/updated_by bila relevan, branch_id, status, dan version untuk optimistic locking.
+Penghapusan fisik dibatasi. Entitas master memakai is_active/deleted_at; transaksi posted memakai reversal atau versi baru.
+Ledger digunakan untuk kuota, stok, dan akuntansi agar saldo dapat direkonstruksi.
+Nilai uang menggunakan NUMERIC/DECIMAL; timestamp disimpan UTC; tanggal bisnis menggunakan DATE dan zona waktu cabang.
+Foreign key, unique constraint, check constraint, dan index wajib menjadi lapisan integritas selain validasi aplikasi.
+Data multi-cabang dipisahkan secara logis dengan branch_id dan selalu difilter berdasarkan scope akses.
+Gambar 10-1. ERD konseptual tingkat tinggi
+10.2 Konvensi Tipe dan Kolom Audit
+10.3 Kamus Data Inti
+10.4 Index, Constraint, dan Partisi
+10.5 Transaksi, Locking, dan Konsistensi
+Gunakan database transaction untuk pembayaran–alokasi–kuota–jurnal; presensi final–debit kuota–make-up; payroll–jurnal; dan mutasi stok.
+Gunakan row-level lock atau optimistic concurrency pada saldo kuota dan stok untuk mencegah overspend/negative balance.
+Gunakan idempotency key pada endpoint pembayaran, presensi, posting, ekspor, webhook, dan job yang dapat dicoba ulang.
+Gunakan transactional outbox untuk event lintas layanan/worker sehingga notifikasi atau posting asynchronous tidak hilang setelah commit.
+Setiap reconciliation job hanya melaporkan selisih dan tidak memperbaiki data otomatis tanpa aturan/approval yang eksplisit.
+11. Spesifikasi API
+11.1 Konvensi API
+11.2 Katalog Endpoint Minimum
+11.3 Contoh Struktur Respons
+Respons sukses tunggal:
+{
+  "data": { "id": "uuid", "status": "ACTIVE" },
+  "meta": { "correlationId": "01J..." }
+}
+Respons daftar:
+{
+  "data": [ ... ],
+  "meta": { "page": 1, "pageSize": 25, "total": 126, "correlationId": "01J..." }
+}
+Respons error:
+{
+  "error": {
+    "code": "QUOTA_INSUFFICIENT",
+    "message": "Kuota siswa tidak mencukupi.",
+    "details": { "studentId": "uuid", "balance": 0 },
+    "correlationId": "01J..."
+  }
+}
+11.4 HTTP Status dan Error Domain
+11.5 Validasi Kontrak dan Dokumentasi
+Gunakan DTO/schema validation pada seluruh input; field tidak dikenal ditolak atau diabaikan secara konsisten sesuai kebijakan.
+OpenAPI menjadi kontrak publik internal dan harus diperbarui bersama kode. Contoh request/response untuk endpoint kritis wajib tersedia.
+Consumer-driven contract test direkomendasikan untuk frontend, worker, dan integrasi eksternal.
+Webhook, bila ditambahkan, harus memiliki signature, timestamp tolerance, replay protection, dan retry policy.
+12. Spesifikasi UI/UX dan Design System
+12.1 Arah Visual
+Aplikasi menggunakan identitas “DIPA Learning Design System” dengan karakter Smart, Friendly, Energetic, dan Educational. Tampilan admin tetap profesional dan padat informasi, sedangkan portal orang tua/siswa lebih ramah, sederhana, dan ilustratif.
+12.2 Tipografi dan Komponen
+12.3 Layout dan Navigasi per Peran
+12.4 Inventaris Layar Minimum
+12.5 Aturan UX
+Setiap aksi berisiko tinggi menampilkan ringkasan dampak, membutuhkan konfirmasi, dan menggunakan bahasa bisnis yang jelas; hindari konfirmasi umum “Apakah Anda yakin?” tanpa konteks.
+Status selalu ditampilkan dengan teks dan ikon, bukan hanya warna.
+Form panjang dibagi menjadi bagian/logical step; autosave draft digunakan bila kehilangan data berisiko.
+Daftar besar menyediakan search, filter, saved views, pagination, dan bulk action hanya bila aman.
+Nominal IDR memakai format lokal, tanggal menggunakan format Indonesia, dan zona waktu/cabang terlihat pada transaksi waktu-sensitif.
+Loading state, empty state, error state, no permission, stale data, offline/connection failure, dan conflict state wajib didesain.
+Untuk check-in/validasi cepat, fokus keyboard, scanner input, dan target sentuh minimal 44×44 px harus didukung.
+Setelah aksi berhasil, tampilkan hasil dan tautan ke transaksi; jangan hanya mengandalkan toast yang cepat hilang.
+Desain memenuhi WCAG 2.1 AA: contrast, keyboard navigation, focus visible, labels, semantic structure, alt text, dan reduced motion.
+UI tidak boleh menampilkan tombol yang tidak berizin, tetapi backend tetap melakukan validasi otorisasi.
+12.6 Pola Status dan Empty/Error State
+13. Dashboard, KPI, dan Laporan
+13.1 Definisi KPI Utama
+13.2 Katalog Laporan Minimum
+13.3 Aturan Ekspor dan Penyajian
+Setiap laporan menampilkan nama laporan, DIPA Learning Center/cabang, periode, filter, generated_at, generated_by, zona waktu, nomor halaman, dan klasifikasi bila sensitif.
+PDF menggunakan layout cetak yang stabil; Excel memiliki header terstruktur, tipe data benar, tidak menggabungkan sel pada data tabular, serta sheet metadata bila diperlukan.
+Ekspor besar diproses asynchronous; file memiliki masa berlaku unduhan dan disimpan sesuai retensi.
+Data sensitif dapat dimasking; ekspor harus memerlukan permission khusus dan dicatat pada audit.
+Angka laporan memakai cut-off konsisten dan tidak berubah selama satu proses generate.
+Format tanda tangan, nomor dokumen, logo, dan legal footer harus disetujui pada workshop template laporan.
+14. Persyaratan Keamanan, Privasi, dan Audit
+14.1 Klasifikasi Data
+14.2 Retensi Minimum yang Harus Diputuskan
+15. Persyaratan Nonfungsional
+15.1 Kapasitas dan Baseline Infrastruktur
+16. Dokumen, File, Notifikasi, dan Integrasi
+16.1 Dokumen yang Dihasilkan Sistem
+16.2 Penyimpanan File
+Gunakan object storage kompatibel S3/MinIO untuk file; database hanya menyimpan metadata dan storage key.
+Nama file storage tidak menggunakan nama asli; akses melalui signed URL berumur pendek atau proxy terotorisasi.
+File diklasifikasikan, memiliki checksum, ukuran, MIME type, uploader, waktu, dan relasi transaksi.
+Lifecycle policy menghapus file sementara/ekspor sesuai retensi; backup file diselaraskan dengan backup database.
+Thumbnail/preview dibuat asynchronous dan tidak mengubah file asli.
+16.3 Integrasi Baseline dan Ekstensi
+16.4 Domain Event Minimum
+17. Migrasi Data dan Cutover
+17.1 Lingkup Migrasi
+17.2 Tahapan Migrasi
+17.3 Aturan Saldo Awal
+Kuota awal dimigrasikan sebagai quota transaction bertipe OPENING_BALANCE dengan batch dan bukti sumber; tidak mengubah saldo langsung.
+Stok awal dimigrasikan sebagai inventory transaction OPENING_BALANCE per barang/lokasi beserta biaya awal.
+Saldo akun dan piutang dimigrasikan melalui jurnal pembukaan serta invoice/open item yang dapat direkonsiliasi.
+Password lama tidak boleh dipindahkan plaintext; gunakan reset password atau migrasi hash hanya bila algoritma kompatibel dan disetujui.
+Semua batch migrasi harus dapat diulang secara idempoten atau dibatalkan sebelum go-live.
+17.4 Kriteria Rekonsiliasi Cutover
+18. Strategi Pengujian dan Penerimaan
+18.1 Tingkat Pengujian
+18.2 Skenario Penerimaan Minimum
+18.3 Severity Defect dan Gate Go-Live
+UAT ditandatangani oleh pemilik proses untuk modul terkait dan Product Owner.
+Data migration reconciliation, security gate, performance gate, backup restore, monitoring, runbook, dan training harus selesai sebelum go-live.
+Daftar known issues, workaround, risk owner, dan target penyelesaian harus disepakati.
+19. DevOps, Deployment, dan Operasional
+19.1 Topologi Deployment
+Gambar 19-1. Topologi deployment containerized untuk staging/production
+Docker berfungsi sebagai lapisan konsistensi lingkungan dan deployment, bukan fitur yang terlihat pengguna. Pengguna akhir mengakses aplikasi melalui browser; pengelolaan container dilakukan developer/administrator server.
+19.2 Environment
+19.3 Struktur Repository Modular
+sim-dipa/
+├── apps/
+│   ├── api/                 # NestJS REST API
+│   ├── web/                 # Next.js web application
+│   └── worker/              # Background jobs, notification, report
+├── packages/
+│   ├── contracts/           # Shared API types/schema
+│   ├── ui/                  # Design system components
+│   ├── config/              # Shared lint/ts/build configuration
+│   └── testing/             # Fixtures and test utilities
+├── prisma/                  # Schema, migrations, seed
+├── docs/                    # SRS, ADR, API, runbook, diagrams
+├── infra/
+│   ├── docker/
+│   ├── nginx/
+│   ├── monitoring/
+│   └── scripts/
+├── docker-compose.yml
+├── .env.example
+└── README.md
+19.4 Pipeline CI/CD
+19.5 Strategi Database Migration
+Migration disimpan dalam version control, bersifat deterministic, dan diuji dari database kosong serta versi production terakhir.
+Gunakan pola expand–migrate–contract untuk perubahan breaking: tambah struktur kompatibel, migrasi data, pindahkan aplikasi, baru hapus struktur lama pada release terpisah.
+Migration production dijalankan satu kali oleh job berizin; aplikasi tidak menjalankan schema migration otomatis pada startup.
+Untuk tabel besar, perubahan index/column dirancang non-blocking sejauh mungkin.
+Backup/pre-migration snapshot dan rollback/forward-fix plan wajib tersedia.
+19.6 Backup dan Disaster Recovery
+19.7 Monitoring dan Alerting
+19.8 Runbook Operasional Minimum
+Deployment dan rollback; database migration; rotate secret/certificate; restore backup; queue stuck; report failed; storage unavailable.
+Unlock/reset account; revoke all sessions; suspected account compromise; audit export; incident escalation.
+Rekonsiliasi pembayaran–invoice–kuota–jurnal; koreksi attendance; reopen periode; reversal jurnal; payroll revision; stock discrepancy.
+Onboarding/offboarding user dan quarterly access review.
+Kontak PIC, jalur eskalasi, severity, template komunikasi, dan post-incident review.
+20. Roadmap Pengembangan Modular
+Gambar 20-1. Roadmap modular implementasi Sistem Informasi DIPA
+20.1 Prinsip Delivery
+Setiap fase menghasilkan increment yang dapat diuji dan didemonstrasikan; hindari membangun seluruh aplikasi sebelum validasi.
+Foundation dan data model lintas modul harus cukup stabil, tetapi detail modul dikembangkan berdasarkan prioritas dan dependency.
+Setiap fase mencakup analisis rinci, UX, implementasi, migration, test, dokumentasi, training, dan sign-off.
+Feature flag dan pilot cabang digunakan untuk menurunkan risiko; rollout bertahap sebelum seluruh cabang.
+Backlog harus mempertahankan ID SRS agar requirement–code–test–defect dapat dilacak.
+21. Traceability Matrix
+22. Register Keputusan dan TBD
+Item berikut sengaja dicatat agar tidak “terlewatkan”. Status TBD berarti implementasi final memerlukan keputusan Product Owner/pemilik proses. Developer boleh membuat konfigurasi/placeholder, tetapi tidak boleh mengunci asumsi sebagai kebijakan final.
+22.1 Prosedur Penutupan TBD
+Workshop melibatkan Product Owner, process owner, developer lead, QA, dan pihak keuangan/legal bila relevan.
+Keputusan dicatat dalam change log/ADR, menyebut tanggal efektif, contoh kasus, pengecualian, approver, dan dampak pada requirement/test.
+Setelah disetujui, status menjadi Closed dan requirement/BR/formula/API/report diperbarui tanpa menghapus histori versi.
+Perubahan setelah baseline mengikuti Change Request dengan analisis biaya, jadwal, risiko, migration, dan regression test.
+Lampiran A — Glosarium dan Singkatan
+Lampiran B — Contoh Payload API Kritis
+B.1 Login
+Request
+{
+  "email": "admin@dipa.co.id",
+  "password": "********"
+}
+Response
+{
+  "data": {
+    "user": {
+      "id": "uuid",
+      "name": "Admin DIPA",
+      "roles": ["FRONT_ADMIN"],
+      "branchScopes": ["branch-uuid"]
+    },
+    "accessToken": "<token bila tidak menggunakan cookie>"
+  }
+}
+B.2 Mencatat Pembayaran
+Request
+{
+  "invoiceIds": ["invoice-uuid"],
+  "paidAt": "2026-07-14T10:15:00+07:00",
+  "methodId": "method-uuid",
+  "amount": 1500000,
+  "referenceNo": "TRX-001",
+  "proofFileId": "file-uuid",
+  "allocations": [
+    { "invoiceId": "invoice-uuid", "amount": 1500000 }
+  ]
+}
+Response setelah verifikasi
+{
+  "data": {
+    "paymentId": "payment-uuid",
+    "status": "VERIFIED",
+    "invoiceStatus": "PAID",
+    "quotaIds": ["quota-uuid"],
+    "journalEntryId": "journal-uuid",
+    "receiptUrl": "/api/v1/payments/payment-uuid/receipt"
+  }
+}
+B.3 Check-in Presensi
+Request
+{
+  "studentId": "student-uuid",
+  "scheduleId": "schedule-uuid",
+  "source": "FRONT_DESK",
+  "occurredAt": "2026-07-14T08:01:12+07:00"
+}
+Response
+{
+  "data": {
+    "attendanceId": "attendance-uuid",
+    "status": "CHECKED_IN",
+    "quota": { "balance": 4, "expiresAt": "2026-08-31" },
+    "nextAction": "WAIT_IN_CLASS_VALIDATION"
+  }
+}
+Lampiran C — Definition of Done
+Lampiran D — Checklist Kesiapan Go-Live
+Lampiran E — Catatan Baseline dan Persetujuan
+Dokumen ini merangkum seluruh kebutuhan yang telah dibahas untuk Sistem Informasi Manajemen DIPA Learning Center dan mengubah kebutuhan tingkat awal menjadi baseline yang dapat digunakan developer, UI/UX designer, database engineer, QA, DevOps, serta pemilik proses.
+Dengan persetujuan dokumen ini, para pihak menyatakan telah memahami ruang lingkup, dependensi, risiko, asumsi, kriteria penerimaan, dan daftar keputusan terbuka. Persetujuan tidak menghilangkan proses change control untuk temuan baru selama desain dan implementasi.

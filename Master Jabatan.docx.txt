@@ -1,0 +1,330 @@
+Untuk SIM-DIPA Learning Center, Master Jabatan sebaiknya dibuat sebagai referensi struktur organisasi dan peran kerja, bukan sekadar daftar nama posisi.
+Karena DIPA adalah lembaga pendidikan/kursus, jabatan harus mengakomodasi:
+Manajemen/pimpinan. 
+Operasional cabang. 
+Akademik. 
+Pengajar (coach). 
+Administrasi. 
+Keuangan. 
+Pendukung. 
+Master Jabatan nantinya akan digunakan oleh:
+Master Karyawan. 
+Hak akses sistem (Role). 
+Approval transaksi. 
+Struktur organisasi. 
+Laporan SDM. 
+Master Jabatan Pendidikan (SIM-DIPA)
+1. Identitas Jabatan
+Bagian dasar jabatan.
+Field
+Keterangan
+Kode Jabatan
+Kode unik jabatan
+Nama Jabatan
+Nama posisi
+Nama Singkat
+Untuk tampilan
+Level Jabatan
+Tingkatan posisi
+Status
+Aktif/nonaktif
+Deskripsi Jabatan
+Penjelasan tugas
+Contoh:
+Kode
+Jabatan
+DIR
+Director
+BM
+Branch Manager
+AC
+Academic Coordinator
+COA
+Coach
+ADM
+Admin
+2. Struktur Organisasi
+Karena jabatan memiliki hubungan atasan-bawahan.
+Field
+Keterangan
+Jabatan Induk
+Atasan jabatan
+Level Organisasi
+Tingkatan
+Urutan Struktur
+Posisi tampilan
+Contoh:
+Director
+│
+├── Head of Operations
+│
+├── Branch Manager
+│     │
+│     ├── Academic Admin
+│     ├── Front Admin
+│     ├── Finance Admin
+│     └── Coach
+3. Kategori Jabatan
+Untuk pendidikan, sebaiknya ada pengelompokan.
+A. Manajemen
+Jabatan
+Fungsi
+Director/Owner
+Pengarah bisnis
+Operational Manager
+Mengelola operasional
+Academic Manager
+Mengelola akademik
+Branch Manager
+Kepala cabang
+Supervisor
+Pengawas operasional
+B. Akademik
+Jabatan
+Fungsi
+Academic Coordinator
+Mengelola program akademik
+Academic Admin
+Administrasi akademik
+Curriculum Coordinator
+Kurikulum
+Assessment Coordinator
+Assessment siswa
+Coach/Teacher
+Pengajar
+Assistant Coach
+Pendamping pengajar
+C. Front Office
+Jabatan
+Fungsi
+Front Admin
+Pendaftaran dan pelayanan
+Customer Service
+Komunikasi pelanggan
+Admission Officer
+Mengelola calon siswa
+Receptionist
+Penerimaan tamu
+D. Finance
+Jabatan
+Fungsi
+Finance Manager
+Pengelolaan keuangan
+Finance Officer
+Transaksi keuangan
+Billing Officer
+Invoice/tagihan
+Cashier
+Kas
+E. Operasional Pendukung
+Jabatan
+Fungsi
+HR/Admin
+Administrasi SDM
+IT Support
+Sistem informasi
+Marketing Officer
+Promosi
+Content Creator
+Konten pemasaran
+General Affair
+Fasilitas
+4. Hak Akses Sistem (Role Mapping)
+Jabatan tidak sama dengan role.
+Contoh:
+Jabatan
+Role Sistem
+Director
+Owner/Admin
+Branch Manager
+Branch Manager
+Academic Admin
+Academic Admin
+Finance Officer
+Finance
+Coach
+Coach
+Front Admin
+Front Admin
+Kenapa dipisah?
+Karena:
+Satu jabatan bisa memiliki beberapa role. 
+Role bisa berubah tanpa mengubah jabatan. 
+Karyawan pindah jabatan tetapi akun tetap memiliki histori. 
+5. Kewenangan Jabatan
+Untuk approval dan kontrol.
+Contoh:
+Jabatan
+Approval
+Branch Manager
+Persetujuan diskon cabang
+Finance Manager
+Approval pembayaran
+Academic Coordinator
+Approval perubahan jadwal
+Director
+Approval nominal besar
+Field:
+Field
+Dapat melakukan approval
+Level approval
+Batas nominal
+Modul yang dapat disetujui
+6. Kompetensi Jabatan
+Khusus pendidikan.
+Untuk Coach:
+Field
+Contoh
+Kompetensi
+Bahasa Inggris
+Level Mengajar
+Beginner-Advanced
+Sertifikasi
+TOEFL, Cambridge
+Pendidikan Minimal
+S1
+Untuk Academic Coordinator:
+Field
+Pengalaman akademik
+Manajemen kelas
+Evaluasi pembelajaran
+7. Jabatan Khusus Coach
+Karena DIPA adalah Learning Center, Coach perlu atribut khusus.
+Pada Master Jabatan:
+Tambahkan:
+Field
+Nilai
+Jenis Jabatan
+Akademik
+Bisa Mengajar
+Ya
+Membutuhkan Jadwal
+Ya
+Membutuhkan Kehadiran
+Ya
+Perhitungan Honor
+Ya
+Sehingga sistem tahu:
+Jika Jabatan = Coach
+Maka:
+✓ muncul di jadwal
+✓ punya kelas
+✓ punya attendance
+✓ punya honor
+8. Status Jabatan
+Status
+Arti
+Draft
+Belum digunakan
+Active
+Digunakan
+Inactive
+Tidak menerima karyawan baru
+Retired
+Sudah tidak digunakan
+Form Master Jabatan
+Struktur UI:
+=================================
+MASTER JABATAN
+=================================
+1. IDENTITAS
+Kode Jabatan
+[ COA ]
+Nama Jabatan
+[ Coach ]
+Kategori
+[ Akademik ▼ ]
+Level Jabatan
+[ Staff ▼ ]
+=================================
+2. STRUKTUR
+Atasan Jabatan
+[ Academic Coordinator ▼ ]
+Urutan Struktur
+[ 5 ]
+=================================
+3. KARAKTERISTIK
+Jenis Jabatan
+☑ Akademik
+☑ Mengajar
+☑ Memiliki Jadwal
+☑ Memiliki Presensi
+=================================
+4. ROLE SISTEM
+Role Default
+[ Coach ▼ ]
+=================================
+5. STATUS
+Status
+[ Active ▼ ]
+=================================
+Deskripsi Jabatan
+[...........................]
+=================================
+Struktur Database
+job_positions
+id
+code
+name
+category
+parent_position_id
+level
+is_teaching_position
+requires_schedule
+requires_attendance
+requires_payroll
+default_role_id
+description
+status
+created_at
+updated_at
+Master Jabatan Awal SIM-DIPA (Rekomendasi)
+Untuk implementasi awal, tidak perlu terlalu banyak. Cukup:
+No
+Jabatan
+1
+Owner / Director
+2
+Operational Manager
+3
+Branch Manager
+4
+Academic Coordinator
+5
+Academic Admin
+6
+Front Admin
+7
+Finance Admin
+8
+Marketing Officer
+9
+Coach
+10
+Assistant Coach
+11
+IT Support
+12
+General Affair
+Kesimpulan
+Untuk SIM-DIPA:
+Master Jabatan berisi:
+Identitas jabatan. 
+Kategori jabatan. 
+Struktur organisasi. 
+Level jabatan. 
+Karakteristik pekerjaan. 
+Mapping role sistem. 
+Kewenangan approval. 
+Status jabatan. 
+Yang tidak masuk Master Jabatan:
+Nama karyawan. 
+Cabang kerja. 
+Jadwal kerja. 
+Gaji. 
+Kelas yang diajar. 
+Itu berada pada:
+Master Karyawan, 
+Assignment Cabang, 
+Scheduling, 
+Payroll.

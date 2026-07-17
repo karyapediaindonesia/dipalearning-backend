@@ -1,0 +1,32 @@
+/* DIPA Learning Custom Styles */
+
+/* Highlight tab yang ada error */
+.nav-link.tab-error {
+    color: #dc3545 !important;
+    border-bottom: 2px solid #dc3545;
+}
+
+/* Box pesan error */
+#errorBox {
+    display: none;
+    margin-bottom: 15px;
+}
+
+/* Fix DataTable wrapper layout */
+.dataTables_wrapper .dataTables_paginate {
+    float: right;
+    clear: both;
+    margin-top: 10px;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 6px 10px !important;
+    white-space: nowrap !important;
+    line-height: 1.4 !important;
+}
+/* Pastikan info dan paginate sejajar */
+.dataTables_wrapper .row:last-child {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+

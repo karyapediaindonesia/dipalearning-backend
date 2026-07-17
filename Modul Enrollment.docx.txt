@@ -1,0 +1,345 @@
+Untuk SIM-DIPA Learning Center, modul Enrollment adalah titik perubahan dari calon siswa menjadi siswa aktif yang mengikuti program tertentu.
+Jadi Enrollment bukan sekadar menyimpan:
+Kursus,
+Level,
+Cabang,
+Kelas,
+Coach,
+tetapi menjadi kontrak akademik siswa selama mengikuti program.
+Secara logis, form Enrollment harus menjawab:
+Siapa siswa yang ikut program?
+Mengikuti kursus apa?
+Di level berapa?
+Di cabang mana?
+Masuk kelas mana?
+Dengan coach siapa?
+Mulai kapan?
+Menggunakan paket apa?
+Bagaimana status perjalanan belajarnya?
+Form Enrollment Siswa
+Saya sarankan dibagi menjadi 6 bagian:
+Informasi Siswa
+Program yang Diikuti
+Penempatan Kelas
+Periode Pembelajaran
+Status Enrollment
+Administrasi & Riwayat
+1. Informasi Siswa
+Bagian ini mengambil data dari Master Siswa.
+Field:
+Field
+Input
+Keterangan
+Nomor Siswa
+Auto
+Dari Master Siswa
+Nama Siswa
+Auto
+Dari Master Siswa
+Wali Utama
+Auto
+Informasi kontak
+Cabang Asal
+Auto
+Jika ada
+Contoh:
+Nomor Siswa:
+STD-2026-00125
+Nama:
+Andi Santoso
+Wali:
+Budi Santoso
+Tidak perlu input ulang.
+2. Program yang Diikuti
+Ini adalah inti enrollment.
+A. Kursus
+Field
+Input
+Keterangan
+Kursus
+Dropdown
+Wajib
+Level
+Dropdown
+Wajib
+Program Type
+Dropdown
+Opsional
+Contoh:
+Kursus:
+Bahasa Inggris
+Level:
+Beginner
+Relasi:
+Kursus
+   |
+   └── Level
+Level harus otomatis mengikuti kursus yang dipilih.
+B. Paket
+Walaupun daftar awal Anda belum memasukkan paket, secara bisnis sebaiknya masuk Enrollment.
+Karena siswa tidak hanya mengikuti kursus, tetapi membeli kuota belajar.
+Field
+Keterangan
+Paket
+Paket yang dibeli
+Jumlah Pertemuan
+Kuota
+Masa Berlaku
+Periode penggunaan
+Contoh:
+Paket:
+8 Pertemuan
+Kuota:
+8x kelas
+Masa Berlaku:
+3 bulan
+C. Tujuan Enrollment
+Opsional:
+Field
+Fungsi
+Trial
+Percobaan
+Reguler
+Program normal
+Remedial
+Perbaikan
+Tambahan
+Tambahan belajar
+3. Penempatan Kelas
+Setelah memilih program, siswa ditempatkan ke kelas.
+A. Cabang
+Field
+Keterangan
+Cabang
+Lokasi belajar
+Contoh:
+Cabang:
+DIPA Surabaya Barat
+Aturan:
+Cabang harus aktif.
+Kursus tersebut harus tersedia di cabang tersebut.
+B. Kelas
+Field
+Keterangan
+Kelas
+Group belajar
+Kapasitas
+Informasi
+Jumlah siswa aktif
+Informasi
+Contoh:
+Kelas:
+English Beginner A
+Kapasitas:
+10 siswa
+Terisi:
+7 siswa
+C. Coach
+Field
+Keterangan
+Coach Utama
+Pengajar
+Coach Pendamping
+Opsional
+Contoh:
+Coach:
+Miss Sarah
+Catatan:Coach sebenarnya lebih baik mengikuti kelas, bukan enrollment.
+Tetapi tetap tampil di enrollment untuk kemudahan operasional.
+4. Periode Pembelajaran
+Bagian ini menentukan kapan siswa mulai belajar.
+Field:
+Field
+Keterangan
+Tanggal Enrollment
+Kapan daftar
+Tanggal Mulai
+Awal belajar
+Tanggal Selesai
+Estimasi selesai
+Periode Akademik
+Tahun/semester
+Contoh:
+Tanggal Enrollment:
+15 Juli 2026
+Mulai:
+20 Juli 2026
+Selesai:
+20 Oktober 2026
+5. Status Enrollment
+Status harus menggambarkan perjalanan siswa.
+Saya sarankan:
+Status
+Arti
+DRAFT
+Belum selesai
+PENDING
+Menunggu pembayaran/verifikasi
+ACTIVE
+Sedang belajar
+SUSPENDED
+Ditunda sementara
+COMPLETED
+Program selesai
+TRANSFERRED
+Pindah kelas/cabang
+CANCELLED
+Dibatalkan
+EXPIRED
+Masa berlaku habis
+Contoh alur:
+DRAFT
+ |
+ |
+PENDING PAYMENT
+ |
+ |
+ACTIVE
+ |
+ |
+COMPLETED
+6. Administrasi Enrollment
+Bagian ini penting untuk hubungan dengan Finance.
+Field:
+Field
+Keterangan
+Nomor Enrollment
+Auto
+Invoice
+Link invoice
+Status Pembayaran
+Informasi
+Metode Pembayaran
+Informasi
+Promo/Diskon
+Jika ada
+Catatan
+Tambahan
+Contoh:
+Enrollment:
+ENR-2026-00125
+Invoice:
+INV-2026-00555
+Pembayaran:
+Lunas
+7. Riwayat Enrollment
+Karena siswa bisa berpindah.
+Contoh:
+Awalnya:
+English Beginner
+Cabang Barat
+Coach Sarah
+Kemudian:
+English Intermediate
+Cabang Timur
+Coach David
+Maka jangan mengubah data lama.
+Simpan:
+Data
+Keterangan
+Perubahan tanggal
+Kapan
+Jenis perubahan
+Apa
+Sebelum
+Data lama
+Sesudah
+Data baru
+Alasan
+Kenapa
+Oleh
+User
+Form UI yang disarankan
+================================================
+ENROLLMENT SISWA
+================================================
+1. DATA SISWA
+Nomor Siswa
+[ STD-2026-00125 ]
+Nama Siswa
+[ Andi Santoso ]
+================================================
+2. PROGRAM
+Kursus
+[ Bahasa Inggris ▼ ]
+Level
+[ Beginner ▼ ]
+Paket
+[ 8 Pertemuan ▼ ]
+================================================
+3. PENEMPATAN
+Cabang
+[ Surabaya Barat ▼ ]
+Kelas
+[ English Beginner A ▼ ]
+Coach
+[ Sarah ▼ ]
+================================================
+4. PERIODE
+Tanggal Enrollment
+[15-07-2026]
+Tanggal Mulai
+[20-07-2026]
+Tanggal Selesai
+[20-10-2026]
+================================================
+5. STATUS
+Status Enrollment
+[ ACTIVE ▼ ]
+================================================
+6. ADMINISTRASI
+Invoice
+[INV-2026-0001]
+Pembayaran
+[LUNAS]
+Catatan:
+_________________
+[Simpan]
+================================================
+Struktur Database yang Rasional
+enrollments
+id
+enrollment_no
+student_id
+course_id
+level_id
+package_id
+branch_id
+class_id
+coach_id
+academic_period_id
+enrollment_date
+start_date
+end_date
+status
+invoice_id
+notes
+created_at
+updated_at
+Hal yang Jangan Dimuat di Enrollment
+Jangan masukkan:
+❌ Nama siswa(sudah ada di Master Siswa)
+❌ Nama kursus manual(ambil dari Master Kursus)
+❌ Harga(ambil dari Daftar Harga)
+❌ Jadwal pertemuan(masuk modul Scheduling)
+❌ Presensi(masuk Attendance)
+❌ Nilai/progress(masuk Progress Siswa)
+Kesimpulan desain Enrollment SIM-DIPA
+Form Enrollment idealnya terdiri dari:
+Wajib:
+Siswa
+Kursus
+Level
+Paket
+Cabang
+Kelas
+Coach
+Tanggal mulai
+Status enrollment
+Disarankan:
+Periode akademik
+Tanggal selesai
+Invoice
+Status pembayaran
+Riwayat perubahan
+Dengan desain ini, Enrollment menjadi penghubung utama antara Siswa → Akademik → Operasional → Finance.

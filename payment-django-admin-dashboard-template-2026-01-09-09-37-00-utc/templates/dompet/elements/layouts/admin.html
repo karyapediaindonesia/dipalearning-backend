@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% load static custom_tags %}
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="keywords" content="" />
+        <meta name="author" content="" />
+        <meta name="robots" content="" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{{ dz_array.public.description }}" />
+        <meta property="og:title" content="{{ dz_array.public.og_title }}" />
+        <meta property="og:description" content="{{ dz_array.public.og_description }}" />
+        <meta property="og:image" content="{{ dz_array.public.og_image }}" />
+        <meta name="format-detection" content="telephone=no">
+        
+        <!-- PAGE TITLE HERE -->
+        <title>{{ dz_array.public.title }}</title>
+        
+        <!-- FAVICONS ICON -->
+        <link rel="shortcut icon" type="image/png" href="{% static dz_array.public.favicon  %}" />
+        {% for cssurl in dz_array.pagelevel.dompet.dompet_views.css|getdata:request.path %}
+        <link rel="stylesheet" href="{% static cssurl %}" >
+        {% endfor %}
+        {% for cssurl in dz_array.global.css %}
+        <link rel="stylesheet" href="{% static cssurl %}">
+        {% endfor %}
+        
+        {% block additional_css %}
+        {% endblock %}
+        
+    </head>
+<body>
+
+    <!--*******************
+        Preloader start
+    ********************-->
+    <div id="preloader">
+        <div class="waviy">
+		   <span style="--i:1">L</span>
+		   <span style="--i:2">o</span>
+		   <span style="--i:3">a</span>
+		   <span style="--i:4">d</span>
+		   <span style="--i:5">i</span>
+		   <span style="--i:6">n</span>
+		   <span style="--i:7">g</span>
+		   <span style="--i:8">.</span>
+		   <span style="--i:9">.</span>
+		   <span style="--i:10">.</span>
+		</div>
+    </div>
+    <!--*******************
+        Preloader end
+    ********************-->
+
+    <!--**********************************
+        Main wrapper start
+    ***********************************-->
+    <div id="main-wrapper">
+
+        <!--**********************************
+            Nav header start
+        ***********************************-->
+
+        {% include 'dompet/elements/nav-header.html' %}
+
+        <!--**********************************
+            Nav header end
+        ***********************************-->
+		
+		<!--**********************************
+            Chat box start
+        ***********************************-->
+
+        {% include 'dompet/elements/chatbox.html' %}
+
+		<!--**********************************
+            Chat box End
+        ***********************************-->
+		
+		<!--**********************************
+            Header start
+        ***********************************-->
+
+        {% include 'dompet/elements/header.html' %}
+
+        <!--**********************************
+            Header end ti-comment-alt
+        ***********************************-->
+
+        <!--**********************************
+            Sidebar start
+        ***********************************-->
+
+        {% include 'dompet/elements/sidebar.html' %}
+        <!--**********************************
+            Sidebar end
+        ***********************************-->
+		
+		<!--**********************************
+            Content body start
+        ***********************************-->
+      {% block content %}
+      {% endblock %}
+        <!--**********************************
+            Content body end
+        ***********************************-->
+		
+		
+		
+        <!--**********************************
+            Footer start
+        ***********************************-->
+
+        {% include 'dompet/elements/footer.html' %}
+        <!--**********************************
+            Footer end
+        ***********************************-->
+
+		<!--**********************************
+           Support ticket button start
+        ***********************************-->
+		
+        <!--**********************************
+           Support ticket button end
+        ***********************************-->
+
+
+	</div>
+    <!--**********************************
+        Main wrapper end
+    ***********************************-->
+
+    <!--**********************************
+        Scripts
+    ***********************************-->
+    <!-- Required vendors -->
+
+    {% for jsurl in dz_array.global.js.top %}
+    <script src="{% static jsurl %}"></script>
+    {% endfor %}
+    
+    {% for jsurl in dz_array.pagelevel.dompet.dompet_views.js|getdata:request.path %}
+    <script src="{% static jsurl %}"></script>
+    {% endfor %}
+    
+    {% for jsurl in dz_array.global.js.bottom %}
+    <script src="{% static jsurl %}"></script>
+    {% endfor %}
+    
+    {% block additional_js %}
+    {% endblock %}
+
+</body>
+</html>

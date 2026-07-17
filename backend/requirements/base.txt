@@ -1,0 +1,12 @@
+django==5.0
+loguru==0.7.0
+Pillow==10.0.0
+gunicorn==21.2.0
+whitenoise==6.6.0
+python-dotenv==1.0.0
+psycopg[binary]
+xhtml2pdf
+openpyxl
+djangorestframework==3.15.1
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1

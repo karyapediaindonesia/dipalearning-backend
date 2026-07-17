@@ -1,0 +1,956 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------
+// 1. Foundation & Auth
+// ----------------------------------------------------------------------
+
+model Branch {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String    @unique @db.VarChar(50)
+  name        String    @db.VarChar(100)
+  address     String?   @db.Text
+  phone       String?   @db.VarChar(50)
+  timezone    String    @default("Asia/Jakarta") @db.VarChar(50)
+  managerId   String?   @map("manager_id") @db.Uuid
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  users       User[]
+  employees   Employee[]
+  students    Student[]
+  classrooms  Classroom[]
+  classGroups ClassGroup[]
+  holidays    Holiday[]
+  priceLists  PriceList[]
+  invoices    Invoice[]
+  payments    Payment[]
+  journalEntries JournalEntry[]
+  expenses    Expense[]
+  payrolls    Payroll[]
+  warehouses  Warehouse[]
+
+  @@map("branches")
+}
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId      String?   @map("branch_id") @db.Uuid
+  email         String?   @unique @db.VarChar(100)
+  username      String?   @unique @db.VarChar(50)
+  passwordHash  String?   @map("password_hash") @db.VarChar(255)
+  status        String    @default("ACTIVE") @db.VarChar(20) // ACTIVE, INACTIVE, LOCKED
+  lastLoginAt   DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  userRoles     UserRole[]
+  refreshTokens RefreshToken[]
+  employee      Employee?
+  parent        Parent?
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  userRoles   UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String   @unique @db.VarChar(100)
+  module      String   @db.VarChar(50)
+  action      String   @db.VarChar(50)
+  description String?  @db.Text
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  roleId        String    @map("role_id") @db.Uuid
+  branchScope   String    @map("branch_scope") @db.VarChar(50) // SELF, OWN_BRANCH, ALL_BRANCHES, dll
+  effectiveFrom DateTime? @map("effective_from") @db.Timestamptz
+  effectiveTo   DateTime? @map("effective_to") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId, branchScope])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(255)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  deviceInfo String?   @map("device_info") @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId       String?  @map("actor_id") @db.Uuid
+  branchId      String?  @map("branch_id") @db.Uuid
+  action        String   @db.VarChar(100)
+  entityType    String   @map("entity_type") @db.VarChar(50)
+  entityId      String   @map("entity_id") @db.VarChar(100)
+  beforeJson    Json?    @map("before_json")
+  afterJson     Json?    @map("after_json")
+  ip            String?  @db.VarChar(50)
+  correlationId String?  @map("correlation_id") @db.VarChar(100)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([createdAt, actorId, entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ----------------------------------------------------------------------
+// 2. HR & Karyawan
+// ----------------------------------------------------------------------
+
+model Employee {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employeeNo       String    @unique @map("employee_no") @db.VarChar(50)
+  userId           String?   @unique @map("user_id") @db.Uuid
+  branchId         String    @map("branch_id") @db.Uuid
+  name             String    @db.VarChar(100)
+  employmentStatus String    @map("employment_status") @db.VarChar(50)
+  joinDate         DateTime  @map("join_date") @db.Date
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user   User?   @relation(fields: [userId], references: [id])
+  branch Branch  @relation(fields: [branchId], references: [id])
+  coach  Coach?
+  payrolls Payroll[]
+
+  @@map("employees")
+}
+
+model Coach {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  employeeId        String  @unique @map("employee_id") @db.Uuid
+  specialty         String? @db.VarChar(100)
+  levelCapabilities String? @map("level_capabilities") @db.Text
+  payrollSchemeId   String? @map("payroll_scheme_id") @db.Uuid
+  isActive          Boolean @default(true) @map("is_active")
+  
+  employee        Employee         @relation(fields: [employeeId], references: [id])
+  classGroups     ClassGroup[]
+  classSchedules  ClassSchedule[]
+  makeupSchedules MakeupSchedule[]
+  coachIncentives CoachIncentive[]
+
+  @@map("coaches")
+}
+
+// ----------------------------------------------------------------------
+// 3. Akademik
+// ----------------------------------------------------------------------
+
+model Student {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentNo String    @unique @map("student_no") @db.VarChar(50)
+  branchId  String    @map("branch_id") @db.Uuid
+  name      String    @db.VarChar(100)
+  birthDate DateTime? @map("birth_date") @db.Date
+  address   String?   @db.Text
+  status    String    @default("ACTIVE") @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+
+  branch             Branch              @relation(fields: [branchId], references: [id])
+  parentLinks        StudentParentLink[]
+  enrollments        Enrollment[]
+  invoices           Invoice[]
+  studentQuotas      StudentQuota[]
+  attendanceRecords  AttendanceRecord[]
+  makeupRequests     MakeupRequest[]
+
+  @@map("students")
+}
+
+model Parent {
+  id                 String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String? @unique @map("user_id") @db.Uuid
+  name               String  @db.VarChar(100)
+  phone              String? @db.VarChar(50)
+  email              String? @db.VarChar(100)
+  address            String? @db.Text
+  verificationStatus String  @default("UNVERIFIED") @map("verification_status") @db.VarChar(20)
+
+  user         User?               @relation(fields: [userId], references: [id])
+  studentLinks StudentParentLink[]
+  invoices     Invoice[]
+
+  @@map("parents")
+}
+
+model StudentParentLink {
+  studentId         String  @map("student_id") @db.Uuid
+  parentId          String  @map("parent_id") @db.Uuid
+  relationship      String? @db.VarChar(50)
+  isPrimary         Boolean @default(false) @map("is_primary")
+  notificationFlags String? @map("notification_flags") @db.VarChar(200)
+
+  student Student @relation(fields: [studentId], references: [id])
+  parent  Parent  @relation(fields: [parentId], references: [id])
+
+  @@id([studentId, parentId])
+  @@map("student_parent_links")
+}
+
+model Course {
+  id                 String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code               String  @unique @db.VarChar(50)
+  name               String  @db.VarChar(100)
+  category           String? @db.VarChar(50)
+  meetingDurationMin Int     @default(60) @map("meeting_duration_min")
+  isActive           Boolean @default(true) @map("is_active")
+
+  levels CourseLevel[]
+
+  @@map("courses")
+}
+
+model CourseLevel {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId String  @map("course_id") @db.Uuid
+  code     String  @db.VarChar(50)
+  name     String  @db.VarChar(100)
+  sequence Int     @default(1)
+  isActive Boolean @default(true) @map("is_active")
+
+  course      Course       @relation(fields: [courseId], references: [id])
+  classGroups ClassGroup[]
+  enrollments Enrollment[]
+
+  @@unique([courseId, code])
+  @@map("course_levels")
+}
+
+model Classroom {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId String  @map("branch_id") @db.Uuid
+  code     String  @db.VarChar(50)
+  name     String  @db.VarChar(100)
+  capacity Int
+  isActive Boolean @default(true) @map("is_active")
+
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  classSchedules ClassSchedule[]
+  makeupSchedules MakeupSchedule[]
+
+  @@unique([branchId, code])
+  @@map("classrooms")
+}
+
+model ClassGroup {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId       String  @map("branch_id") @db.Uuid
+  courseLevelId  String  @map("course_level_id") @db.Uuid
+  code           String  @db.VarChar(50)
+  capacity       Int
+  primaryCoachId String? @map("primary_coach_id") @db.Uuid
+  status         String  @default("ACTIVE") @db.VarChar(20)
+
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  courseLevel    CourseLevel     @relation(fields: [courseLevelId], references: [id])
+  primaryCoach   Coach?          @relation(fields: [primaryCoachId], references: [id])
+  schedules      ClassSchedule[]
+  enrollments    Enrollment[]
+
+  @@unique([branchId, code])
+  @@map("class_groups")
+}
+
+model ClassSchedule {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classGroupId   String   @map("class_group_id") @db.Uuid
+  occurrenceDate DateTime @map("occurrence_date") @db.Date
+  startAt        DateTime @map("start_at") @db.Timestamptz
+  endAt          DateTime @map("end_at") @db.Timestamptz
+  roomId         String   @map("room_id") @db.Uuid
+  coachId        String   @map("coach_id") @db.Uuid
+  seriesId       String?  @map("series_id") @db.Uuid
+  status         String   @default("SCHEDULED") @db.VarChar(20)
+
+  classGroup         ClassGroup          @relation(fields: [classGroupId], references: [id])
+  room               Classroom           @relation(fields: [roomId], references: [id])
+  coach              Coach               @relation(fields: [coachId], references: [id])
+  attendanceSessions AttendanceSession[]
+
+  @@index([coachId, roomId, occurrenceDate])
+  @@map("class_schedules")
+}
+
+model Enrollment {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId      String    @map("student_id") @db.Uuid
+  classGroupId   String    @map("class_group_id") @db.Uuid
+  courseLevelId  String    @map("course_level_id") @db.Uuid
+  startDate      DateTime  @map("start_date") @db.Date
+  endDate        DateTime? @map("end_date") @db.Date
+  status         String    @default("ACTIVE") @db.VarChar(20)
+  transferFromId String?   @map("transfer_from_id") @db.Uuid
+
+  student           Student            @relation(fields: [studentId], references: [id])
+  classGroup        ClassGroup         @relation(fields: [classGroupId], references: [id])
+  courseLevel       CourseLevel        @relation(fields: [courseLevelId], references: [id])
+  attendanceRecords AttendanceRecord[]
+
+  @@map("enrollments")
+}
+
+model Holiday {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId    String   @map("branch_id") @db.Uuid
+  holidayDate DateTime @map("holiday_date") @db.Date
+  name        String   @db.VarChar(100)
+  type        String   @db.VarChar(20)
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@unique([branchId, holidayDate, type])
+  @@map("holidays")
+}
+
+// ----------------------------------------------------------------------
+// 4. Komersial & Keuangan
+// ----------------------------------------------------------------------
+
+model Package {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code         String  @unique @db.VarChar(50)
+  courseId     String? @map("course_id") @db.Uuid
+  meetingCount Int     @map("meeting_count")
+  validityDays Int     @map("validity_days")
+  isActive     Boolean @default(true) @map("is_active")
+
+  studentQuotas StudentQuota[]
+
+  @@map("packages")
+}
+
+model PriceList {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId      String    @map("branch_id") @db.Uuid
+  packageId     String?   @map("package_id") @db.Uuid
+  itemType      String    @map("item_type") @db.VarChar(50)
+  amount        Decimal   @db.Decimal(18, 2)
+  effectiveFrom DateTime  @map("effective_from") @db.Timestamptz
+  effectiveTo   DateTime? @map("effective_to") @db.Timestamptz
+  status        String    @default("ACTIVE") @db.VarChar(20)
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("price_lists")
+}
+
+model Invoice {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceNo String    @unique @map("invoice_no") @db.VarChar(50)
+  branchId  String    @map("branch_id") @db.Uuid
+  studentId String?   @map("student_id") @db.Uuid
+  parentId  String?   @map("parent_id") @db.Uuid
+  issueDate DateTime  @map("issue_date") @db.Date
+  dueDate   DateTime  @map("due_date") @db.Date
+  status    String    @default("DRAFT") @db.VarChar(20)
+  subtotal  Decimal   @default(0) @db.Decimal(18, 2)
+  discount  Decimal   @default(0) @db.Decimal(18, 2)
+  tax       Decimal   @default(0) @db.Decimal(18, 2)
+  total     Decimal   @default(0) @db.Decimal(18, 2)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  branch     Branch              @relation(fields: [branchId], references: [id])
+  student    Student?            @relation(fields: [studentId], references: [id])
+  parent     Parent?             @relation(fields: [parentId], references: [id])
+  items      InvoiceItem[]
+  allocations PaymentAllocation[]
+
+  @@index([status, dueDate, branchId])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invoiceId   String  @map("invoice_id") @db.Uuid
+  itemType    String  @map("item_type") @db.VarChar(50)
+  itemId      String? @map("item_id") @db.Uuid
+  description String  @db.VarChar(255)
+  qty         Decimal @db.Decimal(18, 4)
+  unitPrice   Decimal @map("unit_price") @db.Decimal(18, 2)
+  discount    Decimal @default(0) @db.Decimal(18, 2)
+  lineTotal   Decimal @map("line_total") @db.Decimal(18, 2)
+
+  invoice      Invoice        @relation(fields: [invoiceId], references: [id])
+  studentQuotas StudentQuota[]
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentNo   String    @unique @map("payment_no") @db.VarChar(50)
+  branchId    String    @map("branch_id") @db.Uuid
+  payerId     String?   @map("payer_id") @db.Uuid
+  paidAt      DateTime  @map("paid_at") @db.Timestamptz
+  methodId    String    @map("method_id") @db.Uuid
+  amount      Decimal   @db.Decimal(18, 2)
+  status      String    @default("PENDING") @db.VarChar(20)
+  referenceNo String?   @map("reference_no") @db.VarChar(100)
+  proofFileId String?   @map("proof_file_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  branch      Branch              @relation(fields: [branchId], references: [id])
+  allocations PaymentAllocation[]
+
+  @@map("payments")
+}
+
+model PaymentAllocation {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentId       String  @map("payment_id") @db.Uuid
+  invoiceId       String  @map("invoice_id") @db.Uuid
+  allocatedAmount Decimal @map("allocated_amount") @db.Decimal(18, 2)
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("payment_allocations")
+}
+
+// ----------------------------------------------------------------------
+// 5. Kuota & Absensi
+// ----------------------------------------------------------------------
+
+model StudentQuota {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId            String    @map("student_id") @db.Uuid
+  enrollmentId         String?   @map("enrollment_id") @db.Uuid
+  packageId            String?   @map("package_id") @db.Uuid
+  sourceInvoiceItemId  String?   @map("source_invoice_item_id") @db.Uuid
+  initialQty           Decimal   @map("initial_qty") @db.Decimal(18, 4)
+  balanceQty           Decimal   @map("balance_qty") @db.Decimal(18, 4)
+  activeAt             DateTime  @map("active_at") @db.Timestamptz
+  expiresAt            DateTime  @map("expires_at") @db.Timestamptz
+  status               String    @default("ACTIVE") @db.VarChar(20)
+  version              Int       @default(1)
+
+  student           Student            @relation(fields: [studentId], references: [id])
+  package           Package?           @relation(fields: [packageId], references: [id])
+  sourceInvoiceItem InvoiceItem?       @relation(fields: [sourceInvoiceItemId], references: [id])
+  transactions      QuotaTransaction[]
+
+  @@map("student_quotas")
+}
+
+model QuotaTransaction {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  quotaId      String    @map("quota_id") @db.Uuid
+  type         String    @db.VarChar(20) // DEBIT, CREDIT
+  quantity     Decimal   @db.Decimal(18, 4)
+  sourceType   String    @map("source_type") @db.VarChar(50)
+  sourceId     String    @map("source_id") @db.VarChar(100)
+  postedAt     DateTime  @default(now()) @map("posted_at") @db.Timestamptz
+  reversalOfId String?   @map("reversal_of_id") @db.Uuid
+
+  quota StudentQuota @relation(fields: [quotaId], references: [id])
+
+  @@index([quotaId, postedAt])
+  @@map("quota_transactions")
+}
+
+model AttendanceSession {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  scheduleId String    @map("schedule_id") @db.Uuid
+  openedAt   DateTime? @map("opened_at") @db.Timestamptz
+  closedAt   DateTime? @map("closed_at") @db.Timestamptz
+  openedBy   String?   @map("opened_by") @db.Uuid
+  status     String    @default("OPEN") @db.VarChar(20)
+
+  schedule ClassSchedule      @relation(fields: [scheduleId], references: [id])
+  records  AttendanceRecord[]
+
+  @@map("attendance_sessions")
+}
+
+model AttendanceRecord {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId    String    @map("session_id") @db.Uuid
+  studentId    String    @map("student_id") @db.Uuid
+  enrollmentId String?   @map("enrollment_id") @db.Uuid
+  status       String    @db.VarChar(20) // PRESENT, LATE, ABSENT, EXCUSED
+  checkinAt    DateTime? @map("checkin_at") @db.Timestamptz
+  inclassAt    DateTime? @map("inclass_at") @db.Timestamptz
+  checkoutAt   DateTime? @map("checkout_at") @db.Timestamptz
+  lateMinutes  Int       @default(0) @map("late_minutes")
+
+  session     AttendanceSession      @relation(fields: [sessionId], references: [id])
+  student     Student                @relation(fields: [studentId], references: [id])
+  enrollment  Enrollment?            @relation(fields: [enrollmentId], references: [id])
+  validations AttendanceValidation[]
+
+  @@unique([sessionId, studentId])
+  @@map("attendance_records")
+}
+
+model AttendanceValidation {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attendanceId String   @map("attendance_id") @db.Uuid
+  stage        String   @db.VarChar(20) // CHECKIN, IN_CLASS, CHECKOUT
+  actorId      String?  @map("actor_id") @db.Uuid
+  validatedAt  DateTime @default(now()) @map("validated_at") @db.Timestamptz
+  result       String   @db.VarChar(20)
+  notes        String?  @db.Text
+
+  record AttendanceRecord @relation(fields: [attendanceId], references: [id])
+
+  @@map("attendance_validations")
+}
+
+model MakeupRequest {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attendanceId         String    @map("attendance_id") @db.Uuid
+  studentId            String    @map("student_id") @db.Uuid
+  reasonId             String?   @map("reason_id") @db.Uuid
+  requestedAt          DateTime  @default(now()) @map("requested_at") @db.Timestamptz
+  dueDate              DateTime? @map("due_date") @db.Date
+  status               String    @default("PENDING") @db.VarChar(20)
+  eligibilityExpiresAt DateTime? @map("eligibility_expires_at") @db.Timestamptz
+
+  student Student @relation(fields: [studentId], references: [id])
+  makeupSchedules MakeupSchedule[]
+
+  @@map("makeup_requests")
+}
+
+model MakeupSchedule {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestId   String    @map("request_id") @db.Uuid
+  scheduleId  String?   @map("schedule_id") @db.Uuid
+  customStart DateTime? @map("custom_start") @db.Timestamptz
+  coachId     String?   @map("coach_id") @db.Uuid
+  roomId      String?   @map("room_id") @db.Uuid
+  status      String    @default("SCHEDULED") @db.VarChar(20)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+
+  request MakeupRequest @relation(fields: [requestId], references: [id])
+  coach   Coach?        @relation(fields: [coachId], references: [id])
+  room    Classroom?    @relation(fields: [roomId], references: [id])
+
+  @@map("makeup_schedules")
+}
+
+// ----------------------------------------------------------------------
+// 6. Jurnal & Akuntansi
+// ----------------------------------------------------------------------
+
+model Account {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String  @unique @db.VarChar(50)
+  name          String  @db.VarChar(100)
+  type          String  @db.VarChar(50) // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  parentId      String? @map("parent_id") @db.Uuid
+  normalBalance String  @map("normal_balance") @db.VarChar(10) // DEBIT, CREDIT
+  isPostable    Boolean @default(true) @map("is_postable")
+  isActive      Boolean @default(true) @map("is_active")
+
+  parent  Account?  @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children Account[] @relation("AccountHierarchy")
+  journalDetails JournalEntryDetail[]
+
+  @@map("accounts")
+}
+
+model JournalEntry {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journalNo    String    @unique @map("journal_no") @db.VarChar(50)
+  branchId     String    @map("branch_id") @db.Uuid
+  date         DateTime  @db.Date
+  sourceType   String?   @map("source_type") @db.VarChar(50)
+  sourceId     String?   @map("source_id") @db.VarChar(100)
+  description  String?   @db.VarChar(255)
+  status       String    @default("DRAFT") @db.VarChar(20)
+  postedAt     DateTime? @map("posted_at") @db.Timestamptz
+  reversalOfId String?   @map("reversal_of_id") @db.Uuid
+
+  branch  Branch               @relation(fields: [branchId], references: [id])
+  details JournalEntryDetail[]
+
+  @@map("journal_entries")
+}
+
+model JournalEntryDetail {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journalId     String  @map("journal_id") @db.Uuid
+  accountId     String  @map("account_id") @db.Uuid
+  debit         Decimal @default(0) @db.Decimal(18, 2)
+  credit        Decimal @default(0) @db.Decimal(18, 2)
+  dimensionJson Json?   @map("dimension_json")
+
+  journal JournalEntry @relation(fields: [journalId], references: [id])
+  account Account      @relation(fields: [accountId], references: [id])
+
+  @@index([journalId])
+  @@map("journal_entry_details")
+}
+
+model Expense {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  expenseNo    String  @unique @map("expense_no") @db.VarChar(50)
+  branchId     String  @map("branch_id") @db.Uuid
+  vendorId     String? @map("vendor_id") @db.Uuid
+  categoryId   String? @map("category_id") @db.Uuid
+  date         DateTime @db.Date
+  amount       Decimal @db.Decimal(18, 2)
+  status       String  @default("DRAFT") @db.VarChar(20)
+  proofFileId  String? @map("proof_file_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@map("expenses")
+}
+
+// ----------------------------------------------------------------------
+// 7. Payroll
+// ----------------------------------------------------------------------
+
+model SalaryTier {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  schemeId      String    @map("scheme_id") @db.Uuid
+  minStudents   Int       @map("min_students")
+  maxStudents   Int       @map("max_students")
+  baseAmount    Decimal   @map("base_amount") @db.Decimal(18, 2)
+  effectiveFrom DateTime  @map("effective_from") @db.Timestamptz
+  effectiveTo   DateTime? @map("effective_to") @db.Timestamptz
+
+  @@map("salary_tiers")
+}
+
+model PayrollPeriod {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code      String   @unique @db.VarChar(50)
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  cutoffAt  DateTime @map("cutoff_at") @db.Timestamptz
+  status    String   @default("OPEN") @db.VarChar(20)
+
+  payrolls Payroll[]
+
+  @@map("payroll_periods")
+}
+
+model Payroll {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  periodId   String    @map("period_id") @db.Uuid
+  employeeId String    @map("employee_id") @db.Uuid
+  branchId   String    @map("branch_id") @db.Uuid
+  status     String    @default("DRAFT") @db.VarChar(20)
+  gross      Decimal   @default(0) @db.Decimal(18, 2)
+  deductions Decimal   @default(0) @db.Decimal(18, 2)
+  net        Decimal   @default(0) @db.Decimal(18, 2)
+  approvedAt DateTime? @map("approved_at") @db.Timestamptz
+  paidAt     DateTime? @map("paid_at") @db.Timestamptz
+  version    Int       @default(1)
+
+  period   PayrollPeriod   @relation(fields: [periodId], references: [id])
+  employee Employee        @relation(fields: [employeeId], references: [id])
+  branch   Branch          @relation(fields: [branchId], references: [id])
+  details  PayrollDetail[]
+  coachIncentives CoachIncentive[]
+
+  @@unique([periodId, employeeId, version])
+  @@map("payrolls")
+}
+
+model PayrollDetail {
+  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payrollId     String  @map("payroll_id") @db.Uuid
+  componentCode String  @map("component_code") @db.VarChar(50)
+  type          String  @db.VarChar(20) // EARNING, DEDUCTION
+  quantity      Decimal @db.Decimal(18, 4)
+  rate          Decimal @db.Decimal(18, 2)
+  amount        Decimal @db.Decimal(18, 2)
+  sourceJson    Json?   @map("source_json")
+
+  payroll Payroll @relation(fields: [payrollId], references: [id])
+
+  @@map("payroll_details")
+}
+
+model CoachIncentive {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payrollId      String  @map("payroll_id") @db.Uuid
+  coachId        String  @map("coach_id") @db.Uuid
+  targetMeetings Int     @map("target_meetings")
+  actualMeetings Int     @map("actual_meetings")
+  percentage     Decimal @db.Decimal(5, 2)
+  amount         Decimal @db.Decimal(18, 2)
+
+  payroll Payroll @relation(fields: [payrollId], references: [id])
+  coach   Coach   @relation(fields: [coachId], references: [id])
+
+  @@map("coach_incentives")
+}
+
+// ----------------------------------------------------------------------
+// 8. Inventaris
+// ----------------------------------------------------------------------
+
+model Product {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sku             String  @unique @db.VarChar(50)
+  name            String  @db.VarChar(100)
+  categoryId      String? @map("category_id") @db.Uuid
+  unitId          String? @map("unit_id") @db.Uuid
+  salePrice       Decimal @map("sale_price") @db.Decimal(18, 2)
+  minStockDefault Decimal @map("min_stock_default") @db.Decimal(18, 4)
+  isActive        Boolean @default(true) @map("is_active")
+
+  inventoryStocks       InventoryStock[]
+  inventoryTransactions InventoryTransaction[]
+  stockTransferItems    StockTransferItem[]
+  stockOpnameItems      StockOpnameItem[]
+
+  @@map("products")
+}
+
+model Warehouse {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  branchId String  @map("branch_id") @db.Uuid
+  code     String  @db.VarChar(50)
+  name     String  @db.VarChar(100)
+  isActive Boolean @default(true) @map("is_active")
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  inventoryStocks       InventoryStock[]
+  inventoryTransactions InventoryTransaction[]
+  stockTransfersFrom    StockTransfer[]  @relation("TransferFromWarehouse")
+  stockTransfersTo      StockTransfer[]  @relation("TransferToWarehouse")
+  stockOpnames          StockOpname[]
+
+  @@unique([branchId, code])
+  @@map("warehouses")
+}
+
+model InventoryStock {
+  warehouseId String  @map("warehouse_id") @db.Uuid
+  productId   String  @map("product_id") @db.Uuid
+  quantity    Decimal @db.Decimal(18, 4)
+  avgCost     Decimal @map("avg_cost") @db.Decimal(18, 2)
+  version     Int     @default(1)
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@id([warehouseId, productId])
+  @@map("inventory_stocks")
+}
+
+model InventoryTransaction {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  warehouseId  String   @map("warehouse_id") @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+  type         String   @db.VarChar(20) // IN, OUT
+  qty          Decimal  @db.Decimal(18, 4)
+  unitCost     Decimal  @map("unit_cost") @db.Decimal(18, 2)
+  sourceType   String?  @map("source_type") @db.VarChar(50)
+  sourceId     String?  @map("source_id") @db.VarChar(100)
+  postedAt     DateTime @default(now()) @map("posted_at") @db.Timestamptz
+  reversalOfId String?  @map("reversal_of_id") @db.Uuid
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@index([warehouseId, productId, postedAt])
+  @@map("inventory_transactions")
+}
+
+model StockTransfer {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transferNo        String    @unique @map("transfer_no") @db.VarChar(50)
+  fromWarehouseId   String    @map("from_warehouse_id") @db.Uuid
+  toWarehouseId     String    @map("to_warehouse_id") @db.Uuid
+  status            String    @default("DRAFT") @db.VarChar(20)
+  shippedAt         DateTime? @map("shipped_at") @db.Timestamptz
+  receivedAt        DateTime? @map("received_at") @db.Timestamptz
+
+  fromWarehouse Warehouse @relation("TransferFromWarehouse", fields: [fromWarehouseId], references: [id])
+  toWarehouse   Warehouse @relation("TransferToWarehouse", fields: [toWarehouseId], references: [id])
+  items         StockTransferItem[]
+
+  @@map("stock_transfers")
+}
+
+model StockTransferItem {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  transferId   String  @map("transfer_id") @db.Uuid
+  productId    String  @map("product_id") @db.Uuid
+  requestedQty Decimal @map("requested_qty") @db.Decimal(18, 4)
+  shippedQty   Decimal @default(0) @map("shipped_qty") @db.Decimal(18, 4)
+  receivedQty  Decimal @default(0) @map("received_qty") @db.Decimal(18, 4)
+  notes        String? @db.Text
+
+  transfer StockTransfer @relation(fields: [transferId], references: [id])
+  product  Product       @relation(fields: [productId], references: [id])
+
+  @@map("stock_transfer_items")
+}
+
+model StockOpname {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  warehouseId String    @map("warehouse_id") @db.Uuid
+  opnameNo    String    @unique @map("opname_no") @db.VarChar(50)
+  cutoffAt    DateTime  @map("cutoff_at") @db.Timestamptz
+  status      String    @default("DRAFT") @db.VarChar(20)
+  approvedAt  DateTime? @map("approved_at") @db.Timestamptz
+
+  warehouse Warehouse          @relation(fields: [warehouseId], references: [id])
+  items     StockOpnameItem[]
+
+  @@map("stock_opnames")
+}
+
+model StockOpnameItem {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  opnameId         String  @map("opname_id") @db.Uuid
+  productId        String  @map("product_id") @db.Uuid
+  systemQty        Decimal @map("system_qty") @db.Decimal(18, 4)
+  countedQty       Decimal @map("counted_qty") @db.Decimal(18, 4)
+  varianceQty      Decimal @map("variance_qty") @db.Decimal(18, 4)
+  adjustmentTxId   String? @map("adjustment_tx_id") @db.Uuid
+
+  opname  StockOpname @relation(fields: [opnameId], references: [id])
+  product Product     @relation(fields: [productId], references: [id])
+
+  @@map("stock_opname_items")
+}
+
+// ----------------------------------------------------------------------
+// 9. Sistem & Notifikasi
+// ----------------------------------------------------------------------
+
+model Notification {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientUserId String    @map("recipient_user_id") @db.Uuid
+  type            String    @db.VarChar(50)
+  title           String    @db.VarChar(255)
+  body            String    @db.Text
+  contextType     String?   @map("context_type") @db.VarChar(50)
+  contextId       String?   @map("context_id") @db.VarChar(100)
+  status          String    @default("UNREAD") @db.VarChar(20)
+  readAt          DateTime? @map("read_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  deliveries NotificationDelivery[]
+
+  @@index([recipientUserId, status])
+  @@map("notifications")
+}
+
+model NotificationDelivery {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notificationId String    @map("notification_id") @db.Uuid
+  channel        String    @db.VarChar(50) // EMAIL, PUSH, WHATSAPP
+  provider       String?   @db.VarChar(50)
+  status         String    @default("PENDING") @db.VarChar(20)
+  attempts       Int       @default(0)
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz
+  error          String?   @db.Text
+
+  notification Notification @relation(fields: [notificationId], references: [id])
+
+  @@map("notification_deliveries")
+}
+
+model File {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  storageKey     String   @unique @map("storage_key") @db.VarChar(255)
+  originalName   String   @map("original_name") @db.VarChar(255)
+  mimeType       String   @map("mime_type") @db.VarChar(100)
+  size           Int
+  checksum       String?  @db.VarChar(255)
+  classification String?  @db.VarChar(50)
+  uploadedBy     String?  @map("uploaded_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("files")
+}
+
+model SystemSetting {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key           String    @db.VarChar(100)
+  scopeType     String?   @map("scope_type") @db.VarChar(50)
+  scopeId       String?   @map("scope_id") @db.VarChar(100)
+  valueJson     Json?     @map("value_json")
+  dataType      String    @map("data_type") @db.VarChar(20)
+  effectiveFrom DateTime  @map("effective_from") @db.Timestamptz
+  isSecret      Boolean   @default(false) @map("is_secret")
+
+  @@unique([key, scopeType, scopeId])
+  @@map("system_settings")
+}
+
+model ReportJob {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requestedBy    String?   @map("requested_by") @db.Uuid
+  reportCode     String    @map("report_code") @db.VarChar(50)
+  parametersJson Json?     @map("parameters_json")
+  format         String    @db.VarChar(20)
+  status         String    @default("PENDING") @db.VarChar(20)
+  fileId         String?   @map("file_id") @db.Uuid
+  startedAt      DateTime? @map("started_at") @db.Timestamptz
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("report_jobs")
+}

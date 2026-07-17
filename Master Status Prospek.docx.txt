@@ -1,0 +1,217 @@
+Jika yang dimaksud adalah Master Status Prospek, maka ini bukan data calon siswa, melainkan master referensi tahapan perjalanan calon siswa (sales/marketing pipeline).
+Fungsinya untuk mengontrol posisi seorang calon siswa mulai dari masuk sebagai lead sampai menjadi siswa atau tidak lanjut.
+Jadi Master Status Prospek berisi daftar status yang dapat digunakan pada transaksi Prospek.
+Master Status Prospek
+1. Identitas Status
+Field
+Keterangan
+Kode Status
+Kode unik status
+Nama Status
+Nama tampilan status
+Urutan
+Posisi dalam alur pipeline
+Warna Label
+Untuk tampilan Kanban/dashboard
+Deskripsi
+Penjelasan penggunaan
+Status Aktif
+Aktif/nonaktif
+Contoh:
+Kode
+Nama Status
+Urutan
+NEW
+Prospek Baru
+1
+CONTACTED
+Sudah Dihubungi
+2
+INTERESTED
+Berminat
+3
+2. Tahapan Status Prospek yang Disarankan untuk DIPA
+Tahap Awal (Lead Masuk)
+1. NEW - Prospek Baru
+Arti:Data baru masuk dan belum dilakukan tindakan.
+Contoh sumber:
+Website.
+WhatsApp.
+Instagram.
+Referral.
+Walk-in.
+Aksi:
+✓ Assign ke admin✓ Jadwalkan follow-up
+2. CONTACTED - Sudah Dihubungi
+Arti:Admin sudah melakukan kontak pertama.
+Contoh:
+"Sudah menghubungi orang tua, menanyakan kebutuhan kursus."
+Aksi:
+✓ Catat hasil komunikasi✓ Menunggu respon
+Tahap Kebutuhan
+3. INTERESTED - Berminat
+Arti:Calon siswa menunjukkan ketertarikan.
+Contoh:
+Meminta informasi harga.
+Bertanya jadwal.
+Bertanya program.
+Aksi:
+✓ Kirim informasi program✓ Tawarkan assessment/trial
+4. CONSULTATION - Konsultasi
+Arti:Sudah berdiskusi lebih detail.
+Contoh:
+Konsultasi kebutuhan anak.
+Diskusi program.
+Diskusi jadwal.
+Aksi:
+✓ Tentukan rekomendasi kursus✓ Persiapkan assessment
+Tahap Akademik
+5. ASSESSMENT - Assessment
+Arti:Calon siswa sedang mengikuti atau sudah dijadwalkan assessment.
+Aksi:
+✓ Input hasil assessment✓ Tentukan level
+6. TRIAL - Trial Class
+Arti:Calon siswa mengikuti kelas percobaan.
+Aksi:
+✓ Evaluasi hasil trial✓ Follow-up keputusan
+Tahap Penawaran
+7. OFFERED - Penawaran Diberikan
+Arti:Program/paket/harga sudah diberikan.
+Contoh:
+Paket 8 pertemuan.
+Jadwal kelas.
+Biaya.
+Aksi:
+✓ Menunggu keputusan orang tua
+8. WAITING_DECISION - Menunggu Keputusan
+Arti:Orang tua belum menentukan lanjut/tidak.
+Contoh:
+Menunggu diskusi keluarga.
+Membandingkan tempat lain.
+Tahap Akhir
+9. CONVERTED - Berhasil Menjadi Siswa
+Arti:Prospek berhasil dikonversi menjadi siswa.
+Proses:
+Prospek
+ ↓
+Create Student
+ ↓
+Enrollment
+Status ini biasanya menjadi final.
+10. LOST - Tidak Berhasil
+Arti:Calon siswa tidak jadi bergabung.
+Alasan dapat dicatat:
+Harga tidak sesuai.
+Memilih tempat lain.
+Tidak ada respon.
+Jadwal tidak cocok.
+11. INVALID - Data Tidak Valid
+Arti:Data tidak dapat diproses.
+Contoh:
+Nomor tidak aktif.
+Data duplikat.
+Form palsu.
+Master Status Prospek (Tabel)
+Contoh:
+No
+Kode
+Status
+Final
+1
+NEW
+Prospek Baru
+Tidak
+2
+CONTACTED
+Sudah Dihubungi
+Tidak
+3
+INTERESTED
+Berminat
+Tidak
+4
+CONSULTATION
+Konsultasi
+Tidak
+5
+ASSESSMENT
+Assessment
+Tidak
+6
+TRIAL
+Trial Class
+Tidak
+7
+OFFERED
+Penawaran
+Tidak
+8
+WAITING_DECISION
+Menunggu Keputusan
+Tidak
+9
+CONVERTED
+Menjadi Siswa
+Ya
+10
+LOST
+Tidak Jadi
+Ya
+11
+INVALID
+Tidak Valid
+Ya
+Field Tambahan yang Sangat Berguna
+Status Properties
+Field
+Fungsi
+Is Initial Status
+Status awal
+Is Success Status
+Berhasil menjadi siswa
+Is Failed Status
+Tidak berhasil
+Requires Follow Up
+Wajib follow-up
+Probability
+Persentase peluang konversi
+Allow Conversion
+Bisa dibuat siswa
+Contoh:
+Status
+Probability
+NEW
+10%
+CONTACTED
+20%
+INTERESTED
+50%
+ASSESSMENT
+70%
+OFFERED
+80%
+CONVERTED
+100%
+Struktur Database
+prospect_statuses
+id
+code
+name
+sequence
+description
+is_initial
+is_success
+is_failed
+allow_conversion
+requires_followup
+probability
+color
+status
+created_at
+updated_at
+Untuk DIPA Learning Center, saya tidak menyarankan terlalu banyak status. Versi operasional yang paling ideal adalah:
+NEW → CONTACTED → INTERESTED → ASSESSMENT → OFFERED → CONVERTED
+dengan cabang akhir:
+LOST
+INVALID
+Karena terlalu banyak status akan membuat admin sulit menjalankan operasional harian.

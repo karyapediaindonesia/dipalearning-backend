@@ -1,0 +1,734 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+<style>
+    /* Highlight tab yang ada error */
+    .nav-link.tab-error {
+        color: #dc3545 !important;
+        border-bottom: 2px solid #dc3545;
+    }
+    /* Box pesan error */
+    #errorBox {
+        display: none;
+        margin-bottom: 15px;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Master Data</a></li>
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Cabang</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Data Master Cabang</h4>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#branchModal" onclick="resetForm()">
+                            <i class="fa fa-plus me-2"></i>Tambah Cabang
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="branchTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th>Kode</th>
+                                        <th>Nama Cabang</th>
+                                        <th>Jenis</th>
+                                        <th>Kota</th>
+                                        <th>No. WhatsApp</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for branch in branches %}
+                                    <tr>
+                                        <td><strong>{{ branch.code }}</strong></td>
+                                        <td>{{ branch.name }}</td>
+                                        <td>
+                                            {% if branch.branch_type == 'HEAD_OFFICE' %}Kantor Pusat
+                                            {% elif branch.branch_type == 'BRANCH' %}Cabang
+                                            {% else %}Cabang Pembantu{% endif %}
+                                        </td>
+                                        <td>{{ branch.city|default:"-" }}</td>
+                                        <td>
+                                            {% if branch.whatsapp_number %}
+                                            <a href="https://wa.me/{{ branch.whatsapp_number }}" target="_blank" class="text-success text-decoration-none" title="Hubungi via WhatsApp">
+                                                <i class="fab fa-whatsapp fs-5 me-1"></i> {{ branch.whatsapp_number }}
+                                            </a>
+                                            {% else %}-{% endif %}
+                                        </td>
+                                        <td>
+                                            {% if branch.status == 'ACTIVE' %}
+                                            <span class="badge light badge-success">Aktif</span>
+                                            {% elif branch.status == 'INACTIVE' %}
+                                            <span class="badge light badge-warning">Nonaktif</span>
+                                            {% else %}
+                                            <span class="badge light badge-danger">Tutup</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-info shadow btn-xs sharp me-1" 
+                                                        data-branch='{"id":"{{ branch.id }}", "code":"{{ branch.code|escapejs }}", "name":"{{ branch.name|escapejs }}", "branch_type":"{{ branch.branch_type }}", "address":"{{ branch.address|escapejs }}", "province":"{{ branch.province|escapejs }}", "city":"{{ branch.city|escapejs }}", "district":"{{ branch.district|default:""|escapejs }}", "postal_code":"{{ branch.postal_code|default:""|escapejs }}", "map_location":"{{ branch.map_location|default:""|escapejs }}", "whatsapp_number":"{{ branch.whatsapp_number|default:""|escapejs }}", "email":"{{ branch.email|default:""|escapejs }}", "person_in_charge_name":"{{ branch.person_in_charge.first_name|default:""|escapejs }} {{ branch.person_in_charge.last_name|default:""|escapejs }}", "pic_position":"{{ branch.pic_position|default:""|escapejs }}", "pic_contact":"{{ branch.pic_contact|default:""|escapejs }}", "operational_date":"{{ branch.operational_date|date:"d/m/Y"|default:"" }}", "notes":"{{ branch.notes|default:""|escapejs }}", "status":"{{ branch.status }}"}'
+                                                        onclick="viewBranch(this)" title="Lihat Detail">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-branch='{"id":"{{ branch.id }}", "code":"{{ branch.code|escapejs }}", "name":"{{ branch.name|escapejs }}", "branch_type":"{{ branch.branch_type }}", "address":"{{ branch.address|escapejs }}", "province":"{{ branch.province|escapejs }}", "city":"{{ branch.city|escapejs }}", "district":"{{ branch.district|default:""|escapejs }}", "postal_code":"{{ branch.postal_code|default:""|escapejs }}", "map_location":"{{ branch.map_location|default:""|escapejs }}", "whatsapp_number":"{{ branch.whatsapp_number|default:""|escapejs }}", "email":"{{ branch.email|default:""|escapejs }}", "person_in_charge":"{{ branch.person_in_charge.id|default:"" }}", "operational_date":"{{ branch.operational_date|date:"Y-m-d"|default:"" }}", "notes":"{{ branch.notes|default:""|escapejs }}", "status":"{{ branch.status }}"}'
+                                                        onclick="editBranch(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteBranch({{ branch.id }}, '{{ branch.name }}')" title="Hapus">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Create / Edit -->
+<div class="modal fade" id="branchModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tambah Master Cabang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Kotak pesan error -->
+                <div id="errorBox" class="alert alert-danger alert-dismissible">
+                    <button type="button" class="btn-close" onclick="$('#errorBox').hide()"></button>
+                    <strong><i class="fa fa-exclamation-circle me-1"></i> Terjadi Kesalahan:</strong>
+                    <ul id="errorList" class="mb-0 mt-2"></ul>
+                </div>
+
+                <form id="branchForm">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tab-identitas" data-bs-toggle="tab" href="#identitas">
+                                <i class="la la-home me-2"></i> 1. Identitas Cabang
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-alamat" data-bs-toggle="tab" href="#alamat">
+                                <i class="la la-map-marker me-2"></i> 2. Alamat Cabang
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-kontak" data-bs-toggle="tab" href="#kontak">
+                                <i class="la la-phone me-2"></i> 3. Kontak &amp; PIC
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-administrasi" data-bs-toggle="tab" href="#administrasi">
+                                <i class="la la-cog me-2"></i> 4. Status &amp; Admin
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content pt-4">
+                        <input type="hidden" id="branch_id">
+                        
+                        <!-- Tab 1: Identitas -->
+                        <div class="tab-pane fade show active" id="identitas" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kode Cabang <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="code" placeholder="Contoh: DIPA-JKT-001">
+                                    <small class="text-muted">Kode unik untuk identifikasi cabang.</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Cabang <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="name" placeholder="Contoh: Cabang Jakarta Selatan">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Jenis Cabang <span class="text-danger">*</span></label>
+                                    <select class="default-select form-control wide" id="branch_type">
+                                        <option value="HEAD_OFFICE">Kantor Pusat</option>
+                                        <option value="BRANCH" selected>Cabang</option>
+                                        <option value="SUB_BRANCH">Cabang Pembantu</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Alamat -->
+                        <div class="tab-pane fade" id="alamat" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="address" rows="3" 
+                                        placeholder="Contoh: Jl. Sudirman No. 12, RT 01/RW 02, Senayan"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Provinsi <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="province" style="width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kota / Kabupaten <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="city" style="width: 100%;" disabled>
+                                        <option value="">Pilih Kota/Kabupaten</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kecamatan</label>
+                                    <input type="text" class="form-control" id="district" placeholder="Contoh: Kebayoran Baru">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kode Pos</label>
+                                    <input type="text" class="form-control" id="postal_code" placeholder="Contoh: 12190">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Lokasi Peta</label>
+                                    <input type="text" class="form-control" id="map_location" placeholder="Contoh: https://maps.app.goo.gl/xxx atau -6.200, 106.816">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Kontak -->
+                        <div class="tab-pane fade" id="kontak" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nomor WhatsApp</label>
+                                    <input type="text" class="form-control" id="whatsapp_number" placeholder="Contoh: 081234567890">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email Cabang</label>
+                                    <input type="email" class="form-control" id="email" placeholder="Contoh: cabang.jkt@dipalearning.com">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Penanggung Jawab <span class="text-danger">*</span></label>
+                                    <select class="default-select form-control wide" id="person_in_charge" onchange="updatePicInfo(this)">
+                                        <option value="">Pilih Penanggung Jawab</option>
+                                        {% for emp in employees %}
+                                        <option value="{{ emp.id }}" data-email="{{ emp.email|default:'-' }}" data-role="{% for role in emp.roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}">
+                                            {{ emp.first_name }} {{ emp.last_name }} ({{ emp.username }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Jabatan Penanggung Jawab</label>
+                                    <input type="text" class="form-control bg-light" id="pic_position" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kontak Penanggung Jawab</label>
+                                    <input type="text" class="form-control bg-light" id="pic_contact" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 4: Administrasi -->
+                        <div class="tab-pane fade" id="administrasi" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Status Cabang <span class="text-danger">*</span></label>
+                                    <select class="default-select form-control wide" id="status">
+                                        <option value="ACTIVE" selected>Aktif</option>
+                                        <option value="INACTIVE">Nonaktif</option>
+                                        <option value="CLOSED">Tutup</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tanggal Operasional</label>
+                                    <input type="date" class="form-control" id="operational_date">
+                                    <small class="text-muted">Contoh: 31/12/2024 (opsional)</small>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Catatan</label>
+                                    <textarea class="form-control" id="notes" rows="2" 
+                                        placeholder="Contoh: Cabang ini melayani area Jakarta Selatan dan sekitarnya."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi di semua tab</small>
+                <div>
+                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveBranch()">
+                        <i class="fa fa-save me-1"></i> Simpan Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal View Detail -->
+<div class="modal fade" id="viewBranchModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Cabang: <span id="view_code_title" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Identitas -->
+                    <div class="col-xl-6">
+                        <div class="card mb-3 shadow-sm border-0 h-100">
+                            <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="la la-home text-primary me-2"></i>Identitas Cabang</h5></div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm mb-0">
+                                    <tr><th width="35%" class="text-muted">Kode Cabang</th><td>: <span id="view_code" class="fw-bold"></span></td></tr>
+                                    <tr><th class="text-muted">Nama Cabang</th><td>: <span id="view_name" class="fw-bold"></span></td></tr>
+                                    <tr><th class="text-muted">Jenis Cabang</th><td>: <span id="view_branch_type"></span></td></tr>
+                                    <tr><th class="text-muted">Status</th><td>: <span id="view_status"></span></td></tr>
+                                    <tr><th class="text-muted">Tanggal Operasional</th><td>: <span id="view_operational_date"></span></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Kontak & PIC -->
+                    <div class="col-xl-6">
+                        <div class="card mb-3 shadow-sm border-0 h-100">
+                            <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="la la-user-circle text-primary me-2"></i>Kontak & Penanggung Jawab</h5></div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm mb-0">
+                                    <tr><th width="35%" class="text-muted">Penanggung Jawab</th><td>: <span id="view_person_in_charge_name" class="fw-bold"></span></td></tr>
+                                    <tr><th class="text-muted">Jabatan</th><td>: <span id="view_pic_position"></span></td></tr>
+                                    <tr><th class="text-muted">Kontak (Email)</th><td>: <span id="view_pic_contact"></span></td></tr>
+                                    <tr><th class="text-muted">WhatsApp</th><td>: <span id="view_whatsapp_number"></span> <a href="#" id="view_wa_link" target="_blank" class="text-success ms-2 d-none text-decoration-none"><i class="fab fa-whatsapp"></i> Chat</a></td></tr>
+                                    <tr><th class="text-muted">Email Cabang</th><td>: <span id="view_email"></span></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Alamat -->
+                    <div class="col-xl-12 mt-3">
+                        <div class="card mb-3 shadow-sm border-0">
+                            <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="la la-map-marker text-primary me-2"></i>Alamat & Lokasi</h5></div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 border-end">
+                                        <p class="mb-1 text-muted"><strong>Alamat Lengkap:</strong></p>
+                                        <p id="view_address" class="mb-3"></p>
+                                        <p class="mb-1 text-muted"><strong>Catatan:</strong></p>
+                                        <p id="view_notes" class="mb-0"></p>
+                                    </div>
+                                    <div class="col-md-6 ps-4">
+                                        <table class="table table-borderless table-sm mb-0">
+                                            <tr><th width="30%" class="text-muted">Provinsi</th><td>: <span id="view_province"></span></td></tr>
+                                            <tr><th class="text-muted">Kota/Kab.</th><td>: <span id="view_city"></span></td></tr>
+                                            <tr><th class="text-muted">Kecamatan</th><td>: <span id="view_district"></span></td></tr>
+                                            <tr><th class="text-muted">Kode Pos</th><td>: <span id="view_postal_code"></span></td></tr>
+                                            <tr><th class="text-muted">Lokasi Peta</th><td>: <span id="view_map_location"></span> <a href="#" id="view_map_link" target="_blank" class="text-primary ms-2 d-none text-decoration-none"><i class="fa fa-external-link-alt"></i> Buka Peta</a></td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary light" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<!-- Datatable -->
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#province').select2({
+            dropdownParent: $('#branchModal'),
+            placeholder: "Pilih Provinsi"
+        });
+        $('#city').select2({
+            dropdownParent: $('#branchModal'),
+            placeholder: "Pilih Kota/Kabupaten"
+        });
+
+        fetch('/api/v1/core/provinces/')
+            .then(res => res.json())
+            .then(data => {
+                const provList = data.data || data;
+                provList.forEach(p => {
+                    $('#province').append(new Option(p.name, p.name, false, false));
+                });
+            });
+
+        $('#province').on('change', function() {
+            const provName = $(this).val();
+            $('#city').empty().append(new Option("Pilih Kota/Kabupaten", "", false, false)).prop('disabled', true);
+            if(provName) {
+                fetch('/api/v1/core/provinces/')
+                    .then(res => res.json())
+                    .then(data => {
+                        const provList = data.data || data;
+                        const prov = provList.find(p => p.name === provName);
+                        if(prov) {
+                            fetch(`/api/v1/core/cities/?province_id=${prov.id}`)
+                                .then(res => res.json())
+                                .then(cities => {
+                                    const cityList = cities.data || cities;
+                                    cityList.forEach(c => {
+                                        $('#city').append(new Option(c.name, c.name, false, false));
+                                    });
+                                    $('#city').prop('disabled', false);
+                                });
+                        }
+                    });
+            }
+        });
+        $('#branchTable').DataTable({
+            language: {
+                search:       "Cari:",
+                lengthMenu:   "Tampilkan _MENU_ data",
+                info:         "Menampilkan _START_–_END_ dari _TOTAL_ data",
+                zeroRecords:  "Tidak ada data cabang.",
+                emptyTable:   "Tidak ada data cabang. Klik tombol Tambah Cabang.",
+                paginate: {
+                    previous: '<i class="fa fa-angle-double-left"></i>',
+                    next:     '<i class="fa fa-angle-double-right"></i>'
+                }
+            }
+        });
+    });
+
+    // Daftar field wajib beserta label dan tab-nya
+    const requiredFields = [
+        { id: 'code',         label: 'Kode Cabang',       tab: 'tab-identitas', tabName: '1. Identitas' },
+        { id: 'name',         label: 'Nama Cabang',        tab: 'tab-identitas', tabName: '1. Identitas' },
+        { id: 'address',      label: 'Alamat Lengkap',     tab: 'tab-alamat',    tabName: '2. Alamat' },
+        { id: 'province',     label: 'Provinsi',           tab: 'tab-alamat',    tabName: '2. Alamat' },
+        { id: 'city',         label: 'Kota / Kabupaten',   tab: 'tab-alamat',    tabName: '2. Alamat' },
+        { id: 'person_in_charge', label: 'Penanggung Jawab', tab: 'tab-kontak',  tabName: '3. Kontak & PIC' },
+    ];
+
+    function showErrors(messages) {
+        const list = $('#errorList');
+        list.empty();
+        messages.forEach(msg => list.append(`<li>${msg}</li>`));
+        $('#errorBox').show();
+        // Scroll ke atas modal agar error box terlihat
+        $('#branchModal .modal-body').scrollTop(0);
+    }
+
+    function clearErrors() {
+        $('#errorBox').hide();
+        $('#errorList').empty();
+        // Reset highlight tab
+        ['tab-identitas','tab-alamat','tab-kontak','tab-administrasi'].forEach(t => {
+            $(`#${t}`).removeClass('tab-error');
+        });
+        // Reset highlight field
+        requiredFields.forEach(f => $(`#${f.id}`).removeClass('is-invalid'));
+    }
+
+    function validateForm() {
+        const errors = [];
+        const errorTabs = new Set();
+
+        requiredFields.forEach(field => {
+            const val = $(`#${field.id}`).val().trim();
+            if (!val) {
+                errors.push(`<strong>${field.label}</strong> (Tab: ${field.tabName}) wajib diisi.`);
+                $(`#${field.id}`).addClass('is-invalid');
+                errorTabs.add(field.tab);
+            } else {
+                $(`#${field.id}`).removeClass('is-invalid');
+            }
+        });
+
+        // Tandai tab yang ada error dengan warna merah
+        errorTabs.forEach(tabId => $(`#${tabId}`).addClass('tab-error'));
+
+        return errors;
+    }
+
+    function resetForm() {
+        clearErrors();
+        $('#branch_id').val('');
+        $('#code').val('');
+        $('#name').val('');
+
+        $('#branch_type').val('BRANCH').trigger('change');
+        $('#address').val('');
+        $('#province').val('').trigger('change');
+        $('#city').val('').trigger('change');
+        $('#district').val('');
+        $('#postal_code').val('');
+        $('#map_location').val('');
+
+        $('#whatsapp_number').val('');
+        $('#email').val('');
+        $('#person_in_charge').val('').trigger('change');
+        $('#pic_position').val('');
+        $('#pic_contact').val('');
+        $('#operational_date').val('');
+        $('#notes').val('');
+        $('#status').val('ACTIVE').trigger('change');
+        $('#modalTitle').text('Tambah Master Cabang');
+        // Kembali ke tab pertama
+        $('#tab-identitas').tab('show');
+        $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+    }
+
+    function updatePicInfo(selectElem) {
+        const selectedOpt = $(selectElem).find(':selected');
+        if (selectedOpt.val()) {
+            $('#pic_position').val(selectedOpt.data('role') || '-');
+            $('#pic_contact').val(selectedOpt.data('email') || '-');
+        } else {
+            $('#pic_position').val('');
+            $('#pic_contact').val('');
+        }
+    }
+
+    function editBranch(btn) {
+        const data = $(btn).data('branch');
+        resetForm();
+        $('#branch_id').val(data.id);
+        $('#code').val(data.code);
+        $('#name').val(data.name);
+        $('#branch_type').val(data.branch_type).trigger('change');
+        $('#address').val(data.address);
+        
+        if(data.province) {
+            $('#province').val(data.province).trigger('change');
+            setTimeout(() => {
+                $('#city').val(data.city).trigger('change');
+            }, 500);
+        }
+        
+        $('#district').val(data.district);
+        $('#postal_code').val(data.postal_code);
+        $('#map_location').val(data.map_location);
+
+        $('#whatsapp_number').val(data.whatsapp_number);
+        $('#email').val(data.email);
+        $('#person_in_charge').val(data.person_in_charge).trigger('change');
+        $('#operational_date').val(data.operational_date);
+        $('#notes').val(data.notes);
+        $('#status').val(data.status).trigger('change');
+        $('#modalTitle').text('Edit Master Cabang');
+        $('#branchModal').modal('show');
+    }
+
+    function viewBranch(btn) {
+        const data = $(btn).data('branch');
+        
+        $('#view_code_title').text(data.code);
+        $('#view_code').text(data.code);
+        $('#view_name').text(data.name);
+        
+        let typeText = "Cabang";
+        if(data.branch_type === 'HEAD_OFFICE') typeText = "Kantor Pusat";
+        else if(data.branch_type === 'SUB_BRANCH') typeText = "Cabang Pembantu";
+        $('#view_branch_type').text(typeText);
+        
+        let statusBadge = '<span class="badge light badge-success">Aktif</span>';
+        if(data.status === 'INACTIVE') statusBadge = '<span class="badge light badge-warning">Nonaktif</span>';
+        else if(data.status === 'CLOSED') statusBadge = '<span class="badge light badge-danger">Tutup</span>';
+        $('#view_status').html(statusBadge);
+        
+        $('#view_operational_date').text(data.operational_date || '-');
+        
+        $('#view_person_in_charge_name').text(data.person_in_charge_name?.trim() || '-');
+        $('#view_pic_position').text(data.pic_position || '-');
+        $('#view_pic_contact').text(data.pic_contact || '-');
+        
+        $('#view_whatsapp_number').text(data.whatsapp_number || '-');
+        if(data.whatsapp_number) {
+            $('#view_wa_link').attr('href', 'https://wa.me/' + data.whatsapp_number.replace(/^0/, '62')).removeClass('d-none');
+        } else {
+            $('#view_wa_link').addClass('d-none');
+        }
+        
+        $('#view_email').text(data.email || '-');
+        
+        $('#view_address').text(data.address || '-');
+        $('#view_notes').text(data.notes || '-');
+        
+        $('#view_province').text(data.province || '-');
+        $('#view_city').text(data.city || '-');
+        $('#view_district').text(data.district || '-');
+        $('#view_postal_code').text(data.postal_code || '-');
+        
+        $('#view_map_location').text(data.map_location || '-');
+        if(data.map_location && data.map_location.startsWith('http')) {
+            $('#view_map_link').attr('href', data.map_location).removeClass('d-none');
+        } else if (data.map_location) {
+            $('#view_map_link').attr('href', 'https://maps.google.com/?q=' + encodeURIComponent(data.map_location)).removeClass('d-none');
+        } else {
+            $('#view_map_link').addClass('d-none');
+        }
+        
+        $('#viewBranchModal').modal('show');
+    }
+
+    function saveBranch() {
+        clearErrors();
+
+        // Validasi sisi klien terlebih dahulu
+        const clientErrors = validateForm();
+        if (clientErrors.length > 0) {
+            showErrors(clientErrors);
+            return;
+        }
+
+        const id = $('#branch_id').val();
+        const data = {
+            code:             $('#code').val().trim(),
+            name:             $('#name').val().trim(),
+
+            branch_type:      $('#branch_type').val(),
+            address:          $('#address').val().trim(),
+            province:         $('#province').val().trim(),
+            city:             $('#city').val().trim(),
+            district:         $('#district').val().trim(),
+            postal_code:      $('#postal_code').val().trim(),
+            map_location:     $('#map_location').val().trim(),
+
+            whatsapp_number:  $('#whatsapp_number').val().trim(),
+            email:            $('#email').val().trim(),
+            person_in_charge: $('#person_in_charge').val() || null,
+            operational_date: $('#operational_date').val() || null,
+            notes:            $('#notes').val().trim(),
+            status:           $('#status').val(),
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url    = id ? `/api/v1/branches/${id}/` : '/api/v1/branches/';
+
+        // Tampilkan loading pada tombol
+        $('#btnSimpan').prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...'
+        );
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            const json = await response.json().catch(() => null);
+
+            if (response.ok) {
+                // Sukses → reload halaman
+                location.reload();
+            } else {
+                // Gagal → tampilkan error dari server secara detail
+                const serverErrors = [];
+
+                if (json && json.error) {
+                    // Backend mengembalikan struktur custom: { error: { details: {...}, message: "..." } }
+                    if (json.error.details && typeof json.error.details === 'object' && !Array.isArray(json.error.details)) {
+                        for (const [field, msgs] of Object.entries(json.error.details)) {
+                            const label = fieldLabelMap[field] || field;
+                            const msgList = Array.isArray(msgs) ? msgs.join(', ') : msgs;
+                            serverErrors.push(`<strong>${label}:</strong> ${msgList}`);
+                        }
+                    } else if (json.error.message) {
+                        serverErrors.push(`<strong>Pesan:</strong> ${json.error.message}`);
+                    } else {
+                        serverErrors.push(`<strong>Error:</strong> ${JSON.stringify(json.error)}`);
+                    }
+                } else if (json && typeof json === 'object') {
+                    // Fallback jika format standar DRF
+                    for (const [field, msgs] of Object.entries(json)) {
+                        const label = fieldLabelMap[field] || field;
+                        const msgList = Array.isArray(msgs) ? msgs.join(', ') : msgs;
+                        serverErrors.push(`<strong>${label}:</strong> ${msgList}`);
+                    }
+                } else {
+                    serverErrors.push(`Server mengembalikan HTTP ${response.status}. Silakan coba lagi.`);
+                }
+
+                showErrors(serverErrors);
+                $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+            }
+        })
+        .catch(err => {
+            showErrors([`Gagal terhubung ke server: <strong>${err.message}</strong>. Periksa koneksi Anda.`]);
+            $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+        });
+    }
+
+    // Peta nama field teknis → label yang ramah pengguna
+    const fieldLabelMap = {
+        code:             'Kode Cabang',
+        name:             'Nama Cabang',
+
+        branch_type:      'Jenis Cabang',
+        address:          'Alamat Lengkap',
+        province:         'Provinsi',
+        city:             'Kota / Kabupaten',
+        district:         'Kecamatan',
+        postal_code:      'Kode Pos',
+        map_location:     'Lokasi Peta',
+
+        whatsapp_number:  'Nomor WhatsApp',
+        email:            'Email Cabang',
+        person_in_charge: 'Penanggung Jawab',
+        status:           'Status Cabang',
+        notes:            'Catatan',
+        operational_date: 'Tanggal Operasional',
+        non_field_errors: 'Kesalahan umum',
+        detail:           'Informasi',
+    };
+
+    function deleteBranch(id, name) {
+        if(confirm(`Apakah Anda yakin ingin menghapus cabang "${name}"?`)) {
+            fetch(`/api/v1/branches/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert(`Gagal menghapus cabang "${name}". Status: ${response.status}`);
+                }
+            })
+            .catch(err => {
+                alert(`Gagal terhubung ke server: ${err.message}`);
+            });
+        }
+    }
+</script>
+{% endblock %}

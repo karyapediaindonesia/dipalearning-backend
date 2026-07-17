@@ -1,0 +1,394 @@
+Untuk Form Registrasi Calon Siswa (Prospect Registration), konsepnya berbeda dengan Master Siswa. Registrasi calon siswa hanya menangkap data awal calon peserta sebelum menjadi siswa aktif.
+Tujuannya:
+Mengetahui siapa calon siswa.
+Mengetahui siapa orang tua/pengambil keputusan.
+Mengetahui program yang diminati.
+Mengetahui asal lead/pemasaran.
+Mengetahui status proses follow-up sampai menjadi siswa.
+Struktur form yang rasional:
+FORM REGISTRASI CALON SISWA
+1. Data Calon Siswa
+Bagian ini berisi identitas anak/peserta yang berminat mengikuti program.
+A. Identitas Dasar
+Field
+Input
+Keterangan
+Nomor Prospect
+Auto Generate
+Nomor registrasi calon siswa
+Nama Lengkap Calon Siswa
+Text
+Wajib
+Nama Panggilan
+Text
+Opsional
+Jenis Kelamin
+Dropdown
+Wajib
+Tempat Lahir
+Text
+Opsional
+Tanggal Lahir
+Date
+Disarankan
+Usia
+Auto Calculate
+Dari tanggal lahir
+NIK/NISN
+Text
+Opsional
+Foto Calon Siswa
+Upload
+Opsional
+Contoh:
+Nomor Prospect : PRS-2026-00001
+Nama Lengkap   : Budi Santoso
+Nama Panggilan : Budi
+Jenis Kelamin  : Laki-laki
+Tanggal Lahir  : 12 Januari 2018
+Usia           : 8 Tahun
+B. Informasi Pendidikan
+Field
+Input
+Keterangan
+Status Pendidikan
+Dropdown
+Wajib
+Nama Sekolah
+Text
+Disarankan
+Jenjang Sekolah
+Dropdown
+Wajib
+Kelas Saat Ini
+Dropdown/Text
+Wajib
+Tahun Masuk Sekolah
+Number
+Opsional
+Pilihan jenjang:
+PAUD/TK
+SD
+SMP
+SMA
+Mahasiswa
+Umum
+Contoh:
+Jenjang : SD
+Sekolah : SD Kristen Petra
+Kelas   : 2 SD
+C. Informasi Kebutuhan Belajar
+Field
+Input
+Keterangan
+Tujuan Mengikuti Kursus
+Multi-select
+Wajib
+Kemampuan Saat Ini
+Text area
+Opsional
+Catatan Akademik
+Text area
+Opsional
+Tujuan:
+Meningkatkan nilai sekolah.
+Persiapan ujian.
+Mengejar ketertinggalan.
+Mengembangkan bakat.
+Persiapan kompetisi.
+Kebutuhan khusus.
+2. Data Orang Tua / Wali
+Bagian ini penting karena orang tua merupakan pengambil keputusan dan pihak pembayaran.
+A. Identitas Orang Tua Utama
+Field
+Input
+Keterangan
+Hubungan dengan Siswa
+Dropdown
+Wajib
+Nama Orang Tua/Wali
+Text
+Wajib
+Jenis Kelamin
+Dropdown
+Opsional
+Pekerjaan
+Text
+Opsional
+Nama Perusahaan
+Text
+Opsional
+Hubungan:
+Ayah.
+Ibu.
+Wali.
+Saudara.
+Lainnya.
+B. Kontak Orang Tua
+Field
+Input
+Keterangan
+Nomor WhatsApp
+Text
+Wajib
+Nomor Telepon
+Text
+Opsional
+Email
+Email
+Opsional
+Preferensi Komunikasi
+Dropdown
+Opsional
+Preferensi:
+WhatsApp.
+Email.
+Telepon.
+SMS.
+C. Alamat Orang Tua
+Field
+Input
+Keterangan
+Alamat Lengkap
+Text Area
+Opsional
+Kota
+Dropdown
+Opsional
+Kecamatan
+Dropdown
+Opsional
+Kode Pos
+Text
+Opsional
+D. Informasi Pembayaran
+Field
+Input
+Keterangan
+Nama Penanggung Jawab Pembayaran
+Text
+Disarankan
+Hubungan dengan Siswa
+Dropdown
+Disarankan
+Catatan Pembayaran
+Text Area
+Opsional
+Karena calon siswa belum tentu membayar sendiri.
+3. Cabang Tujuan
+Bagian ini menentukan lokasi layanan yang diminati.
+Field
+Input
+Keterangan
+Cabang Tujuan
+Dropdown
+Wajib
+Jarak dari Rumah
+Number/Text
+Opsional
+Alasan Memilih Cabang
+Text
+Opsional
+Cabang Alternatif
+Dropdown
+Opsional
+Contoh:
+Cabang Tujuan:
+[ DIPA Learning Center Surabaya Barat ]
+Cabang Alternatif:
+[ DIPA Surabaya Timur ]
+Aturan:
+Cabang harus berasal dari Master Cabang.
+Prospect dapat memilih cabang sebelum menjadi siswa.
+Saat enrollment, cabang dapat dikonfirmasi ulang.
+4. Sumber Informasi (Lead Source)
+Bagian ini digunakan untuk mengetahui efektivitas pemasaran.
+Field
+Input
+Keterangan
+Sumber Informasi
+Dropdown
+Wajib
+Detail Sumber
+Text
+Opsional
+Campaign
+Dropdown
+Opsional
+Referensi Oleh
+Text
+Opsional
+Contoh sumber:
+Website.
+Instagram.
+Facebook.
+TikTok.
+Google Search.
+WhatsApp.
+Referral orang tua.
+Sekolah.
+Event.
+Brosur.
+Telemarketing.
+Walk-in.
+Contoh:
+Sumber:
+Instagram
+Campaign:
+Promo Liburan Juni 2026
+5. Minat Program
+Bagian ini menangkap kebutuhan akademik calon siswa.
+Karena satu calon siswa dapat berminat lebih dari satu program, gunakan tabel detail.
+A. Program yang Diminati
+Field
+Input
+Keterangan
+Kursus
+Dropdown
+Wajib
+Level Perkiraan
+Dropdown
+Opsional
+Paket Minat
+Dropdown
+Opsional
+Target Mulai
+Date
+Opsional
+Catatan Minat
+Text Area
+Opsional
+Contoh:
+Program:
+Bahasa Inggris
+Level:
+Beginner
+Paket:
+8 Pertemuan
+Target Mulai:
+Agustus 2026
+Struktur:
+Prospect
+    |
+    └── Prospect Interest
+            |
+            ├── Kursus
+            ├── Level
+            └── Paket
+Karena calon siswa bisa memilih:
+Bahasa Inggris.
+Matematika.
+Coding.
+secara bersamaan.
+6. Status Prospect
+Bagian ini mengontrol perjalanan calon siswa sampai menjadi siswa.
+Status utama
+Status
+Keterangan
+NEW
+Baru masuk
+CONTACTED
+Sudah dihubungi
+INTERESTED
+Berminat
+CONSULTATION
+Sudah konsultasi
+TRIAL
+Mengikuti trial
+OFFER_SENT
+Penawaran diberikan
+WAITING_PAYMENT
+Menunggu pembayaran
+ENROLLED
+Sudah menjadi siswa
+NOT_INTERESTED
+Tidak berminat
+LOST
+Tidak berhasil dikonversi
+DUPLICATE
+Data ganda
+Informasi Follow-up
+Field
+Input
+Keterangan
+Status Prospect
+Dropdown
+Wajib
+PIC Follow-up
+Dropdown User
+Opsional
+Tanggal Follow-up Terakhir
+Date
+Otomatis
+Follow-up Berikutnya
+Date
+Opsional
+Catatan Follow-up
+Text Area
+Opsional
+Alasan Tidak Lanjut
+Dropdown
+Kondisional
+Contoh:
+Status:
+INTERESTED
+PIC:
+Admin Surabaya
+Follow-up berikut:
+20 Juli 2026
+Catatan:
+Orang tua menunggu jadwal sekolah anak.
+Struktur Database yang Disarankan
+prospects
+│
+├── prospect_students
+│
+├── prospect_parents
+│
+├── prospect_addresses
+│
+├── prospect_sources
+│
+├── prospect_interests
+│       │
+│       ├── course_id
+│       ├── level_id
+│       └── package_id
+│
+├── prospect_followups
+│
+└── prospect_status_history
+Tampilan Form Akhir
+Secara UI, saya sarankan dibagi menjadi 6 tab:
+REGISTRASI CALON SISWA
+[1] Data Calon Siswa
+    ├─ Identitas
+    ├─ Pendidikan
+    └─ Kebutuhan belajar
+[2] Data Orang Tua/Wali
+    ├─ Identitas orang tua
+    ├─ Kontak
+    └─ Pembayaran
+[3] Cabang Tujuan
+    ├─ Cabang utama
+    └─ Cabang alternatif
+[4] Sumber Informasi
+    ├─ Channel marketing
+    ├─ Campaign
+    └─ Referral
+[5] Minat Program
+    ├─ Kursus
+    ├─ Level
+    └─ Paket
+[6] Status Prospect
+    ├─ Pipeline
+    ├─ Follow-up
+    └─ Riwayat perubahan
+Dengan struktur ini, Registrasi Calon Siswa sudah siap menjadi modul CRM sederhana, dan ketika prospect berubah menjadi siswa aktif, data dapat dikonversi ke modul:
+Master Siswa,
+Orang Tua,
+Enrollment,
+Invoice,
+Pembayaran,
+Jadwal kelas,
+tanpa input ulang.

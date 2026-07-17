@@ -1,0 +1,377 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block title %}Master Ruangan | DIPA Learning{% endblock %}
+
+
+
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+<div class="row page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Data Master</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">Master Ruangan</a></li>
+    </ol>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title">Data Master Ruangan</h4>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#roomModal" onclick="resetForm()">
+                    <i class="fa fa-plus me-2"></i>Tambah Ruangan
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="roomTable" class="display" style="min-width: 845px">
+                        <thead>
+                            <tr>
+                                <th>Cabang</th>
+                                <th>Kode</th>
+                                <th>Nama Ruangan</th>
+                                <th>Jenis</th>
+                                <th>Kapasitas</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in rooms %}
+                            <tr>
+                                <td>{{ room.branch.name }}</td>
+                                <td><strong>{{ room.code }}</strong></td>
+                                <td>{{ room.name }}</td>
+                                <td>{{ room.get_room_type_display }}</td>
+                                <td>{{ room.capacity_ideal }} / {{ room.capacity_max }}</td>
+                                <td>
+                                    {% if room.status == 'ACTIVE' %}
+                                    <span class="badge light badge-success">Aktif</span>
+                                    {% elif room.status == 'INACTIVE' %}
+                                    <span class="badge light badge-warning">Nonaktif</span>
+                                    {% else %}
+                                    <span class="badge light badge-danger">Maintenance</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex">
+                                        <button class="btn btn-info shadow btn-xs sharp me-1" 
+                                                data-room='{"id":"{{ room.id }}", "branch":"{{ room.branch_id }}", "branch_name":"{{ room.branch.name|escapejs }}", "code":"{{ room.code|escapejs }}", "name":"{{ room.name|escapejs }}", "room_type":"{{ room.room_type }}", "capacity_ideal":"{{ room.capacity_ideal }}", "capacity_max":"{{ room.capacity_max }}", "facilities":{{ room.facilities|safe|default:"[]" }}, "status":"{{ room.status }}", "notes":"{{ room.notes|escapejs }}"}'
+                                                onclick="viewRoom(this)" title="Lihat Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                data-room='{"id":"{{ room.id }}", "branch":"{{ room.branch_id }}", "code":"{{ room.code|escapejs }}", "name":"{{ room.name|escapejs }}", "room_type":"{{ room.room_type }}", "capacity_ideal":"{{ room.capacity_ideal }}", "capacity_max":"{{ room.capacity_max }}", "facilities":{{ room.facilities|safe|default:"[]" }}, "status":"{{ room.status }}", "notes":"{{ room.notes|escapejs }}"}'
+                                                onclick="editRoom(this)" title="Edit">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </button>
+                                        <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteRoom({{ room.id }}, '{{ room.name|escapejs }}')" title="Hapus">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Form -->
+<div class="modal fade" id="roomModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tambah Master Ruangan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="errorBox" class="alert alert-danger" style="display: none;">
+                    <ul id="errorList" class="mb-0"></ul>
+                </div>
+                <form id="roomForm">
+                    <input type="hidden" id="room_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Cabang <span class="text-danger">*</span></label>
+                            <select class="form-control default-select wide" id="branch">
+                                <option value="">Pilih Cabang</option>
+                                {% for branch in branches %}
+                                <option value="{{ branch.id }}">{{ branch.code }} - {{ branch.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kode Ruangan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="code" placeholder="Contoh: R-01">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Ruangan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" placeholder="Contoh: Kelas Alpha">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Jenis Ruangan <span class="text-danger">*</span></label>
+                            <select class="form-control default-select wide" id="room_type">
+                                <option value="CLASSROOM">Ruang Kelas</option>
+                                <option value="PRIVATE">Ruang Privat</option>
+                                <option value="GROUP">Ruang Kelompok</option>
+                                <option value="LABORATORY">Laboratorium</option>
+                                <option value="MEETING">Ruang Rapat</option>
+                                <option value="HALL">Aula/Multifungsi</option>
+                                <option value="ADMINISTRATION">Ruang Administrasi</option>
+                                <option value="OTHER">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kapasitas Ideal <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="capacity_ideal" value="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kapasitas Maksimal <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="capacity_max" value="15">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Fasilitas Ruangan</label>
+                            <input type="text" class="form-control" id="facilities" placeholder="Pisahkan dengan koma. Contoh: AC, Proyektor, Papan Tulis">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status Ruangan <span class="text-danger">*</span></label>
+                            <select class="form-control default-select wide" id="status">
+                                <option value="ACTIVE" selected>Aktif</option>
+                                <option value="INACTIVE">Nonaktif</option>
+                                <option value="MAINTENANCE">Maintenance</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Catatan</label>
+                            <textarea class="form-control" id="notes" rows="2" placeholder="Contoh: Ruangan dilengkapi dengan proyektor dan AC."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi</small>
+                <div>
+                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveRoom()">
+                        <i class="fa fa-save me-1"></i> Simpan Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal View Detail -->
+<div class="modal fade" id="viewRoomModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Ruangan: <span id="view_code_title" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless">
+                    <tr><th width="35%">Cabang</th><td>: <span id="view_branch"></span></td></tr>
+                    <tr><th>Kode Ruangan</th><td>: <span id="view_code" class="fw-bold"></span></td></tr>
+                    <tr><th>Nama Ruangan</th><td>: <span id="view_name" class="fw-bold"></span></td></tr>
+                    <tr><th>Jenis Ruangan</th><td>: <span id="view_room_type"></span></td></tr>
+                    <tr><th>Kapasitas</th><td>: <span id="view_capacity"></span></td></tr>
+                    <tr><th>Fasilitas</th><td>: <span id="view_facilities"></span></td></tr>
+                    <tr><th>Status</th><td>: <span id="view_status"></span></td></tr>
+                    <tr><th>Catatan</th><td>: <span id="view_notes"></span></td></tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary light" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#roomTable').DataTable({
+            language: {
+                paginate: {
+                    previous: '<i class="fa fa-angle-double-left"></i>',
+                    next: '<i class="fa fa-angle-double-right"></i>'
+                }
+            }
+        });
+    });
+
+    const requiredFields = [
+        { id: 'branch', label: 'Cabang' },
+        { id: 'code', label: 'Kode Ruangan' },
+        { id: 'name', label: 'Nama Ruangan' },
+        { id: 'capacity_ideal', label: 'Kapasitas Ideal' },
+        { id: 'capacity_max', label: 'Kapasitas Maksimal' },
+    ];
+
+    function showErrors(messages) {
+        const list = $('#errorList');
+        list.empty();
+        messages.forEach(msg => list.append(`<li>${msg}</li>`));
+        $('#errorBox').show();
+        $('#roomModal .modal-body').scrollTop(0);
+    }
+
+    function clearErrors() {
+        $('#errorBox').hide();
+        $('#errorList').empty();
+        requiredFields.forEach(f => $(`#${f.id}`).removeClass('is-invalid'));
+    }
+
+    function validateForm() {
+        const errors = [];
+        requiredFields.forEach(field => {
+            const val = $(`#${field.id}`).val().trim();
+            if (!val) {
+                errors.push(`<strong>${field.label}</strong> wajib diisi.`);
+                $(`#${field.id}`).addClass('is-invalid');
+            } else {
+                $(`#${field.id}`).removeClass('is-invalid');
+            }
+        });
+        return errors;
+    }
+
+    function resetForm() {
+        clearErrors();
+        $('#room_id').val('');
+        $('#branch').val('').trigger('change');
+        $('#code').val('');
+        $('#name').val('');
+        $('#room_type').val('CLASSROOM').trigger('change');
+        $('#capacity_ideal').val('10');
+        $('#capacity_max').val('15');
+        $('#facilities').val('');
+        $('#status').val('ACTIVE').trigger('change');
+        $('#notes').val('');
+        $('#modalTitle').text('Tambah Master Ruangan');
+        $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+    }
+
+    function editRoom(btn) {
+        const data = $(btn).data('room');
+        resetForm();
+        $('#room_id').val(data.id);
+        $('#branch').val(data.branch).trigger('change');
+        $('#code').val(data.code);
+        $('#name').val(data.name);
+        $('#room_type').val(data.room_type).trigger('change');
+        $('#capacity_ideal').val(data.capacity_ideal);
+        $('#capacity_max').val(data.capacity_max);
+        $('#facilities').val((data.facilities || []).join(', '));
+        $('#status').val(data.status).trigger('change');
+        $('#notes').val(data.notes);
+        $('#modalTitle').text('Edit Master Ruangan');
+        $('#roomModal').modal('show');
+    }
+
+    function viewRoom(btn) {
+        const data = $(btn).data('room');
+        $('#view_code_title').text(data.code);
+        $('#view_branch').text(data.branch_name);
+        $('#view_code').text(data.code);
+        $('#view_name').text(data.name);
+        $('#view_room_type').text(data.room_type); 
+        $('#view_capacity').text(data.capacity_ideal + ' / ' + data.capacity_max);
+        $('#view_facilities').text((data.facilities || []).join(', ') || '-');
+        
+        let statusBadge = '<span class="badge light badge-success">Aktif</span>';
+        if(data.status === 'INACTIVE') statusBadge = '<span class="badge light badge-warning">Nonaktif</span>';
+        else if(data.status === 'MAINTENANCE') statusBadge = '<span class="badge light badge-danger">Maintenance</span>';
+        $('#view_status').html(statusBadge);
+        
+        $('#view_notes').text(data.notes || '-');
+        $('#viewRoomModal').modal('show');
+    }
+
+    function saveRoom() {
+        clearErrors();
+        const clientErrors = validateForm();
+        if (clientErrors.length > 0) {
+            showErrors(clientErrors);
+            return;
+        }
+
+        const id = $('#room_id').val();
+        let facilities = $('#facilities').val().split(',').map(s => s.trim()).filter(s => s);
+        
+        const data = {
+            branch: $('#branch').val(),
+            code: $('#code').val().trim(),
+            name: $('#name').val().trim(),
+            room_type: $('#room_type').val(),
+            capacity_ideal: parseInt($('#capacity_ideal').val()),
+            capacity_max: parseInt($('#capacity_max').val()),
+            facilities: facilities,
+            status: $('#status').val(),
+            notes: $('#notes').val().trim(),
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/v1/branches/rooms/${id}/` : '/api/v1/branches/rooms/';
+
+        $('#btnSimpan').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...');
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            const json = await response.json().catch(() => null);
+            if (response.ok) {
+                location.reload();
+            } else {
+                const serverErrors = [];
+                if (json && json.error && json.error.details) {
+                    for (const [field, msgs] of Object.entries(json.error.details)) {
+                        serverErrors.push(`<strong>${field}:</strong> ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`);
+                    }
+                } else {
+                    serverErrors.push(`Error: ${response.status}`);
+                }
+                showErrors(serverErrors);
+                $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+            }
+        })
+        .catch(err => {
+            showErrors([`Gagal terhubung ke server: <strong>${err.message}</strong>.`]);
+            $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+        });
+    }
+
+    function deleteRoom(id, name) {
+        if(confirm(`Apakah Anda yakin ingin menghapus ruangan "${name}"?`)) {
+            fetch(`/api/v1/branches/rooms/${id}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(response => {
+                if (response.ok) location.reload();
+                else alert(`Gagal menghapus. Status: ${response.status}`);
+            })
+            .catch(err => alert(`Gagal terhubung: ${err.message}`));
+        }
+    }
+</script>
+{% endblock %}

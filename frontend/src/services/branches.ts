@@ -1,0 +1,45 @@
+const API_URL = 'http://localhost:8000/api';
+
+const getHeaders = () => {
+    const token = localStorage.getItem('access_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+};
+
+export const getBranches = async () => {
+    const response = await fetch(`${API_URL}/branches/`, {
+        headers: getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to fetch branches');
+    return response.json();
+};
+
+export const createBranch = async (data: any) => {
+    const response = await fetch(`${API_URL}/branches/`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to create branch');
+    return response.json();
+};
+
+export const updateBranch = async (id: string, data: any) => {
+    const response = await fetch(`${API_URL}/branches/${id}/`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Failed to update branch');
+    return response.json();
+};
+
+export const deleteBranch = async (id: string) => {
+    const response = await fetch(`${API_URL}/branches/${id}/`, {
+        method: 'DELETE',
+        headers: getHeaders()
+    });
+    if (!response.ok) throw new Error('Failed to delete branch');
+};

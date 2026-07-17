@@ -1,0 +1,577 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+<style>
+    .nav-link.tab-error {
+        color: #dc3545 !important;
+        border-bottom: 2px solid #dc3545;
+    }
+    #errorBox {
+        display: none;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Kesiswaan</a></li>
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Registrasi Calon Siswa</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Data Calon Siswa (Prospects)</h4>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#prospectModal" onclick="resetForm()">
+                            <i class="fa fa-plus me-2"></i>Tambah Prospect
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="prospectTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th>No Prospect</th>
+                                        <th>Nama Lengkap</th>
+                                        <th>Jenjang</th>
+                                        <th>No. Telepon / WA</th>
+                                        <th>Tanggal Masuk</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for prospect in prospects %}
+                                    <tr>
+                                        <td><strong>{{ prospect.prospect_number }}</strong></td>
+                                        <td>{{ prospect.full_name }}</td>
+                                        <td>{{ prospect.edu_level|default:"-" }}</td>
+                                        <td>
+                                            {% if prospect.guardian %}
+                                                {{ prospect.guardian.phone|default:"-" }} (Wali)
+                                            {% else %}
+                                                {{ prospect.parent.whatsapp|default:"-" }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ prospect.created_at|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if prospect.status == 'NEW' %}<span class="badge light badge-primary">Baru</span>
+                                            {% elif prospect.status == 'CONTACTED' %}<span class="badge light badge-warning">Dihubungi</span>
+                                            {% elif prospect.status == 'INTERESTED' %}<span class="badge light badge-info">Berminat</span>
+                                            {% elif prospect.status == 'ENROLLED' %}<span class="badge light badge-success">Mendaftar</span>
+                                            {% else %}<span class="badge light badge-danger">{{ prospect.status }}</span>{% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-prospect='{"id":"{{ prospect.id }}", "full_name":"{{ prospect.full_name|escapejs }}", "nickname":"{{ prospect.nickname|escapejs }}", "gender":"{{ prospect.gender }}", "date_of_birth":"{{ prospect.date_of_birth|date:'Y-m-d' }}", "edu_status":"{{ prospect.edu_status }}", "edu_level":"{{ prospect.edu_level }}", "parent_name":"{{ prospect.parent.full_name|escapejs }}", "parent_whatsapp":"{{ prospect.parent.whatsapp|escapejs }}", "guardian_name":"{{ prospect.guardian.guardian_name|escapejs }}", "guardian_phone":"{{ prospect.guardian.phone|escapejs }}", "guardian_rel":"{{ prospect.guardian.relationship|escapejs }}", "guardian_job":"{{ prospect.guardian.job|escapejs }}", "guardian_address":"{{ prospect.guardian.address|escapejs }}", "address_full":"{{ prospect.address.full_address|escapejs }}", "address_province":"{{ prospect.address.province|escapejs }}", "address_city":"{{ prospect.address.city|escapejs }}", "target_branch":"{{ prospect.target_branch.id|default:"" }}"}'
+                                                        onclick="editProspect(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                {% if prospect.status == 'REGISTERED' or prospect.status == 'ENROLLED' %}
+                                                <a href="{% url 'dashboard:enrollment_siswa' %}?prospect_id={{ prospect.id }}" class="btn btn-success shadow btn-xs sharp me-1" title="Enroll Siswa (Lunas)">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </a>
+                                                {% endif %}
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteProspect({{ prospect.id }}, '{{ prospect.full_name|escapejs }}')" title="Hapus">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Create / Edit -->
+<div class="modal fade" id="prospectModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tambah Calon Siswa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="errorBox" class="alert alert-danger alert-dismissible">
+                    <button type="button" class="btn-close" onclick="$('#errorBox').hide()"></button>
+                    <strong><i class="fa fa-exclamation-circle me-1"></i> Terjadi Kesalahan:</strong>
+                    <ul id="errorList" class="mb-0 mt-2"></ul>
+                </div>
+
+                <form id="prospectForm">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="tab-identitas" data-bs-toggle="tab" href="#identitas">
+                                <i class="la la-user me-2"></i> 1. Calon Siswa
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-ortu" data-bs-toggle="tab" href="#ortu">
+                                <i class="la la-users me-2"></i> 2. Orang Tua / Wali
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-cabang" data-bs-toggle="tab" href="#cabang">
+                                <i class="la la-building me-2"></i> 3. Cabang
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content pt-4">
+                        <input type="hidden" id="prospect_id">
+                        
+                        <!-- Tab 1: Identitas -->
+                        <div class="tab-pane fade show active" id="identitas" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="full_name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Jenis Kelamin <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="gender">
+                                        <option value="">Pilih</option>
+                                        <option value="L">Laki-laki</option>
+                                        <option value="P">Perempuan</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tanggal Lahir</label>
+                                    <input type="date" class="form-control" id="date_of_birth" onchange="calculateAge()">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Usia</label>
+                                    <input type="text" class="form-control bg-light" id="age_calc" readonly placeholder="Auto calculate">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Status Pendidikan</label>
+                                    <select class="form-control" id="edu_status">
+                                        <option value="">Pilih</option>
+                                        <option value="STUDENT">Pelajar</option>
+                                        <option value="COLLEGE_STUDENT">Mahasiswa</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Jenjang Pendidikan</label>
+                                    <select class="form-control" id="edu_level">
+                                        <option value="">Pilih</option>
+                                        <option value="SD">SD</option>
+                                        <option value="SMP">SMP</option>
+                                        <option value="SMA">SMA</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Orang Tua / Wali & Alamat -->
+                        <div class="tab-pane fade" id="ortu" role="tabpanel">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Pendaftar adalah:</label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_parent" value="parent" checked onchange="toggleRegistrantType()">
+                                            <label class="form-check-label" for="type_parent">Orang Tua</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_guardian" value="guardian" onchange="toggleRegistrantType()">
+                                            <label class="form-check-label" for="type_guardian">Wali</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row" id="section_parent">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Orang Tua <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="parent_name" placeholder="Contoh: Budi Santoso">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">No WhatsApp <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="parent_whatsapp" placeholder="Contoh: 081234567890">
+                                </div>
+                            </div>
+
+                            <div class="row" id="section_guardian" style="display: none;">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Wali <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="guardian_name" placeholder="Contoh: Siti Aminah">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hubungan dengan Siswa <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="guardian_relationship" placeholder="Contoh: Paman, Nenek">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">No WhatsApp Wali <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="guardian_phone" placeholder="Contoh: 081234567890">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Pekerjaan</label>
+                                    <input type="text" class="form-control" id="guardian_job" placeholder="Contoh: Wiraswasta">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Wali</label>
+                                    <textarea class="form-control" id="guardian_address" rows="2" placeholder="Contoh: Jl. Diponegoro No. 10"></textarea>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <h5 class="mb-3">Alamat Calon Siswa</h5>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Lengkap</label>
+                                    <textarea class="form-control" id="address" rows="2" placeholder="Contoh: Jl. Merdeka No. 45, RT 02/RW 03"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Provinsi</label>
+                                    <select class="form-control" id="province" style="width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kota / Kabupaten</label>
+                                    <select class="form-control" id="city" style="width: 100%;" disabled>
+                                        <option value="">Pilih Kota/Kabupaten</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Cabang -->
+                        <div class="tab-pane fade" id="cabang" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cabang Tujuan</label>
+                                    <select class="form-control" id="target_branch">
+                                        <option value="">Pilih Cabang</option>
+                                        {% for branch in branches %}
+                                        <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi</small>
+                <div>
+                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveProspect()">
+                        <i class="fa fa-save me-1"></i> Simpan Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<!-- Datatable -->
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#province').select2({
+            dropdownParent: $('#prospectModal'),
+            placeholder: "Pilih Provinsi"
+        });
+        $('#city').select2({
+            dropdownParent: $('#prospectModal'),
+            placeholder: "Pilih Kota/Kabupaten"
+        });
+
+        // Fetch Provinces
+        fetch('/api/v1/core/provinces/')
+            .then(res => res.json())
+            .then(data => {
+                const provList = data.data || data;
+                provList.forEach(p => {
+                    $('#province').append(new Option(p.name, p.name, false, false));
+                });
+            });
+
+        // On Province Change
+        $('#province').on('change', function() {
+            const provName = $(this).val();
+            $('#city').empty().append(new Option("Pilih Kota/Kabupaten", "", false, false)).prop('disabled', true);
+            if(provName) {
+                // We need to fetch by ID, so let's fetch province ID first... wait, the backend API for prospects takes string address.
+                // Let's just fetch all provinces, find the ID, then fetch cities.
+                fetch('/api/v1/core/provinces/')
+                    .then(res => res.json())
+                    .then(data => {
+                        const provList = data.data || data;
+                        const prov = provList.find(p => p.name === provName);
+                        if(prov) {
+                            fetch(`/api/v1/core/cities/?province_id=${prov.id}`)
+                                .then(res => res.json())
+                                .then(cities => {
+                                    const cityList = cities.data || cities;
+                                    cityList.forEach(c => {
+                                        $('#city').append(new Option(c.name, c.name, false, false));
+                                    });
+                                    $('#city').prop('disabled', false);
+                                });
+                        }
+                    });
+            }
+        });
+
+        $('#prospectTable').DataTable({
+            language: {
+                search:       "Cari:",
+                lengthMenu:   "Tampilkan _MENU_ data",
+                info:         "Menampilkan _START_–_END_ dari _TOTAL_ data",
+                zeroRecords:  "Tidak ada data prospect.",
+                emptyTable:   "Tidak ada data.",
+                paginate: {
+                    previous: '<i class="fa fa-angle-double-left"></i>',
+                    next:     '<i class="fa fa-angle-double-right"></i>'
+                }
+            }
+        });
+        
+        // Populate options via API initially if needed
+    });
+
+    function calculateAge() {
+        const dobVal = $('#date_of_birth').val();
+        if(dobVal) {
+            const dob = new Date(dobVal);
+            const ageDt = new Date(Date.now() - dob.getTime());
+            const years = Math.abs(ageDt.getUTCFullYear() - 1970);
+            $('#age_calc').val(years + ' Tahun');
+        } else {
+            $('#age_calc').val('');
+        }
+    }
+
+    function toggleRegistrantType() {
+        const type = $('input[name="registrant_type"]:checked').val();
+        if(type === 'guardian') {
+            $('#section_parent').hide();
+            $('#section_guardian').show();
+        } else {
+            $('#section_guardian').hide();
+            $('#section_parent').show();
+        }
+    }
+
+    function resetForm() {
+        $('#errorBox').hide();
+        $('#prospect_id').val('');
+        $('#full_name').val('');
+        $('#gender').val('');
+        $('#date_of_birth').val('');
+        $('#age_calc').val('');
+        $('#edu_status').val('');
+        $('#edu_level').val('');
+        
+        $('#type_parent').prop('checked', true);
+        toggleRegistrantType();
+        
+        $('#parent_name').val('');
+        $('#parent_whatsapp').val('');
+        $('#guardian_name').val('');
+        $('#guardian_relationship').val('');
+        $('#guardian_phone').val('');
+        $('#guardian_job').val('');
+        $('#guardian_address').val('');
+
+        $('#address').val('');
+        $('#province').val('').trigger('change');
+        $('#city').val('').trigger('change');
+        $('#target_branch').val('');
+
+        $('#modalTitle').text('Tambah Calon Siswa');
+        $('#tab-identitas').tab('show');
+    }
+
+    function editProspect(btn) {
+        resetForm();
+        const data = $(btn).data('prospect');
+        
+        $('#prospect_id').val(data.id);
+        $('#full_name').val(data.full_name);
+        $('#gender').val(data.gender);
+        $('#date_of_birth').val(data.date_of_birth);
+        $('#edu_status').val(data.edu_status);
+        $('#edu_level').val(data.edu_level);
+        
+        if(data.guardian_name) {
+            $('#type_guardian').prop('checked', true);
+            toggleRegistrantType();
+            $('#guardian_name').val(data.guardian_name);
+            $('#guardian_relationship').val(data.guardian_rel);
+            $('#guardian_phone').val(data.guardian_phone);
+            $('#guardian_job').val(data.guardian_job);
+            $('#guardian_address').val(data.guardian_address);
+        } else {
+            $('#type_parent').prop('checked', true);
+            toggleRegistrantType();
+            $('#parent_name').val(data.parent_name);
+            $('#parent_whatsapp').val(data.parent_whatsapp);
+        }
+        
+        // Handling address
+        $('#address').val(data.address_full || '');
+        if(data.address_province) {
+            $('#province').val(data.address_province).trigger('change');
+            // City needs to wait for province trigger to load cities
+            setTimeout(() => {
+                $('#city').val(data.address_city).trigger('change');
+            }, 500);
+        }
+        
+        $('#target_branch').val(data.target_branch);
+        
+        calculateAge();
+
+        $('#modalTitle').text('Edit Calon Siswa');
+        $('#prospectModal').modal('show');
+    }
+
+    function saveProspect() {
+        const id = $('#prospect_id').val();
+        const fullName = $('#full_name').val().trim();
+        const address = $('#address').val().trim();
+        const province = $('#province').val();
+        const city = $('#city').val();
+
+        if(!fullName) {
+            $('#errorList').html('<li>Nama Lengkap Calon Siswa wajib diisi.</li>');
+            $('#errorBox').show();
+            return;
+        }
+
+        const registrantType = $('input[name="registrant_type"]:checked').val();
+        
+        let parentName = '';
+        let parentWhatsapp = '';
+        let guardianName = '';
+        let guardianRel = '';
+        let guardianPhone = '';
+
+        if(registrantType === 'parent') {
+            parentName = $('#parent_name').val().trim();
+            parentWhatsapp = $('#parent_whatsapp').val().trim();
+            if(!parentName || !parentWhatsapp) {
+                $('#errorList').html('<li>Nama Orang Tua dan WhatsApp wajib diisi.</li>');
+                $('#errorBox').show();
+                return;
+            }
+        } else {
+            guardianName = $('#guardian_name').val().trim();
+            guardianRel = $('#guardian_relationship').val().trim();
+            guardianPhone = $('#guardian_phone').val().trim();
+            if(!guardianName || !guardianRel || !guardianPhone) {
+                $('#errorList').html('<li>Nama Wali, Hubungan, dan WhatsApp Wali wajib diisi.</li>');
+                $('#errorBox').show();
+                return;
+            }
+        }
+
+        const data = {
+            full_name: fullName,
+            gender: $('#gender').val() || null,
+            date_of_birth: $('#date_of_birth').val() || null,
+            edu_status: $('#edu_status').val() || null,
+            edu_level: $('#edu_level').val() || null,
+            
+            target_branch: $('#target_branch').val() || null,
+            status: 'NEW'
+        };
+
+        if(registrantType === 'parent') {
+            data.parent = {
+                full_name: parentName,
+                whatsapp: parentWhatsapp,
+                relation: 'AYAH', // Default relation for Orang Tua tab
+            };
+        } else {
+            data.guardian = {
+                guardian_name: guardianName,
+                relationship: guardianRel,
+                phone: guardianPhone,
+                job: $('#guardian_job').val().trim(),
+                address: $('#guardian_address').val().trim(),
+                is_primary: true
+            };
+        }
+        data.address = {
+            full_address: address,
+            province: province,
+            city: city,
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/v1/students/prospects/${id}/` : `/api/v1/students/prospects/`;
+
+        $('#btnSimpan').prop('disabled', true).text('Menyimpan...');
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            if(response.ok) {
+                location.reload();
+            } else {
+                const json = await response.json().catch(() => null);
+                $('#errorList').html(`<li>Gagal menyimpan. Error: ${JSON.stringify(json)}</li>`);
+                $('#errorBox').show();
+                $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+            }
+        })
+        .catch(err => {
+            $('#errorList').html(`<li>Network error: ${err.message}</li>`);
+            $('#errorBox').show();
+            $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+        });
+    }
+
+    function deleteProspect(id, name) {
+        if(confirm(`Yakin ingin menghapus calon siswa "${name}"?`)) {
+            fetch(`/api/v1/students/prospects/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(res => {
+                if(res.ok) location.reload();
+                else alert('Gagal menghapus');
+            });
+        }
+    }
+</script>
+{% endblock %}

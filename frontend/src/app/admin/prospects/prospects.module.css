@@ -1,0 +1,112 @@
+.container {
+    padding: 32px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.header h1 {
+    font-size: 24px;
+    color: #1f2937;
+    margin: 0;
+}
+
+.addButton {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.addButton:hover {
+    background-color: #2563eb;
+}
+
+.tableContainer {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    background-color: #f9fafb;
+    padding: 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #374151;
+    font-size: 14px;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.table tr:hover {
+    background-color: #f9fafb;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+}
+
+.editBtn, .deleteBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.editBtn:hover {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.deleteBtn:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.statusBadge {
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.statusNew { background-color: #dbeafe; color: #1e40af; }
+.statusContacted { background-color: #fef3c7; color: #92400e; }
+.statusInterested { background-color: #e0e7ff; color: #3730a3; }
+.statusEnrolled { background-color: #d1fae5; color: #065f46; }
+.statusLost { background-color: #fee2e2; color: #991b1b; }
+.statusDefault { background-color: #f3f4f6; color: #374151; }

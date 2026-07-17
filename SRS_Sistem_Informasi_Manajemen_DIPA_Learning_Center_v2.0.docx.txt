@@ -1,0 +1,3902 @@
+ 
+SOFTWARE REQUIREMENTSSPECIFICATION (SRS)
+SISTEM INFORMASI MANAJEMENDIPA LEARNING CENTER
+Versi Dokumen
+2.0 - Baseline Pengembangan
+Tanggal
+14 Juli 2026
+Status
+Siap sebagai panduan developer; item TBD wajib divalidasi
+Cakupan
+Multi-cabang, 1.000+ siswa, target ekspansi 7 cabang
+DIPA Learning Design System  •  Smart  •  Friendly  •  Energetic  •  Educational
+KONTROL DOKUMEN
+Elemen
+Isi
+Nama dokumen
+Software Requirements Specification (SRS) Sistem Informasi Manajemen DIPA Learning Center
+Versi
+2.0 - Baseline Pengembangan
+Tanggal
+14 Juli 2026
+Sumber kebutuhan
+Dokumen Analisis Kebutuhan Sistem Informasi (67 halaman) dan hasil diskusi proyek pada tanggal yang sama
+Tujuan penggunaan
+Acuan Owner, Project Manager, Business Analyst, UI/UX Designer, Developer, Database Engineer, DevOps, QA, dan pengguna UAT
+Status
+Baseline. Kebutuhan berlabel TBD/konfigurabel harus mendapat keputusan stakeholder sebelum modul terkait ditutup
+Riwayat Revisi
+Versi
+Tanggal
+Perubahan
+Status
+1.0
+14 Juli 2026
+Draft awal berisi ruang lingkup, modul, arsitektur, UI/UX, dan roadmap.
+Draft
+2.0
+14 Juli 2026
+Diperluas menjadi spesifikasi developer lengkap: requirement ID, use case, proses, data model, API, keamanan, QA, DevOps, migrasi, acceptance, traceability, dan TBD register.
+Baseline
+Persetujuan Dokumen
+Peran
+Nama
+Tanggal
+Tanda Tangan
+Owner / Sponsor Proyek
+Project Manager
+Business Process Owner
+Lead Developer
+QA/UAT Coordinator
+Aturan baseline: Perubahan setelah persetujuan dokumen harus melalui change request, analisis dampak, pembaruan versi, dan persetujuan ulang stakeholder terkait.
+DAFTAR ISI
+Bagian
+Judul
+1
+Ringkasan Eksekutif
+2
+Pendahuluan
+3
+Konteks Bisnis dan Ruang Lingkup
+4
+Stakeholder, Pengguna, dan Hak Akses
+5
+Arsitektur dan Struktur Modular
+6
+Kebutuhan Fungsional
+7
+Use Case Utama
+8
+Aturan Bisnis dan Status Transaksi
+9
+Alur Proses dan BPMN Konseptual
+10
+Desain Data dan Database
+11
+Spesifikasi API
+12
+UI/UX dan Design System
+13
+Dashboard dan Laporan
+14
+Keamanan, Privasi, dan Audit
+15
+Kebutuhan Nonfungsional
+16
+Notifikasi, Dokumen, dan Integrasi
+17
+Migrasi Data dan Cutover
+18
+Pengujian, UAT, dan Acceptance
+19
+Deployment, DevOps, dan Operasional
+20
+Roadmap Pengembangan Modular
+21
+Traceability Matrix
+22
+Register Keputusan/TBD
+Lampiran A
+Kamus Istilah
+Lampiran B
+Contoh Payload API
+Lampiran C
+Checklist Definition of Done
+Lampiran D
+Checklist Kesiapan Go-Live
+Lampiran E
+Catatan Baseline dan Persetujuan
+1. RINGKASAN EKSEKUTIF
+Sistem Informasi Manajemen DIPA Learning Center (SIM-DIPA) adalah aplikasi berbasis web yang mengintegrasikan proses akademik, operasional, keuangan, sumber daya manusia, inventaris, dan pelaporan untuk mendukung kondisi saat ini sekitar 1.000 siswa aktif, 8–9 jenis kursus, 3 cabang operasional, serta rencana ekspansi sampai 7 cabang.
+Dokumen ini menjadi kontrak kebutuhan antara stakeholder bisnis dan tim teknis. Setiap kebutuhan diberi identitas, prioritas, kriteria penerimaan, aturan data, hak akses, serta hubungan ke pengujian dan fase pengembangan. Sistem dirancang modular agar dapat dibangun bertahap tanpa mengorbankan integritas arsitektur keseluruhan.
+Masalah utama: proses manual, data tidak sinkron, ketidaksesuaian pembayaran dan invoice, absensi belum terkait kuota, perhitungan insentif manual, pengolahan ulang laporan, dan kesulitan monitoring multi-cabang.
+Solusi inti: single source of truth berbasis PostgreSQL, REST API NestJS, frontend Next.js, RBAC, audit trail, kuota terintegrasi, absensi tiga lapis, make-up class, payroll, inventaris, dan dashboard eksekutif.
+Prinsip implementasi: secure by design, modular, API-first, branch-aware, traceable, paperless, responsive, dan dapat dikembangkan ke mobile app, payment gateway, WhatsApp, serta integrasi lain.
+Target hasil: proses lebih cepat dan terkendali, data dapat diaudit, pengurangan kuota akurat, laporan tersedia real-time, serta keputusan manajemen berbasis data.
+Gambar 1. Konteks sistem dan hubungan dengan pengguna serta layanan eksternal.
+2. PENDAHULUAN
+2.1 Tujuan Dokumen
+Mendefinisikan kebutuhan perangkat lunak secara lengkap dan terukur agar dapat digunakan sebagai panduan desain, pengembangan, pengujian, deployment, pelatihan, dan penerimaan SIM-DIPA.
+2.2 Audiens Dokumen
+Audiens
+Kebutuhan dari Dokumen
+Owner/Top Management
+Validasi ruang lingkup, KPI, aturan bisnis, laporan, dan prioritas fase.
+Project Manager/Product Owner
+Perencanaan backlog, milestone, dependensi, risiko, dan perubahan kebutuhan.
+Business Analyst
+Traceability, klarifikasi aturan, dan pengelolaan TBD.
+UI/UX Designer
+Inventaris layar, design system, state, role, dan kriteria usability.
+Backend/Frontend Developer
+Kontrak API, model data, validasi, error, permission, dan acceptance criteria.
+Database Engineer
+Entitas, relasi, constraint, indeks, transaksi, audit, dan migrasi.
+DevOps/SRE
+Topologi deployment, Docker, backup, observability, dan environment.
+QA/UAT
+Skenario uji, kriteria penerimaan, data uji, dan traceability.
+2.3 Konvensi Requirement
+Kode
+Arti
+FR-xxx
+Functional Requirement.
+BR-xxx
+Business Rule.
+NFR-xxx
+Nonfunctional Requirement.
+UC-xx
+Use Case.
+RPT-xx
+Laporan/dashboard.
+SEC-xx
+Kontrol keamanan.
+TBD-xx
+Keputusan yang belum final/harus dikonfigurasi.
+2.4 Prioritas
+Must: wajib untuk baseline modul.
+Should: penting, dapat dijadwalkan setelah kebutuhan Must dalam fase yang sama.
+Could: peningkatan yang dapat ditunda tanpa menghambat proses inti.
+Won’t (v1): secara eksplisit di luar baseline versi pertama.
+2.5 Definisi Selesai Tingkat Requirement
+Implementasi tersedia pada environment pengujian.
+Unit, integration, dan end-to-end test lulus.
+Hak akses dan audit log terverifikasi.
+Tidak terdapat defect Critical/High yang terbuka.
+Dokumentasi API dan perubahan database diperbarui.
+Kriteria penerimaan requirement ditandatangani pada UAT.
+3. KONTEKS BISNIS DAN RUANG LINGKUP
+3.1 Kondisi Saat Ini
+Aspek
+Kondisi/Persoalan
+Skala
+±1.000 siswa aktif, 8–9 jenis kursus, 3 cabang; target sampai 7 cabang.
+Pencatatan
+Sebagian proses masih manual atau tersebar di aplikasi/berkas yang berbeda.
+Data
+Sinkronisasi antarbagian belum konsisten dan menimbulkan duplikasi/keterlambatan.
+Billing
+Invoice dan pembayaran dapat tidak sesuai; rekonsiliasi membutuhkan pekerjaan manual.
+Absensi & kuota
+Absensi belum otomatis memvalidasi serta mengurangi kuota belajar.
+Make-up
+Penjadwalan pengganti belum terpantau end-to-end dan berisiko melewati batas waktu.
+Payroll
+Perhitungan strata gaji, meeting percentage, dan insentif coach masih manual.
+Laporan
+Membutuhkan ekspor dan pengolahan ulang sebelum dapat dipakai manajemen.
+Multi-cabang
+Owner sulit memperoleh pandangan konsolidasi dan perbandingan cabang secara cepat.
+3.2 Tujuan Bisnis
+Menyediakan single source of truth untuk data siswa, jadwal, kuota, transaksi, karyawan, stok, dan laporan.
+Menghubungkan pembayaran → invoice → kuota → absensi → laporan keuangan secara dapat ditelusuri.
+Mencegah absensi saat kuota nol melalui auto-lock dan memberikan jalur pembelian paket.
+Menyediakan absensi tiga lapis: datang, masuk kelas, dan pulang.
+Mengotomasi make-up class, payroll, minimum stock alert, dan reminder operasional.
+Menyediakan dashboard real-time per cabang dan konsolidasi seluruh cabang.
+3.3 Ruang Lingkup Baseline
+Domain
+Cakupan
+Foundation
+Authentication, user, role, permission, cabang, konfigurasi, audit trail.
+Akademik
+Siswa, orang tua, coach, kursus, level, kelas, ruangan, enrollment, jadwal.
+Komersial
+Paket 4/8/12 pertemuan, price list, invoice, pembayaran, alokasi, kuota.
+Operasional
+Absensi tiga tahap, keterlambatan, ketidakhadiran, make-up class, reminder.
+Keuangan
+Kas, pemasukan, pengeluaran, chart of accounts, jurnal, rekonsiliasi, laba rugi.
+HR & Payroll
+Data karyawan, strata gaji, target/realisasi meeting, insentif, potongan, slip.
+Inventaris
+Barang, gudang, stok, mutasi, transfer, stock opname, minimum stock.
+Insight
+Dashboard role-based, laporan PDF/Excel/CSV, filter, export, scheduling report.
+3.4 Di Luar Cakupan Baseline v1
+Aplikasi native iOS/Android; baseline menggunakan web responsif.
+Payment gateway otomatis; disiapkan extension point dan webhook.
+Integrasi WhatsApp Business API; baseline dapat menggunakan in-app/email dan desain adapter.
+Integrasi Dapodik atau sistem pemerintah lain.
+Biometrik/face recognition untuk absensi.
+Perhitungan pajak kompleks dan e-faktur.
+Learning content delivery penuh seperti LMS video/quiz; fokus baseline adalah manajemen kursus dan operasional.
+3.5 Asumsi dan Dependensi
+Setiap cabang memiliki koneksi internet dan minimal satu perangkat admin.
+Data master awal tersedia dalam Excel/CSV dan dapat dibersihkan sebelum migrasi.
+Setiap siswa memiliki identitas unik; satu siswa dapat dikaitkan dengan satu atau lebih orang tua/wali.
+Tanggal/waktu disimpan UTC dan ditampilkan pada zona Asia/Jakarta; mata uang IDR dan locale id-ID.
+Kebijakan refund, diskon, kuota kedaluwarsa, dan approval override harus disahkan sebelum UAT modul terkait.
+4. STAKEHOLDER, PENGGUNA, DAN HAK AKSES
+4.1 Daftar Role
+Kode Role
+Scope Data
+Tanggung Jawab Utama
+SUPER_ADMIN
+Seluruh sistem
+Konfigurasi, pengguna, role, permission, cabang, integrasi, audit.
+OWNER
+Seluruh cabang atau cabang terpilih
+Dashboard eksekutif, laporan, approval strategis, monitoring.
+FRONT_ADMIN
+Cabang sendiri
+Registrasi kedatangan, siswa, paket, invoice, pembayaran awal, kuota.
+COACH
+Kelas/siswa yang ditugaskan
+Jadwal, validasi masuk kelas, ketidakhadiran, make-up, performa sendiri.
+BACK_ADMIN
+Cabang sendiri
+Validasi pulang, operasional kelas, ruangan, make-up, reminder.
+FINANCE_ADMIN
+Cabang sesuai penugasan atau konsolidasi
+Verifikasi payment, jurnal, expense, rekonsiliasi, laporan keuangan.
+HR_ADMIN
+Organisasi/cabang sesuai penugasan
+Karyawan, strata, payroll, insentif, slip.
+INVENTORY_ADMIN
+Gudang/cabang sesuai penugasan
+Barang, stok, transfer, opname, laporan inventaris.
+PARENT
+Data anak sendiri
+Jadwal, kuota, kehadiran, invoice, pembayaran, make-up, notifikasi.
+STUDENT
+Data diri sendiri
+Jadwal, kehadiran, kuota, informasi kelas, notifikasi terbatas.
+4.2 Model Otorisasi
+RBAC: permission diberikan ke role, role diberikan ke user.
+Scope-based authorization: SELF, OWN_CLASS, OWN_BRANCH, ASSIGNED_BRANCHES, ALL_BRANCHES.
+Action-level permission: VIEW, CREATE, UPDATE, DELETE, APPROVE, VOID, EXPORT, OVERRIDE.
+Prinsip least privilege dan separation of duties, terutama invoice/payment, payroll, dan adjustment stok.
+Setiap akses lintas cabang harus eksplisit dan tercatat pada audit log.
+4.3 Matriks Hak Akses Operasional
+Aktivitas
+Owner
+Front Admin
+Coach
+Back Admin
+Parent/Student
+Lihat seluruh cabang
+V
+-
+-
+-
+-
+Kelola siswa/enrollment
+V
+C/U cabang
+V kelas
+V cabang
+V sendiri
+Check-in datang
+V
+C
+-
+-
+-
+Validasi masuk kelas
+V
+-
+C kelas
+-
+-
+Validasi pulang
+V
+-
+-
+C cabang
+-
+Buat invoice
+V
+C cabang
+-
+U terbatas
+V sendiri
+Catat pembayaran
+V
+C draft
+-
+-
+V status
+Kelola make-up
+V
+U terbatas
+C usulan
+C/U cabang
+V sendiri
+Lihat kuota
+V
+V cabang
+V kelas
+V cabang
+V sendiri
+Export laporan
+X
+X terbatas
+X sendiri
+X operasional
+X sendiri
+4.4 Matriks Hak Akses Back Office
+Aktivitas
+Owner
+Finance
+HR
+Inventory
+Super Admin
+Verifikasi pembayaran
+A
+A
+-
+-
+OV
+Void/refund
+A
+C/A sesuai limit
+-
+-
+OV
+Jurnal & rekonsiliasi
+V/A
+C/U/A
+-
+V sumber
+OV
+Payroll
+V/A
+V jurnal
+C/U/A
+-
+OV
+Strata gaji
+V/A
+-
+C/U
+-
+OV
+Stok & transfer
+V
+V nilai
+-
+C/U/A
+OV
+Stock adjustment
+V/A
+V jurnal
+-
+C + approval
+OV
+Role/permission
+V
+-
+-
+-
+C/U/D
+Audit trail
+V
+V keuangan
+V HR
+V inventory
+V seluruh
+Konfigurasi sistem
+V
+-
+-
+-
+C/U
+Legenda matriks: V=view, C=create, U=update, D=delete, A=approve, X=export, OV=override. Implementasi final menggunakan permission code granular, bukan hanya nama role.
+5. ARSITEKTUR DAN STRUKTUR MODULAR
+5.1 Arsitektur Teknologi
+Gambar 2. Arsitektur logis SIM-DIPA.
+Lapisan
+Teknologi Baseline
+Tanggung Jawab
+Frontend
+Next.js, React, TypeScript, Tailwind CSS, Material Design 3
+UI role-based, routing, form, dashboard, cookie session, accessibility.
+Backend API
+NestJS, TypeScript, REST, OpenAPI/Swagger
+Business rules, validation, RBAC, transaction, audit, integration.
+ORM/Data Access
+Prisma ORM
+Schema, migration, type-safe query, transaction.
+Database
+PostgreSQL
+Data master/transaksi, constraint, indeks, reporting source.
+Cache/Queue
+Redis
+Cache, background queue, rate limiting, distributed lock.
+Worker
+NestJS/BullMQ atau worker setara
+PDF/Excel, email, reminder, scheduled jobs, payroll batch.
+Storage
+S3-compatible/MinIO
+Invoice, slip gaji, bukti pembayaran, ekspor, dokumen.
+Reverse Proxy
+Nginx
+TLS termination, routing, compression, security headers.
+Container
+Docker & Docker Compose
+Keseragaman environment, deployment, isolasi service.
+5.2 Struktur Monorepo
+Struktur folder yang direkomendasikan:
+sim-dipa/├── apps/│   ├── api/                 # NestJS REST API│   ├── web/                 # Next.js frontend│   └── worker/              # Queue, report, reminder, payroll jobs├── packages/│   ├── contracts/           # DTO/schema bersama dan API types│   ├── ui/                  # Komponen design system│   ├── config/              # ESLint, TSConfig, environment schema│   └── utils/               # Utility tanpa business state├── prisma/│   ├── schema.prisma│   ├── migrations/│   └── seed/├── docs/│   ├── srs/│   ├── api/│   ├── architecture/│   └── runbook/├── infra/│   ├── docker/│   ├── nginx/│   ├── monitoring/│   └── backup/├── scripts/                 # import, export, migration, maintenance├── tests/                   # contract, e2e, load, security├── docker-compose.yml├── .env.example└── README.md
+5.3 Modul dan Batas Dependensi
+Modul
+Boleh Bergantung Pada
+Tidak Boleh
+Auth/RBAC
+User, Branch, Audit
+Mengakses domain transaksi tanpa service/API.
+Academic
+Auth, Branch, Master
+Mengubah payment atau ledger langsung.
+Billing/Quota
+Academic, Finance adapter
+Mengurangi kuota tanpa ledger transaksi.
+Attendance
+Academic, Quota, Notification
+Mengubah saldo kuota melalui query langsung.
+Make-up
+Attendance, Schedule, Notification
+Melewati conflict/SLA validation.
+Finance
+Billing, Payroll, Inventory event
+Menghapus jurnal posted.
+HR/Payroll
+Employee, Attendance summary, Finance adapter
+Mengubah data attendance historis.
+Inventory
+Branch, Finance adapter
+Mengubah saldo stok tanpa transaction row.
+Reporting
+Read model seluruh domain
+Menulis transaksi domain.
+5.4 Prinsip Teknis
+API-first dan versioned endpoint (/api/v1).
+TypeScript strict mode; DTO tervalidasi pada boundary.
+Database transaction untuk payment, quota deduction, payroll posting, stock transfer, dan journal posting.
+Idempotency key untuk operasi finansial dan absensi agar tidak terjadi duplikasi.
+Outbox/event pattern untuk notifikasi dan integrasi yang memerlukan konsistensi.
+Soft delete untuk master; transaksi finansial/ledger tidak dihapus, hanya void/reversal.
+Semua tabel domain memiliki created_at, updated_at, dan identifier UUID/ULID sesuai standar proyek.
+6. Kebutuhan Fungsional
+Bagian ini merupakan spesifikasi minimum yang harus diimplementasikan. Setiap kebutuhan memiliki pengenal unik untuk kebutuhan pengembangan, pengujian, pelacakan perubahan, dan penerimaan pengguna.
+6.1 Autentikasi dan Manajemen Sesi
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-AUTH-001
+Sistem harus menyediakan login menggunakan email/username dan password untuk seluruh pengguna internal dan portal orang tua.
+Must
+Pengguna dengan kredensial valid masuk ke halaman sesuai peran; kredensial salah ditolak tanpa mengungkap apakah akun atau password yang salah.
+FR-AUTH-002
+Password harus disimpan menggunakan hash adaptif yang aman, minimal bcrypt/Argon2, dan tidak pernah disimpan atau dicatat dalam bentuk plaintext.
+Must
+Pemeriksaan basis data dan log tidak menemukan password plaintext; verifikasi password menggunakan fungsi hash yang disetujui.
+FR-AUTH-003
+Sistem harus menerbitkan access token berumur pendek dan refresh token berumur lebih panjang setelah login berhasil.
+Must
+Access token digunakan untuk akses API; token kedaluwarsa ditolak; refresh token valid dapat menerbitkan pasangan token baru.
+FR-AUTH-004
+Refresh token harus dirotasi pada setiap penggunaan, disimpan dalam bentuk hash, dan token lama harus dicabut.
+Must
+Pemakaian kembali refresh token lama gagal dan menghasilkan kejadian keamanan pada audit log.
+FR-AUTH-005
+Sistem harus menyediakan logout satu sesi dan logout dari seluruh perangkat.
+Must
+Token/sesi yang dicabut tidak dapat digunakan kembali pada endpoint terproteksi.
+FR-AUTH-006
+Sistem harus menyediakan lupa password dan reset password melalui token sekali pakai dengan masa berlaku terbatas.
+Must
+Tautan reset kedaluwarsa/terpakai ditolak; password baru memenuhi kebijakan password; seluruh sesi lama dapat dicabut.
+FR-AUTH-007
+Sistem harus menerapkan pembatasan percobaan login dan penguncian sementara akun yang dapat dikonfigurasi.
+Must
+Setelah ambang gagal tercapai, login ditolak sampai masa kunci berakhir atau dibuka oleh petugas berwenang.
+FR-AUTH-008
+Sistem harus menyediakan endpoint/profil sesi aktif yang mengembalikan identitas, peran, izin, dan ruang lingkup cabang pengguna.
+Must
+Respons hanya berisi data pengguna yang telah diautentikasi dan permission efektif terbaru.
+FR-AUTH-009
+Status akun harus mendukung ACTIVE, INACTIVE, dan LOCKED.
+Must
+Akun INACTIVE/LOCKED tidak dapat login; perubahan status tercatat pada audit log.
+FR-AUTH-010
+Aktivitas login, gagal login, refresh, reset password, logout, dan pencabutan sesi harus diaudit.
+Must
+Audit memuat pengguna/identitas percobaan, waktu, aksi, hasil, alamat IP, dan user agent sejauh tersedia.
+6.2 Pengguna, Peran, Izin, dan Cabang
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-RBAC-001
+Super Admin harus dapat membuat, melihat, mengubah, menonaktifkan, dan mengaktifkan akun pengguna.
+Must
+Perubahan tersimpan, tervalidasi, dan tercatat pada audit log; email/username unik.
+FR-RBAC-002
+Sistem harus menerapkan Role-Based Access Control (RBAC) dengan izin pada tingkat tindakan: view, create, edit, delete, approve, void, export, dan configure.
+Must
+Endpoint dan komponen UI menolak atau menyembunyikan tindakan tanpa izin yang sesuai.
+FR-RBAC-003
+Sistem harus mendukung satu pengguna memiliki satu atau lebih peran.
+Must
+Permission efektif merupakan gabungan izin peran yang aktif, tanpa mengabaikan pembatasan cabang.
+FR-RBAC-004
+Sistem harus mendukung ruang lingkup data SELF, OWN_CLASS, OWN_BRANCH, ASSIGNED_BRANCHES, dan ALL_BRANCHES.
+Must
+Daftar dan detail data hanya menampilkan record dalam scope efektif pengguna.
+FR-RBAC-005
+Super Admin harus dapat mengelola master peran dan pemetaan izin.
+Must
+Perubahan role-permission berlaku pada sesi berikutnya atau setelah permission cache disegarkan.
+FR-RBAC-006
+Sistem harus mencegah pengguna menghapus/menonaktifkan akun sendiri apabila tindakan tersebut menghilangkan administrator aktif terakhir.
+Must
+Permintaan ditolak dengan pesan bisnis yang jelas.
+FR-RBAC-007
+Sistem harus mengelola penugasan pengguna ke cabang utama dan cabang tambahan.
+Must
+Akses lintas cabang hanya tersedia sesuai penugasan dan izin.
+FR-RBAC-008
+Sistem harus menyediakan daftar sesi aktif pengguna dan fungsi pencabutan sesi oleh administrator berwenang.
+Must
+Sesi yang dicabut gagal pada permintaan berikutnya.
+FR-RBAC-009
+Sistem harus menyediakan laporan peninjauan akses yang memuat akun, peran, izin, cabang, status, dan waktu login terakhir.
+Must
+Laporan dapat difilter dan diekspor oleh pengguna berizin.
+FR-RBAC-010
+Perubahan peran, izin, penugasan cabang, dan status akun harus memerlukan audit trail before/after.
+Must
+Audit menyimpan nilai sebelum dan sesudah serta aktor perubahan.
+6.3 Master Data
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-MST-001
+Sistem harus mengelola data cabang, termasuk kode, nama, alamat, kontak, zona waktu, status, dan penanggung jawab.
+Must
+Kode cabang unik; cabang tidak dapat dihapus apabila telah memiliki transaksi dan hanya dapat dinonaktifkan.
+FR-MST-002
+Sistem harus mengelola ruang kelas per cabang beserta kapasitas dan status penggunaan.
+Must
+Jadwal tidak dapat memakai ruang nonaktif atau melebihi kapasitas tanpa override berizin.
+FR-MST-003
+Sistem harus mengelola kursus, level, durasi per pertemuan, kategori, dan status.
+Must
+Kursus/level yang sudah digunakan transaksi tidak dapat dihapus fisik.
+FR-MST-004
+Sistem harus mengelola paket 4, 8, dan 12 pertemuan serta memungkinkan paket tambahan yang dikonfigurasi.
+Must
+Jumlah pertemuan bernilai positif dan paket memiliki masa berlaku serta status.
+FR-MST-005
+Sistem harus mengelola daftar harga berversi berdasarkan cabang, kursus, level, paket, periode berlaku, dan mata uang.
+Must
+Pada satu kombinasi tidak boleh ada periode harga aktif yang tumpang tindih.
+FR-MST-006
+Sistem harus mengelola hari libur, jam operasional, dan kalender akademik per cabang.
+Must
+Validasi jadwal menggunakan kalender cabang yang berlaku.
+FR-MST-007
+Sistem harus mengelola alasan standar untuk pembatalan, keterlambatan, ketidakhadiran, koreksi, refund, dan penyesuaian stok.
+Must
+Transaksi terkait mewajibkan alasan aktif yang sesuai.
+FR-MST-008
+Sistem harus mengelola rekening/kas, metode pembayaran, kategori pemasukan/pengeluaran, dan chart of accounts.
+Must
+Kode master unik dan hanya item aktif yang tersedia untuk transaksi baru.
+FR-MST-009
+Sistem harus mengelola satuan barang, kategori barang, gudang/lokasi stok, dan batas stok minimum.
+Must
+Gudang terasosiasi ke cabang; SKU unik.
+FR-MST-010
+Seluruh master data harus mendukung pencarian, filter, pagination, ekspor sesuai izin, dan status aktif/nonaktif.
+Must
+Data historis tetap dapat dirujuk walaupun master dinonaktifkan.
+6.4 Siswa, Orang Tua, Coach, dan Pendaftaran
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-STD-001
+Sistem harus mengelola profil siswa dengan nomor siswa unik, identitas, tanggal lahir, alamat, kontak, cabang utama, foto/dokumen opsional, dan status.
+Must
+Nomor siswa unik; field wajib tervalidasi; perubahan profil memiliki audit trail.
+FR-STD-002
+Sistem harus mengelola profil orang tua/wali dan relasinya dengan satu atau lebih siswa.
+Must
+Satu siswa dapat memiliki beberapa wali dengan penanda wali utama dan hak menerima notifikasi/tagihan.
+FR-STD-003
+Sistem harus mengelola data karyawan dan coach, termasuk ID, cabang, spesialisasi, level yang dapat diajar, status, dan tanggal efektif.
+Must
+Coach nonaktif tidak dapat ditugaskan pada jadwal baru.
+FR-STD-004
+Admin berwenang harus dapat mendaftarkan siswa ke kursus, level, cabang, kelas, coach, dan periode.
+Must
+Pendaftaran menghasilkan enrollment unik dan tervalidasi terhadap status siswa, kursus, kelas, dan kapasitas.
+FR-STD-005
+Status enrollment harus mendukung DRAFT, ACTIVE, SUSPENDED, COMPLETED, TRANSFERRED, CANCELLED, dan WITHDRAWN.
+Must
+Transisi status hanya mengikuti aturan yang diizinkan dan menyimpan waktu serta aktor.
+FR-STD-006
+Sistem harus mendukung perpindahan kelas, coach, jadwal, dan cabang dengan tanggal efektif.
+Must
+Riwayat lama tidak berubah; jadwal/kuota aktif dipindahkan atau dipetakan menurut keputusan berizin.
+FR-STD-007
+Sistem harus mencegah duplikasi enrollment aktif pada kombinasi siswa-kursus-level-periode yang sama kecuali disetujui.
+Must
+Permintaan duplikat ditolak atau masuk alur override dengan alasan.
+FR-STD-008
+Sistem harus menampilkan profil 360° siswa: enrollment, jadwal, kuota, kehadiran, make-up, invoice, pembayaran, dan notifikasi.
+Must
+Data ditampilkan sesuai hak akses dan dapat ditelusuri ke transaksi sumber.
+FR-STD-009
+Portal orang tua harus hanya menampilkan data anak yang terhubung ke akun tersebut.
+Must
+Percobaan akses ID siswa lain ditolak di backend, bukan hanya disembunyikan di UI.
+FR-STD-010
+Sistem harus mendukung impor siswa/orang tua/coach melalui template terkontrol.
+Must
+File divalidasi; hasil impor menampilkan jumlah berhasil/gagal dan alasan per baris; proses dapat diaudit.
+FR-STD-011
+Sistem harus menyediakan pencarian cepat siswa berdasarkan nomor, nama, nomor telepon wali, atau kode QR/barcode bila diterapkan.
+Must
+Hasil pencarian muncul sesuai scope cabang dan target performa.
+FR-STD-012
+Penghapusan data personal harus menggunakan soft delete/anonymization sesuai kebijakan retensi dan persetujuan.
+Must
+Transaksi historis tetap konsisten tanpa mengekspos data yang telah dianonimkan.
+6.5 Kelas dan Penjadwalan
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-SCH-001
+Admin operasional harus dapat membuat kelas/grup dengan kursus, level, cabang, kapasitas, coach utama, dan periode aktif.
+Must
+Kelas memiliki kode unik dalam cabang dan hanya menggunakan master aktif.
+FR-SCH-002
+Sistem harus dapat membuat jadwal satu kali maupun berulang berdasarkan hari, waktu, ruang, coach, dan kelas.
+Must
+Jadwal berulang menghasilkan occurrence yang dapat ditelusuri ke seri.
+FR-SCH-003
+Sistem harus mendeteksi bentrok coach, ruang, kelas, dan siswa pada rentang waktu yang sama.
+Must
+Penyimpanan ditolak atau memerlukan override berizin dan alasan audit.
+FR-SCH-004
+Sistem harus memvalidasi kapasitas ruang dan kelas.
+Must
+Jumlah peserta aktif tidak melebihi kapasitas tanpa override.
+FR-SCH-005
+Sistem harus mendukung perubahan jadwal satu occurrence, occurrence ini dan berikutnya, atau seluruh seri.
+Must
+Pilihan cakupan perubahan jelas dan riwayat occurrence yang telah selesai tidak diubah.
+FR-SCH-006
+Sistem harus mendukung coach pengganti, pemindahan ruang, pembatalan kelas, dan reschedule.
+Must
+Perubahan menghasilkan notifikasi kepada pihak terdampak serta audit trail.
+FR-SCH-007
+Sistem harus mempertimbangkan hari libur dan jam operasional cabang.
+Must
+Jadwal pada waktu terlarang ditolak atau memerlukan override berizin.
+FR-SCH-008
+Sistem harus menyediakan kalender harian, mingguan, dan bulanan per coach, ruang, kelas, dan cabang.
+Must
+Filter bekerja dan warna/status konsisten dengan legenda.
+FR-SCH-009
+Sistem harus menyediakan daftar hadir yang berasal dari peserta aktif pada occurrence terkait.
+Must
+Siswa nonaktif/berakhir tidak muncul kecuali memiliki pengecualian sah.
+FR-SCH-010
+Perubahan jadwal harus menjaga referensi terhadap absensi, make-up, payroll, dan laporan.
+Must
+Transaksi selesai tetap mengacu pada occurrence historis yang benar.
+6.6 Paket dan Manajemen Kuota
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-QTA-001
+Sistem harus membuat saldo kuota siswa hanya dari transaksi sumber yang sah, seperti pembayaran terverifikasi, migrasi saldo awal, atau penyesuaian disetujui.
+Must
+Setiap saldo mempunyai source_type/source_id dan tidak dapat dibuat tanpa referensi.
+FR-QTA-002
+Sistem harus menyimpan kuota sebagai ledger transaksi kredit/debit, bukan hanya angka saldo.
+Must
+Saldo dapat direkonstruksi dari total kredit dikurangi debit.
+FR-QTA-003
+Setiap paket kuota harus memiliki jumlah awal, saldo, tanggal aktif, tanggal kedaluwarsa, kursus/enrollment, dan status.
+Must
+Field konsisten; status berubah otomatis saat habis/kedaluwarsa.
+FR-QTA-004
+Sistem harus mengurangi satu kuota untuk pertemuan yang memenuhi rule konsumsi.
+Must
+Debit terhubung ke attendance record/meeting yang unik dan tidak dapat diduplikasi.
+FR-QTA-005
+Sistem harus mencegah saldo kuota menjadi negatif.
+Must
+Transaksi debit ditolak secara atomik bila saldo tidak cukup.
+FR-QTA-006
+Sistem harus melakukan auto-lock absensi/masuk kelas ketika siswa tidak memiliki kuota valid.
+Must
+Tombol/tindakan terkunci; pesan menunjukkan alasan dan jalur pembelian/override.
+FR-QTA-007
+Sistem harus memberi notifikasi ketika saldo mencapai ambang rendah yang dapat dikonfigurasi.
+Must
+Notifikasi tidak dikirim berulang tanpa perubahan kondisi kecuali jadwal reminder mengizinkan.
+FR-QTA-008
+Bila siswa memiliki beberapa saldo, baseline alokasi menggunakan kuota yang paling awal kedaluwarsa.
+Must
+Ledger menunjukkan lot kuota mana yang dikonsumsi; aturan dapat dikonfigurasi.
+FR-QTA-009
+Sistem harus menangani kuota kedaluwarsa dan masa tenggang sesuai kebijakan yang dikonfigurasi.
+Must
+Kuota di luar masa berlaku tidak dapat digunakan dan status diperbarui otomatis.
+FR-QTA-010
+Koreksi kuota harus berupa transaksi reversal/adjustment dengan alasan dan approval, bukan mengubah ledger lama.
+Must
+Saldo dan riwayat dapat direkonsiliasi; nilai sebelum/sesudah tercatat.
+FR-QTA-011
+Sistem harus menyediakan riwayat kuota per siswa serta laporan rekonsiliasi kuota terhadap pembayaran dan absensi.
+Must
+Perbedaan dapat ditelusuri sampai invoice/payment dan attendance sumber.
+FR-QTA-012
+Proses konsumsi atau pengembalian kuota harus idempoten dan aman terhadap permintaan bersamaan.
+Must
+Permintaan berulang dengan kunci yang sama menghasilkan satu transaksi efektif.
+6.7 Presensi Tiga Lapis
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-ATT-001
+Admin Depan harus dapat melakukan check-in kedatangan siswa pada jadwal yang valid.
+Must
+Sistem merekam waktu aktual, petugas, cabang, perangkat/sumber, dan occurrence.
+FR-ATT-002
+Sebelum check-in, sistem harus memeriksa enrollment, jadwal, status siswa, dan kuota valid.
+Must
+Kegagalan validasi menampilkan alasan; override hanya untuk izin khusus.
+FR-ATT-003
+Coach harus dapat memvalidasi siswa masuk kelas dari daftar occurrence yang diajar.
+Must
+Coach hanya dapat mengakses kelasnya; waktu dan aktor validasi tersimpan.
+FR-ATT-004
+Admin Belakang harus dapat memvalidasi siswa pulang setelah kelas.
+Must
+Checkout mencatat waktu aktual dan hanya tersedia untuk siswa yang telah check-in/masuk sesuai rule.
+FR-ATT-005
+Sistem harus mendukung status PRESENT, LATE, ABSENT, EXCUSED, CANCELLED, MAKEUP, dan INCOMPLETE.
+Must
+Status akhir ditentukan konsisten dari validasi dan alasan.
+FR-ATT-006
+Ambang terlambat baseline 15 menit harus dapat dikonfigurasi per cabang/kursus.
+Must
+Sistem menghitung keterlambatan dari jadwal dan waktu masuk kelas.
+FR-ATT-007
+Sistem harus mendeteksi siswa yang sudah check-in tetapi belum divalidasi masuk kelas.
+Must
+Daftar exception tersedia real-time dan dapat memicu notifikasi operasional.
+FR-ATT-008
+Sistem harus mendeteksi siswa yang masuk kelas tetapi belum divalidasi pulang.
+Must
+Daftar exception tersedia pada dashboard admin belakang.
+FR-ATT-009
+Ketidakhadiran atau keterlambatan yang memenuhi rule harus dapat menghasilkan pending make-up secara otomatis.
+Must
+Make-up request dibuat satu kali dengan referensi attendance.
+FR-ATT-010
+Baseline konsumsi kuota dilakukan ketika pertemuan selesai setelah validasi pulang/status final.
+Must
+Satu attendance final menghasilkan maksimal satu debit kuota.
+FR-ATT-011
+Koreksi presensi setelah final harus melalui aksi koreksi berizin, alasan, dan bila perlu approval.
+Must
+Perubahan status, kuota, make-up, dan payroll diproses atomik serta diaudit.
+FR-ATT-012
+Sistem harus mendukung check-in manual, pencarian cepat, dan ekstensi QR/barcode tanpa mengubah aturan bisnis inti.
+Must
+Semua kanal menghasilkan struktur record dan validasi yang sama.
+FR-ATT-013
+Sistem harus mencegah presensi ganda untuk siswa dan occurrence yang sama.
+Must
+Unique constraint/idempotency mencegah record duplikat.
+FR-ATT-014
+Orang tua harus dapat melihat status datang, masuk kelas, pulang, dan riwayat kehadiran anak.
+Must
+Hanya data anak terkait yang ditampilkan dan perubahan dapat memicu notifikasi.
+6.8 Make-up Class
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-MKU-001
+Sistem harus membuat permintaan make-up dari attendance yang memenuhi syarat sesuai alasan dan kebijakan.
+Must
+Satu attendance memiliki maksimal satu permintaan aktif kecuali request sebelumnya dibatalkan.
+FR-MKU-002
+Status make-up harus mendukung PENDING, SCHEDULED, COMPLETED, EXPIRED, CANCELLED, dan REJECTED.
+Must
+Transisi mengikuti state machine dan menyimpan aktor/waktu.
+FR-MKU-003
+Admin operasional harus dapat menjadwalkan make-up ke occurrence yang tersedia atau membuat jadwal khusus.
+Must
+Sistem memeriksa bentrok siswa, coach, ruang, kapasitas, dan periode kelayakan.
+FR-MKU-004
+Baseline target penyelesaian adalah pada minggu yang sama dan dalam 3–4 hari kerja; nilai harus dapat dikonfigurasi.
+Must
+Sistem menampilkan due date dan menandai request yang mendekati/melewati SLA.
+FR-MKU-005
+Sistem harus mengirim reminder untuk make-up pending dan jadwal yang akan datang.
+Must
+Pengiriman tercatat dan tidak menduplikasi notifikasi pada window yang sama.
+FR-MKU-006
+Coach harus dapat memvalidasi pelaksanaan make-up.
+Must
+Validasi menghasilkan attendance MAKEUP yang terhubung ke request dan schedule.
+FR-MKU-007
+Make-up tidak boleh menyebabkan pengurangan kuota ganda untuk pertemuan yang sama.
+Must
+Ledger kuota menunjukkan paling banyak satu konsumsi bersih sesuai rule final.
+FR-MKU-008
+Perubahan atau pembatalan jadwal make-up harus menyimpan alasan dan memberi notifikasi.
+Must
+Riwayat jadwal lama tetap tersedia.
+FR-MKU-009
+Sistem harus mencegah make-up setelah melewati batas kelayakan kecuali override berizin.
+Must
+Override mencatat alasan dan approver.
+FR-MKU-010
+Dashboard harus menampilkan make-up pending, scheduled, due soon, overdue, dan completed.
+Must
+Angka dapat ditelusuri ke daftar detail dan difilter per cabang/coach/periode.
+FR-MKU-011
+Orang tua harus dapat melihat status dan jadwal make-up anak.
+Must
+Informasi sinkron dengan status operasional terbaru.
+FR-MKU-012
+Penyelesaian make-up harus memperbarui laporan kehadiran dan perhitungan meeting coach sesuai konfigurasi.
+Must
+Tidak ada duplikasi meeting pada payroll dan laporan.
+6.9 Billing, Invoice, Pembayaran, dan Rekonsiliasi
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-BIL-001
+Admin berwenang harus dapat membuat invoice dari enrollment, paket, buku, merchandise, biaya lain, diskon, dan pajak bila berlaku.
+Must
+Nomor invoice unik; total dihitung server-side dari item.
+FR-BIL-002
+Invoice harus memiliki status DRAFT, ISSUED, PARTIALLY_PAID, PAID, OVERDUE, VOID, dan REFUNDED.
+Must
+Status diperbarui otomatis dari pembayaran, jatuh tempo, void, dan refund.
+FR-BIL-003
+Invoice yang telah ISSUED tidak boleh diedit langsung; perubahan dilakukan melalui void/reissue atau dokumen koreksi.
+Must
+Data invoice terbit tetap immutable dan audit trail tersedia.
+FR-BIL-004
+Sistem harus mendukung pembayaran tunai, transfer, kartu/EDC, dan metode lain yang dikonfigurasi.
+Must
+Metode dan rekening tujuan tercatat; referensi eksternal opsional/unik sesuai kanal.
+FR-BIL-005
+Pembayaran harus memiliki status PENDING, VERIFIED, REJECTED, REVERSED, dan REFUNDED.
+Must
+Hanya pembayaran VERIFIED yang mengurangi piutang dan mengaktifkan manfaat.
+FR-BIL-006
+Sistem harus mendukung pembayaran sebagian dan alokasi satu pembayaran ke satu atau lebih invoice.
+Must
+Jumlah alokasi tidak melebihi pembayaran; outstanding dihitung benar.
+FR-BIL-007
+Sistem harus menangani pembayaran lebih dengan saldo unapplied/credit sesuai kebijakan.
+Must
+Selisih dapat ditelusuri dan tidak hilang dari rekonsiliasi.
+FR-BIL-008
+Verifikasi pembayaran harus dilakukan oleh peran berizin dan menyimpan waktu, verifier, bukti, serta catatan.
+Must
+Perubahan menghasilkan audit dan posting downstream atomik.
+FR-BIL-009
+Pembayaran paket yang telah diverifikasi harus mengaktifkan kuota sesuai item invoice dan tanggal efektif.
+Must
+Kuota dibuat tepat satu kali dan terhubung ke invoice item/payment.
+FR-BIL-010
+Sistem harus menerbitkan invoice dan kuitansi PDF dengan identitas cabang, nomor, item, total, status, dan informasi pembayaran.
+Must
+Dokumen dapat diunduh dan menghasilkan representasi yang konsisten dengan transaksi.
+FR-BIL-011
+Void pembayaran/invoice harus memerlukan alasan, izin, dan approval sesuai batas nominal.
+Must
+Sistem membuat reversal, mengembalikan outstanding/kuota bila relevan, dan tidak menghapus transaksi asli.
+FR-BIL-012
+Refund harus mendukung pengajuan, persetujuan, pembayaran refund, dan dampak ke kuota/jurnal.
+Must
+Status dan nilai refund dapat direkonsiliasi; dokumen pendukung tersimpan.
+FR-BIL-013
+Diskon harus mengikuti tipe, periode, batas nilai/persen, eligibility, dan approval matrix.
+Must
+Diskon di luar batas ditolak atau meminta approver.
+FR-BIL-014
+Sistem harus menyediakan aging piutang dan reminder invoice belum lunas.
+Must
+Bucket umur dan saldo sesuai tanggal jatuh tempo serta alokasi pembayaran.
+FR-BIL-015
+Sistem harus menyediakan rekonsiliasi pembayaran terhadap invoice, rekening/kas, kuota, dan jurnal.
+Must
+Perbedaan ditampilkan dengan drill-down ke transaksi sumber.
+FR-BIL-016
+Pembuatan pembayaran, alokasi, kuota, dan jurnal harus berada dalam transaksi atomik atau mekanisme event/outbox yang dapat dipulihkan.
+Must
+Kegagalan parsial tidak meninggalkan manfaat aktif tanpa pencatatan keuangan yang sesuai.
+6.10 Keuangan dan Akuntansi
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-FIN-001
+Sistem harus mengelola chart of accounts (COA) berversi dengan kode, nama, tipe akun, parent, status, dan aturan posting.
+Must
+Kode unik; akun header tidak dapat diposting; akun transaksi historis tidak dapat dihapus.
+FR-FIN-002
+Transaksi pembayaran, refund, pengeluaran, payroll, dan persediaan yang relevan harus menghasilkan jurnal otomatis berdasarkan mapping.
+Must
+Jurnal seimbang debit=credit dan memiliki referensi ke transaksi sumber.
+FR-FIN-003
+Admin Keuangan harus dapat membuat jurnal manual dengan workflow DRAFT, SUBMITTED, APPROVED, POSTED, dan REVERSED.
+Must
+Jurnal tidak dapat diposting bila tidak seimbang; pemisahan maker-checker diterapkan sesuai izin.
+FR-FIN-004
+Sistem harus mengelola pengeluaran operasional, vendor, kategori, cabang, bukti, metode pembayaran, dan approval.
+Must
+Pengeluaran yang disetujui dapat diposting ke jurnal dan buku kas.
+FR-FIN-005
+Sistem harus menyediakan buku kas/bank per rekening dan cabang.
+Must
+Saldo awal, mutasi, dan saldo akhir dapat direkonstruksi dari transaksi posted.
+FR-FIN-006
+Jurnal POSTED tidak boleh diedit atau dihapus; koreksi menggunakan reversal dan jurnal pengganti.
+Must
+Audit menunjukkan jurnal asli, reversal, dan replacement.
+FR-FIN-007
+Sistem harus menyediakan periode akuntansi serta proses closing dan reopening berizin.
+Must
+Transaksi ke periode tertutup ditolak kecuali periode dibuka kembali oleh approver.
+FR-FIN-008
+Sistem harus menghasilkan laporan laba rugi, arus kas, pendapatan, pengeluaran, dan rekap per cabang.
+Must
+Nilai laporan dapat ditelusuri ke akun dan jurnal detail.
+FR-FIN-009
+Sistem harus mendukung konsolidasi seluruh cabang dan filter multi-cabang.
+Must
+Total konsolidasi sama dengan agregasi cabang untuk periode yang sama.
+FR-FIN-010
+Sistem harus menyediakan rekonsiliasi modul billing, payroll, inventaris, dan kas terhadap general ledger.
+Must
+Selisih ditampilkan dengan sumber dan status tindak lanjut.
+FR-FIN-011
+Ekspor laporan keuangan harus mempertahankan filter, periode, mata uang IDR, dan metadata pembuatan.
+Must
+PDF/Excel memuat generated_at, generated_by, dan parameter laporan.
+FR-FIN-012
+Hak akses ke data keuangan harus dibatasi berdasarkan fungsi dan cabang.
+Must
+Pengguna tanpa izin tidak dapat melihat nominal atau mengekspor laporan melalui UI maupun API.
+6.11 HR, Strata Gaji, Insentif, dan Payroll
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-HR-001
+Sistem harus mengelola profil kerja karyawan/coach, penempatan cabang, tanggal kerja, status, dan informasi payroll yang diperlukan.
+Must
+Data sensitif hanya terlihat bagi peran HR/Owner berizin.
+FR-HR-002
+Sistem harus mengelola strata gaji berdasarkan rentang jumlah siswa atau parameter lain dengan tanggal efektif.
+Must
+Tidak ada rentang strata aktif yang tumpang tindih untuk skema yang sama.
+FR-HR-003
+Sistem harus menentukan jumlah siswa yang ditangani coach berdasarkan definisi aktif dan tanggal cut-off payroll.
+Must
+Daftar siswa sumber dapat ditinjau dan direkonsiliasi.
+FR-HR-004
+Sistem harus menghitung target meeting dan realisasi meeting coach pada periode payroll.
+Must
+Rincian occurrence/attendance sumber dapat ditelusuri.
+FR-HR-005
+Meeting Percentage dihitung sebagai realisasi meeting dibagi target meeting dikali 100%, dengan penanganan target nol.
+Must
+Formula, pembulatan, dan hasil tampil pada preview payroll.
+FR-HR-006
+Sistem harus menghitung gaji pokok/strata, insentif, potongan, dan komponen lain sesuai aturan berversi.
+Must
+Setiap komponen memiliki rule version dan sumber perhitungan.
+FR-HR-007
+Sistem harus menyediakan preview payroll sebelum pengajuan.
+Must
+HR dapat melihat anomali, total per coach, dan rincian tanpa membuat posting final.
+FR-HR-008
+Workflow payroll harus mendukung DRAFT, CALCULATED, REVIEWED, APPROVED, PAID, dan CANCELLED.
+Must
+Transisi mematuhi izin maker-checker dan merekam aktor/waktu.
+FR-HR-009
+Penyesuaian manual harus memerlukan alasan dan approval sesuai batas nominal.
+Must
+Nilai manual ditandai jelas dan tercatat before/after.
+FR-HR-010
+Payroll APPROVED harus terkunci dari perubahan perhitungan; perubahan memerlukan pembatalan/revision.
+Must
+Versi lama tetap dapat diaudit.
+FR-HR-011
+Payroll PAID harus menghasilkan jurnal penggajian dan mutasi kas sesuai mapping.
+Must
+Nominal jurnal sama dengan payroll net dan komponen terkait.
+FR-HR-012
+Sistem harus menghasilkan slip gaji individual yang hanya dapat diakses karyawan terkait dan HR/Owner berizin.
+Must
+Slip memuat periode, komponen, total, potongan, net, serta identitas perusahaan/cabang.
+FR-HR-013
+Sistem harus menyediakan laporan payroll, insentif, meeting percentage, dan distribusi strata.
+Must
+Laporan dapat difilter cabang/periode/coach dan diekspor.
+FR-HR-014
+Koreksi attendance/make-up setelah payroll ditutup harus masuk ke periode penyesuaian berikutnya atau workflow reopen.
+Must
+Tidak ada perubahan diam-diam pada payroll yang telah approved/paid.
+6.12 Inventaris
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-INV-001
+Sistem harus mengelola master barang dengan SKU unik, nama, kategori, satuan, harga, status, dan batas minimum.
+Must
+SKU unik; barang bertransaksi tidak dapat dihapus.
+FR-INV-002
+Sistem harus mengelola gudang/lokasi stok per cabang.
+Must
+Transaksi stok selalu memiliki lokasi asal/tujuan yang valid.
+FR-INV-003
+Sistem harus mencatat penerimaan stok, sumber/vendor, kuantitas, biaya, bukti, dan tanggal transaksi.
+Must
+Stok bertambah setelah transaksi diposting dan dapat ditelusuri.
+FR-INV-004
+Sistem harus mencatat pengeluaran/penjualan stok dan menghubungkannya ke invoice bila berasal dari penjualan.
+Must
+Stok berkurang tepat satu kali saat transaksi final.
+FR-INV-005
+Sistem harus mencegah stok negatif kecuali kebijakan dan izin khusus mengizinkan.
+Must
+Permintaan ditolak atau override dicatat sesuai konfigurasi.
+FR-INV-006
+Transfer antar-cabang/gudang harus memiliki status DRAFT, SUBMITTED, APPROVED, IN_TRANSIT, RECEIVED, REJECTED, dan CANCELLED.
+Must
+Stok asal/tujuan berubah sesuai status dan tidak diduplikasi.
+FR-INV-007
+Sistem harus menyediakan kartu stok per barang/lokasi.
+Must
+Saldo awal + masuk - keluar = saldo akhir untuk setiap periode.
+FR-INV-008
+Sistem harus memberikan minimum stock alert berdasarkan batas per lokasi.
+Must
+Dashboard/notifikasi menampilkan barang di bawah atau sama dengan batas.
+FR-INV-009
+Sistem harus mendukung stock opname, freeze/cut-off, hitung fisik, variance, approval, dan adjustment.
+Must
+Selisih hanya memengaruhi stok setelah approval dan memiliki alasan.
+FR-INV-010
+Penyesuaian stok harus menggunakan transaksi adjustment/reversal dan bukan mengubah transaksi historis.
+Must
+Riwayat lengkap dan audit tersedia.
+FR-INV-011
+Baseline penilaian persediaan menggunakan moving average; metode final harus dikonfirmasi.
+Must
+Nilai persediaan dan HPP dapat dihitung konsisten dari transaksi posted.
+FR-INV-012
+Sistem harus menyediakan laporan posisi stok, mutasi, barang terlaris, minimum stock, opname, dan selisih.
+Must
+Laporan dapat difilter dan ditelusuri ke transaksi sumber.
+6.13 Notifikasi
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-NTF-001
+Sistem harus menyediakan notification center di aplikasi.
+Must
+Pengguna dapat melihat unread/read, waktu, kategori, dan tautan konteks.
+FR-NTF-002
+Sistem harus mendukung template notifikasi berversi untuk kejadian operasional.
+Must
+Template memiliki variabel tervalidasi dan preview.
+FR-NTF-003
+Kejadian minimum mencakup check-in, masuk kelas, pulang, kuota rendah/habis, invoice, pembayaran, jadwal berubah, make-up, dan stok minimum.
+Must
+Event menghasilkan notifikasi kepada penerima yang tepat sesuai preference dan role.
+FR-NTF-004
+Sistem harus menyimpan status pengiriman QUEUED, SENT, DELIVERED, FAILED, dan READ bila kanal mendukung.
+Must
+Kegagalan dapat dilihat dan dicoba ulang sesuai kebijakan.
+FR-NTF-005
+Email adalah kanal baseline; WhatsApp/SMS/push disiapkan sebagai adapter opsional.
+Must
+Perubahan provider tidak mengubah logika domain.
+FR-NTF-006
+Pengguna harus dapat mengatur preference untuk notifikasi non-wajib.
+Must
+Notifikasi keamanan/transaksional wajib tidak dapat dimatikan bila kebijakan melarang.
+FR-NTF-007
+Sistem harus mencegah spam/duplikasi melalui idempotency dan throttling.
+Must
+Satu event tidak menghasilkan pengiriman ganda pada kanal yang sama.
+FR-NTF-008
+Notifikasi harus mematuhi scope data dan tidak mengekspos informasi sensitif berlebihan.
+Must
+Isi pesan hanya memuat minimum data yang diperlukan.
+6.14 Dashboard dan Pelaporan
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-RPT-001
+Sistem harus menyediakan dashboard Owner untuk seluruh cabang dan filter cabang/periode.
+Must
+KPI total siswa, cabang, pendapatan, kehadiran, kuota, make-up, coach, pengeluaran, dan stok dapat ditampilkan.
+FR-RPT-002
+Dashboard Admin Depan harus menampilkan kedatangan hari ini, pencarian siswa, kuota habis/hampir habis, invoice, dan pembayaran.
+Must
+Kartu dapat ditindaklanjuti ke daftar detail.
+FR-RPT-003
+Dashboard Coach harus menampilkan jadwal, daftar siswa, validasi kelas, ketidakhadiran, make-up, dan meeting percentage.
+Must
+Coach hanya melihat kelas/siswa sesuai scope.
+FR-RPT-004
+Dashboard Admin Belakang harus menampilkan siswa selesai kelas, belum checkout, pending make-up, jadwal, dan ruangan.
+Must
+Status exception diperbarui mendekati real-time.
+FR-RPT-005
+Dashboard Finance/HR/Inventory harus menampilkan KPI sesuai fungsi dan cabang.
+Must
+Nominal/sensitivitas mengikuti permission.
+FR-RPT-006
+Setiap KPI harus memiliki definisi, sumber data, periode, dan aturan refresh yang terdokumentasi.
+Must
+Tooltip/data dictionary tersedia atau dirujuk.
+FR-RPT-007
+Pengguna harus dapat melakukan drill-down dari KPI/grafik ke daftar transaksi sumber.
+Must
+Filter dashboard dibawa ke halaman detail.
+FR-RPT-008
+Laporan harus mendukung filter, sorting, pagination, dan ekspor PDF/Excel/CSV sesuai jenis.
+Must
+Ekspor mempertahankan parameter filter dan zona waktu.
+FR-RPT-009
+Laporan besar harus diproses melalui background job dan dapat diunduh ketika selesai.
+Must
+UI menampilkan status queued/processing/completed/failed.
+FR-RPT-010
+Sistem harus mencatat siapa, kapan, dan parameter apa yang digunakan untuk ekspor sensitif.
+Must
+Audit log dan report job memiliki metadata lengkap.
+FR-RPT-011
+Angka dashboard dan laporan harus konsisten untuk filter serta cut-off yang sama.
+Must
+Uji rekonsiliasi menunjukkan tidak ada selisih di luar aturan pembulatan.
+FR-RPT-012
+Akses laporan harus dibatasi berdasarkan role, action export, cabang, dan sensitivitas.
+Must
+API menolak ekspor di luar izin meskipun URL diketahui.
+6.15 Audit, Konfigurasi, dan Administrasi Sistem
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+FR-ADM-001
+Sistem harus mencatat audit untuk create, update, delete/disable, approve, void, export, login, dan perubahan konfigurasi.
+Must
+Audit memuat aktor, waktu, aksi, objek, ID objek, hasil, before/after, IP, dan correlation ID sejauh tersedia.
+FR-ADM-002
+Audit log harus append-only bagi pengguna aplikasi dan tidak dapat diedit/dihapus melalui UI.
+Must
+Percobaan modifikasi ditolak dan kontrol database membatasi akses.
+FR-ADM-003
+Sistem harus menyediakan pencarian/filter audit berdasarkan pengguna, aksi, modul, objek, cabang, dan periode.
+Must
+Hasil dapat diekspor oleh peran berizin.
+FR-ADM-004
+Sistem harus mengelola konfigurasi global dan per cabang dengan tipe data, default, validasi, dan tanggal efektif.
+Must
+Perubahan konfigurasi divalidasi dan diaudit.
+FR-ADM-005
+Sistem harus menyediakan health check untuk aplikasi, database, cache, queue, dan storage.
+Must
+Endpoint health membedakan status healthy/degraded/unhealthy tanpa mengekspos rahasia.
+FR-ADM-006
+Sistem harus menyediakan job scheduler untuk reminder, expiry, laporan, payroll, dan housekeeping.
+Must
+Setiap job memiliki run history, status, durasi, dan error.
+FR-ADM-007
+Sistem harus mendukung feature flag untuk peluncuran bertahap.
+Must
+Fitur dapat diaktifkan per environment/cabang/role sesuai konfigurasi.
+FR-ADM-008
+Sistem harus menyediakan mekanisme unggah file yang memvalidasi ukuran, tipe, dan malware scanning bila tersedia.
+Must
+File ilegal ditolak; metadata dan checksum disimpan.
+FR-ADM-009
+Sistem harus menyediakan proses arsip/purge sesuai kebijakan retensi dengan approval.
+Must
+Data yang dipurge tidak melanggar referential integrity dan proses tercatat.
+FR-ADM-010
+Sistem harus menyediakan halaman informasi versi aplikasi, status layanan, dan dokumentasi bantuan dasar.
+Must
+Versi frontend/backend dan waktu build dapat diidentifikasi untuk support.
+Aturan Implementasi Lintas Modul: Validasi bisnis wajib dilakukan di backend. UI hanya membantu mencegah kesalahan, tetapi tidak boleh menjadi satu-satunya kontrol. Seluruh aksi finansial, kuota, presensi final, payroll, dan stok harus idempoten, transaksional, dapat diaudit, dan memiliki referensi sumber yang eksplisit.
+7. Spesifikasi Use Case
+Use case berikut merinci interaksi utama yang wajib didukung. Detail layar dapat berubah selama desain UI/UX, tetapi tujuan, aturan bisnis, hasil, dan kontrol tidak boleh hilang tanpa change request.
+UC-01 — Login dan Membuka Dashboard
+Atribut
+Spesifikasi
+Aktor utama
+Seluruh pengguna
+Prasyarat
+Akun ACTIVE; pengguna memiliki kredensial; layanan autentikasi tersedia.
+Pemicu
+Pengguna membuka halaman login dan mengirim kredensial.
+Alur utama
+1) Sistem memvalidasi input. 2) Sistem memeriksa akun dan password. 3) Sistem memeriksa status akun dan rate limit. 4) Sistem menerbitkan access/refresh token. 5) Sistem memuat role, permission, dan scope cabang. 6) Pengguna diarahkan ke dashboard sesuai peran.
+Alur alternatif/exception
+Kredensial salah: ditolak dan percobaan dicatat. Akun terkunci/nonaktif: akses ditolak. Token kedaluwarsa: aplikasi mencoba refresh satu kali; bila gagal kembali ke login.
+Pascakondisi
+Sesi aktif tercipta; login tercatat; pengguna hanya dapat melihat fitur dan data sesuai izin.
+Referensi kebutuhan
+FR-AUTH-001–010; FR-RBAC-002–004
+UC-02 — Mendaftarkan Siswa dan Enrollment
+Atribut
+Spesifikasi
+Aktor utama
+Admin Depan/Admin Operasional
+Prasyarat
+Cabang, kursus, level, kelas, jadwal, coach, serta data orang tua tersedia; aktor memiliki izin create.
+Pemicu
+Calon siswa/orang tua menyetujui pendaftaran.
+Alur utama
+1) Admin mencari kemungkinan duplikat. 2) Admin mengisi profil siswa dan wali. 3) Sistem membuat relasi wali. 4) Admin memilih cabang, kursus, level, dan kelas. 5) Sistem memeriksa kapasitas/bentrok. 6) Sistem membuat enrollment DRAFT/ACTIVE sesuai kebijakan. 7) Sistem menawarkan paket dan pembuatan invoice.
+Alur alternatif/exception
+Data duplikat: gunakan profil lama. Kapasitas penuh/bentrok: pilih kelas lain atau override berizin. Dokumen belum lengkap: simpan DRAFT.
+Pascakondisi
+Profil, relasi wali, dan enrollment tercipta dengan histori serta audit.
+Referensi kebutuhan
+FR-STD-001–010; FR-SCH-003–004; FR-BIL-001
+UC-03 — Membuat Invoice Paket
+Atribut
+Spesifikasi
+Aktor utama
+Admin Depan/Admin Keuangan
+Prasyarat
+Enrollment tersedia; paket dan price list aktif; aktor memiliki izin invoice.create.
+Pemicu
+Orang tua memilih paket 4/8/12 pertemuan atau item lain.
+Alur utama
+1) Sistem mengambil harga efektif. 2) Admin memilih item, jumlah, diskon yang sah, dan jatuh tempo. 3) Sistem menghitung subtotal/total di server. 4) Admin meninjau. 5) Sistem menerbitkan nomor invoice dan status ISSUED. 6) PDF invoice tersedia dan notifikasi dikirim.
+Alur alternatif/exception
+Harga tidak tersedia: penerbitan ditolak. Diskon melebihi batas: menunggu approval. Kesalahan setelah terbit: gunakan void/reissue.
+Pascakondisi
+Invoice immutable terbit; piutang terbentuk; belum ada kuota sampai pembayaran memenuhi rule.
+Referensi kebutuhan
+FR-MST-004–005; FR-BIL-001–003, 010, 013
+UC-04 — Mencatat dan Memverifikasi Pembayaran hingga Kuota Aktif
+Atribut
+Spesifikasi
+Aktor utama
+Admin Depan (pencatatan), Admin Keuangan (verifikasi)
+Prasyarat
+Invoice ISSUED/PARTIALLY_PAID; metode pembayaran aktif.
+Pemicu
+Bukti pembayaran diterima atau pembayaran tunai dilakukan.
+Alur utama
+1) Petugas mencatat pembayaran dan bukti. 2) Sistem memvalidasi jumlah/referensi. 3) Finance memverifikasi. 4) Sistem mengalokasikan pembayaran ke invoice. 5) Status invoice dihitung ulang. 6) Untuk item paket yang memenuhi rule, sistem membuat kuota. 7) Sistem membuat kuitansi dan jurnal. 8) Notifikasi dikirim.
+Alur alternatif/exception
+Pembayaran sebagian: invoice PARTIALLY_PAID; manfaat mengikuti kebijakan. Pembayaran lebih: saldo unapplied. Bukti tidak sah: REJECTED. Kegagalan downstream: seluruh transaksi rollback atau dipulihkan oleh outbox.
+Pascakondisi
+Pembayaran VERIFIED, alokasi, kuota, kuitansi, dan jurnal konsisten serta dapat direkonsiliasi.
+Referensi kebutuhan
+FR-BIL-004–016; FR-QTA-001–003; FR-FIN-002
+UC-05 — Check-in Kedatangan Siswa
+Atribut
+Spesifikasi
+Aktor utama
+Admin Depan
+Prasyarat
+Ada occurrence hari ini; siswa/enrollment aktif; aktor berada pada scope cabang.
+Pemicu
+Siswa datang dan diidentifikasi.
+Alur utama
+1) Admin mencari/scan siswa. 2) Sistem menampilkan jadwal hari ini dan kuota. 3) Sistem memvalidasi status serta saldo. 4) Admin menekan Check-in. 5) Sistem membuat/memperbarui attendance record dan mencatat validasi kedatangan. 6) Orang tua dapat diberi notifikasi.
+Alur alternatif/exception
+Kuota nol/kedaluwarsa: check-in/masuk dikunci sesuai kebijakan dan admin diarahkan ke pembelian paket; override hanya dengan izin. Tidak ada jadwal: petugas memilih exception/menjadwalkan ulang. Sudah check-in: hasil idempoten.
+Pascakondisi
+Status kedatangan tercatat, daftar Coach terbarui, dan audit tersedia.
+Referensi kebutuhan
+FR-ATT-001–002, 012–014; FR-QTA-005–007
+UC-06 — Validasi Masuk Kelas, Pulang, dan Konsumsi Kuota
+Atribut
+Spesifikasi
+Aktor utama
+Coach dan Admin Belakang
+Prasyarat
+Siswa telah check-in; occurrence aktif; coach/admin memiliki scope.
+Pemicu
+Kelas dimulai dan kemudian selesai.
+Alur utama
+1) Coach membuka daftar kelas. 2) Coach menandai masuk/tidak hadir/terlambat. 3) Sistem menghitung status. 4) Setelah kelas, Admin Belakang memvalidasi pulang. 5) Sistem menentukan status final. 6) Sistem mendebit kuota tepat satu kali bila memenuhi rule. 7) Exception dan notifikasi diperbarui.
+Alur alternatif/exception
+Coach tidak memvalidasi: muncul exception. Siswa tidak hadir/terlambat: sistem membuat make-up bila eligible. Koreksi setelah final: workflow correction, reversal kuota, dan approval.
+Pascakondisi
+Attendance final, kuota, make-up, payroll, dan laporan konsisten.
+Referensi kebutuhan
+FR-ATT-003–011; FR-QTA-004, 010, 012; FR-MKU-001
+UC-07 — Menjadwalkan dan Menyelesaikan Make-up Class
+Atribut
+Spesifikasi
+Aktor utama
+Admin Belakang/Coach
+Prasyarat
+Make-up request PENDING dan masih eligible.
+Pemicu
+Admin memilih request pending.
+Alur utama
+1) Sistem menampilkan due date dan kandidat jadwal. 2) Admin memilih/membuat occurrence make-up. 3) Sistem memeriksa bentrok, kapasitas, ruang, coach, dan batas waktu. 4) Request menjadi SCHEDULED dan notifikasi dikirim. 5) Coach melaksanakan serta memvalidasi. 6) Request menjadi COMPLETED dan laporan diperbarui.
+Alur alternatif/exception
+Tidak ada slot: tetap PENDING dan reminder. Melewati SLA: tandai overdue; lewat eligibility: EXPIRED atau override. Pembatalan: kembali PENDING atau CANCELLED sesuai alasan.
+Pascakondisi
+Make-up selesai tanpa pengurangan kuota ganda; histori lengkap.
+Referensi kebutuhan
+FR-MKU-001–012; FR-SCH-003–007
+UC-08 — Mengubah Jadwal atau Coach
+Atribut
+Spesifikasi
+Aktor utama
+Admin Operasional
+Prasyarat
+Jadwal/seri tersedia dan aktor memiliki izin edit.
+Pemicu
+Terjadi perubahan coach, ruang, hari, waktu, atau pembatalan.
+Alur utama
+1) Admin memilih cakupan perubahan. 2) Sistem memvalidasi bentrok/kapasitas/hari libur. 3) Admin memasukkan alasan. 4) Sistem menyimpan occurrence/seri baru sesuai tanggal efektif. 5) Peserta, coach, dan admin diberi notifikasi.
+Alur alternatif/exception
+Jadwal telah memiliki attendance final: histori tidak diubah. Bentrok: ditolak atau override. Coach pengganti: penugasan dan payroll mengikuti occurrence aktual.
+Pascakondisi
+Jadwal masa depan diperbarui; data historis tetap utuh; notifikasi dan audit tersedia.
+Referensi kebutuhan
+FR-SCH-002–010; FR-NTF-003
+UC-09 — Menghitung dan Menyetujui Payroll
+Atribut
+Spesifikasi
+Aktor utama
+Admin HR, Admin Keuangan/Owner sebagai approver
+Prasyarat
+Periode payroll terbuka; data karyawan, strata, attendance, dan meeting lengkap.
+Pemicu
+HR membuat periode dan menjalankan kalkulasi.
+Alur utama
+1) Sistem membekukan cut-off data. 2) Sistem menghitung siswa aktif, target, realisasi, meeting percentage, strata, insentif, dan potongan. 3) HR meninjau exception. 4) Penyesuaian diberi alasan. 5) Payroll diajukan dan disetujui. 6) Slip diterbitkan. 7) Setelah dibayar, jurnal dan mutasi kas dibuat.
+Alur alternatif/exception
+Anomali attendance: perbaiki sebelum approval. Payroll approved perlu koreksi: cancel/revision atau adjustment periode berikutnya. Approval ditolak: kembali ke DRAFT/REVIEWED.
+Pascakondisi
+Payroll terkunci, dapat diaudit, slip tersedia, dan jurnal seimbang.
+Referensi kebutuhan
+FR-HR-001–014; FR-FIN-002–007
+UC-10 — Transfer Stok Antar-Cabang
+Atribut
+Spesifikasi
+Aktor utama
+Admin Inventaris asal/tujuan dan approver
+Prasyarat
+Barang serta gudang aktif; stok tersedia; pengguna memiliki scope.
+Pemicu
+Cabang meminta/mengirim barang.
+Alur utama
+1) Petugas membuat transfer DRAFT. 2) Sistem memeriksa stok. 3) Transfer diajukan/disetujui. 4) Saat dikirim, stok asal dipindahkan ke in-transit. 5) Cabang tujuan menerima dan mengonfirmasi kuantitas. 6) Sistem menambah stok tujuan dan menutup transfer.
+Alur alternatif/exception
+Stok kurang: ditolak. Jumlah diterima berbeda: catat discrepancy dan approval. Transfer dibatalkan sebelum kirim: tidak ada mutasi. Barang hilang/rusak: gunakan adjustment beralasan.
+Pascakondisi
+Kartu stok asal/tujuan dan in-transit konsisten; audit lengkap.
+Referensi kebutuhan
+FR-INV-005–010
+UC-11 — Menghasilkan dan Mengekspor Laporan
+Atribut
+Spesifikasi
+Aktor utama
+Owner/Admin sesuai izin
+Prasyarat
+Data tersedia; aktor memiliki report.view dan bila perlu report.export.
+Pemicu
+Pengguna memilih laporan, filter, dan format.
+Alur utama
+1) Sistem memvalidasi scope/filter. 2) Sistem menghitung query menggunakan cut-off yang konsisten. 3) Untuk laporan ringan hasil tampil langsung; laporan besar dibuat sebagai job. 4) File memuat metadata filter dan generator. 5) Ekspor sensitif dicatat.
+Alur alternatif/exception
+Data terlalu besar: background job. Tidak ada data: ekspor berisi header dan keterangan. Izin tidak cukup: ditolak. Job gagal: status FAILED dan dapat dicoba ulang.
+Pascakondisi
+File dapat diunduh, angka dapat ditelusuri, dan tindakan ekspor diaudit.
+Referensi kebutuhan
+FR-RPT-001–012; FR-ADM-001–003
+UC-12 — Orang Tua Memantau Anak
+Atribut
+Spesifikasi
+Aktor utama
+Orang Tua/Wali
+Prasyarat
+Akun wali terhubung ke siswa dan aktif.
+Pemicu
+Wali membuka portal.
+Alur utama
+1) Sistem menampilkan anak yang terhubung. 2) Wali memilih anak. 3) Sistem menampilkan jadwal, sisa kuota, kehadiran, status make-up, invoice, pembayaran, dan notifikasi. 4) Wali dapat mengunduh invoice/kuitansi yang menjadi haknya.
+Alur alternatif/exception
+Akun belum terhubung: tampilkan bantuan verifikasi. Data anak lain: backend menolak. Dokumen belum tersedia: tampilkan status proses.
+Pascakondisi
+Wali memperoleh informasi real-time tanpa akses ke data siswa lain atau data internal sensitif.
+Referensi kebutuhan
+FR-STD-008–009; FR-ATT-014; FR-MKU-011; FR-BIL-010; FR-NTF-001
+8. Aturan Bisnis, Status, dan Formula
+8.1 Aturan Bisnis Utama
+ID
+Aturan
+BR-001
+Setiap transaksi operasional harus memiliki cabang sumber; transaksi lintas cabang harus mencatat cabang asal dan tujuan.
+BR-002
+Data historis yang telah menjadi sumber transaksi tidak boleh dihapus fisik; gunakan status nonaktif, soft delete, reversal, atau versi baru.
+BR-003
+Setiap pembayaran harus terhubung ke invoice/alokasi atau tercatat sebagai unapplied credit yang dapat direkonsiliasi.
+BR-004
+Setiap penambahan/pengurangan kuota harus memiliki source_type dan source_id yang sah.
+BR-005
+Saldo kuota dan stok tidak boleh negatif kecuali kebijakan override yang eksplisit, berizin, dan diaudit.
+BR-006
+Satu siswa hanya memiliki satu attendance record per occurrence; setiap tahap validasi memiliki aktor dan timestamp.
+BR-007
+Baseline pengurangan kuota dilakukan setelah pertemuan selesai/status final, bukan hanya saat siswa datang.
+BR-008
+Tidak hadir atau terlambat di atas ambang dapat membuat make-up request; eligibility final mengikuti kebijakan DIPA.
+BR-009
+Make-up tidak boleh menghasilkan konsumsi kuota ganda untuk kewajiban pertemuan yang sama.
+BR-010
+Invoice terbit, jurnal posted, payroll approved/paid, dan transaksi stok posted bersifat immutable; koreksi menggunakan reversal/versi baru.
+BR-011
+Aksi approval tidak boleh dilakukan oleh pembuat transaksi apabila maker-checker diwajibkan oleh approval matrix.
+BR-012
+Harga, strata, formula, dan konfigurasi yang berdampak finansial harus berversi serta memiliki periode efektif.
+BR-013
+Waktu transaksi disimpan dalam UTC dan ditampilkan menggunakan zona waktu cabang/pengguna; tanggal bisnis mengikuti cabang.
+BR-014
+Seluruh nominal menggunakan mata uang IDR dan disimpan dengan tipe desimal presisi; tidak menggunakan floating point biner.
+BR-015
+Semua endpoint mutasi kritis menggunakan idempotency key atau unique business constraint untuk mencegah duplikasi.
+BR-016
+Scope akses selalu divalidasi oleh backend; ID record yang valid tidak otomatis memberi hak akses.
+8.2 State Machine Entitas Kritis
+Entitas
+Status
+Aturan Transisi Ringkas
+Pengguna
+ACTIVE, INACTIVE, LOCKED
+ACTIVE→INACTIVE/LOCKED; LOCKED→ACTIVE oleh admin/expiry; INACTIVE→ACTIVE.
+Enrollment
+DRAFT, ACTIVE, SUSPENDED, COMPLETED, TRANSFERRED, CANCELLED, WITHDRAWN
+Transisi berdasarkan validasi administrasi dan tanggal efektif.
+Invoice
+DRAFT, ISSUED, PARTIALLY_PAID, PAID, OVERDUE, VOID, REFUNDED
+DRAFT dapat diedit; setelah ISSUED hanya pembayaran, void, refund, atau reissue.
+Payment
+PENDING, VERIFIED, REJECTED, REVERSED, REFUNDED
+Hanya VERIFIED memengaruhi piutang/kuota/jurnal.
+Kuota
+PENDING, ACTIVE, EXHAUSTED, EXPIRED, CANCELLED
+Aktif setelah trigger sah; EXHAUSTED saat saldo 0; EXPIRED saat melewati masa berlaku.
+Attendance
+PLANNED, CHECKED_IN, IN_CLASS, COMPLETED, ABSENT, EXCUSED, CANCELLED, INCOMPLETE
+Validasi tiga lapis dan koreksi menentukan status final.
+Make-up
+PENDING, SCHEDULED, COMPLETED, EXPIRED, CANCELLED, REJECTED
+Jadwal valid mengubah PENDING→SCHEDULED; validasi coach→COMPLETED.
+Payroll
+DRAFT, CALCULATED, REVIEWED, APPROVED, PAID, CANCELLED
+APPROVED terkunci; PAID menghasilkan jurnal/kas.
+Transfer Stok
+DRAFT, SUBMITTED, APPROVED, IN_TRANSIT, RECEIVED, REJECTED, CANCELLED
+Mutasi stok mengikuti tahap pengiriman dan penerimaan.
+Jurnal
+DRAFT, SUBMITTED, APPROVED, POSTED, REVERSED
+POSTED immutable; koreksi melalui REVERSED dan jurnal baru.
+8.3 Formula dan Pembulatan
+Formula
+Definisi
+Aturan
+Outstanding Invoice
+Total invoice − total alokasi pembayaran VERIFIED + reversal/refund yang mengembalikan piutang.
+IDR; hasil minimum 0 kecuali credit note terpisah.
+Saldo Kuota
+Σ kredit kuota posted − Σ debit kuota posted.
+Bilangan pertemuan; tidak negatif.
+Meeting Percentage
+Realisasi meeting ÷ target meeting × 100%.
+Target 0 mengikuti konfigurasi: 0% atau N/A; default N/A.
+Gaji Bersih
+Gaji pokok/strata + insentif + tunjangan − potongan.
+IDR; pembulatan per komponen sesuai aturan payroll.
+Saldo Stok
+Saldo awal + penerimaan + transfer masuk + adjustment positif − pengeluaran − transfer keluar − adjustment negatif.
+Kuantitas sesuai presisi satuan.
+Laba/Rugi
+Pendapatan posted − beban posted pada periode/cabang.
+Berdasarkan COA dan basis akuntansi yang disetujui.
+Moving Average Cost
+(Nilai stok lama + nilai penerimaan) ÷ (kuantitas lama + kuantitas penerimaan).
+Presisi internal ≥4 desimal; penyajian IDR dibulatkan.
+Waktu Keterlambatan
+Maks(0, waktu validasi masuk kelas − waktu mulai jadwal).
+Menit; ambang baseline 15 menit.
+Parameter yang Masih Memerlukan Keputusan: Formula payroll final, waktu konsumsi kuota, kelayakan make-up, metode penilaian stok, basis laporan keuangan, dan aturan refund dicatat dalam Register Keputusan/TBD pada Bab 22. Developer tidak boleh mengasumsikan nilai final tanpa persetujuan Product Owner.
+9. Alur Proses Bisnis
+Diagram berikut menjadi baseline BPMN/flowchart. Implementasi harus mempertahankan kontrol validasi, approval, audit, dan rekonsiliasi yang dinyatakan dalam uraian.
+9.1 Pembelian Paket, Pembayaran, dan Aktivasi Kuota
+Gambar 9-1. Alur pembelian paket hingga kuota aktif
+Titik kontrol utama: harga efektif, invoice immutable setelah terbit, verifikasi pembayaran, posting atomik ke alokasi–kuota–jurnal, serta notifikasi dan kuitansi.
+9.2 Presensi Tiga Lapis dan Konsumsi Kuota
+Gambar 9-2. Check-in Admin Depan, validasi Coach, dan checkout Admin Belakang
+Exception wajib dimonitor: datang tetapi tidak masuk kelas, masuk kelas tetapi belum pulang, kuota tidak valid, presensi ganda, dan koreksi setelah status final.
+9.3 Make-up Class
+Gambar 9-3. Alur permintaan, penjadwalan, reminder, dan penyelesaian make-up
+SLA baseline 3–4 hari kerja dan target minggu yang sama harus dapat dikonfigurasi. Penjadwalan wajib memeriksa bentrok dan tidak boleh menggandakan konsumsi kuota.
+9.4 Payroll Coach
+Gambar 9-4. Perhitungan strata, meeting percentage, approval, dan pembayaran payroll
+Cut-off data, versi formula, maker-checker, dan keterlacakan ke attendance merupakan kontrol utama agar payroll dapat diaudit.
+9.5 Inventaris dan Transfer Antar-Cabang
+Gambar 9-5. Siklus stok masuk, keluar, transfer, dan stock opname
+Transaksi stok harus posted, tidak diubah langsung, dan direkonsiliasi melalui kartu stok serta stock opname.
+9.6 RACI Proses Utama
+Proses
+R (Pelaksana)
+A (Penanggung Jawab)
+C (Konsultasi)
+I (Informasi)
+Pendaftaran siswa
+Admin Depan
+Admin Operasional
+Orang Tua, Coach
+Owner
+Penerbitan invoice
+Admin Depan/Finance
+Finance/Owner sesuai limit
+Orang Tua
+Owner
+Verifikasi pembayaran
+Finance
+Finance/Owner
+Admin Depan, Orang Tua
+Owner
+Check-in siswa
+Admin Depan
+Admin Operasional
+Coach, Orang Tua
+Owner
+Validasi masuk kelas
+Coach
+Admin Operasional
+Admin Depan/Belakang
+Owner
+Validasi pulang
+Admin Belakang
+Admin Operasional
+Coach, Orang Tua
+Owner
+Penjadwalan make-up
+Admin Belakang
+Admin Operasional
+Coach, Orang Tua
+Owner
+Payroll
+HR
+Owner/Finance
+Coach
+Owner
+Pengeluaran
+Finance
+Owner sesuai limit
+Unit pemohon
+Owner
+Transfer stok
+Inventory Admin
+Inventory Lead/Owner
+Cabang asal/tujuan
+Owner
+Closing periode
+Finance
+Owner/Finance Lead
+HR, Inventory
+Owner
+Perubahan role/permission
+Super Admin
+Owner/System Owner
+Pemilik proses
+Audit/Owner
+10. Desain Data dan Basis Data
+10.1 Prinsip Desain Data
+PostgreSQL digunakan sebagai source of truth transaksional; Prisma ORM digunakan untuk schema, migration, dan akses type-safe.
+Primary key direkomendasikan UUID; seluruh tabel transaksi memiliki created_at, updated_at, created_by/updated_by bila relevan, branch_id, status, dan version untuk optimistic locking.
+Penghapusan fisik dibatasi. Entitas master memakai is_active/deleted_at; transaksi posted memakai reversal atau versi baru.
+Ledger digunakan untuk kuota, stok, dan akuntansi agar saldo dapat direkonstruksi.
+Nilai uang menggunakan NUMERIC/DECIMAL; timestamp disimpan UTC; tanggal bisnis menggunakan DATE dan zona waktu cabang.
+Foreign key, unique constraint, check constraint, dan index wajib menjadi lapisan integritas selain validasi aplikasi.
+Data multi-cabang dipisahkan secara logis dengan branch_id dan selalu difilter berdasarkan scope akses.
+Gambar 10-1. ERD konseptual tingkat tinggi
+10.2 Konvensi Tipe dan Kolom Audit
+Kategori
+Tipe Rekomendasi
+Ketentuan
+ID
+UUID
+Generated server-side; tidak bermakna bisnis.
+Kode bisnis
+VARCHAR(20–50)
+Unik dalam scope yang didefinisikan; contoh nomor siswa, SKU, invoice.
+Nama/deskripsi
+VARCHAR/TEXT
+Panjang sesuai kebutuhan; trim; Unicode.
+Uang
+NUMERIC(18,2)
+IDR; presisi internal tertentu dapat NUMERIC(18,4).
+Kuantitas
+NUMERIC(18,4)
+Mendukung satuan pecahan bila diperlukan.
+Tanggal
+DATE
+Tanggal bisnis tanpa waktu.
+Waktu
+TIMESTAMPTZ
+Disimpan UTC.
+Status
+ENUM atau VARCHAR + CHECK
+Nilai eksplisit; perubahan melalui service domain.
+Soft delete
+deleted_at TIMESTAMPTZ NULL
+Tidak digunakan pada ledger posted.
+Optimistic lock
+version INTEGER
+Bertambah setiap update untuk mencegah lost update.
+Audit umum
+created_at, created_by, updated_at, updated_by
+Wajib pada entitas mutable.
+10.3 Kamus Data Inti
+Entitas
+Field Kunci
+Relasi/Kendala Utama
+branches
+id; code; name; address; phone; timezone; manager_id; is_active
+code unik; parent organisasi; direferensikan hampir seluruh transaksi.
+users
+id; branch_id; email; username; password_hash; status; last_login_at
+email/username unik; tidak menyimpan password plaintext.
+roles
+id; code; name; description; is_system
+code unik; role sistem tidak dapat dihapus.
+permissions
+id; code; module; action; description
+code unik, contoh attendance.approve.
+user_roles
+user_id; role_id; branch_scope; effective_from/to
+unique user-role-scope aktif.
+role_permissions
+role_id; permission_id
+PK gabungan; mapping RBAC.
+refresh_tokens
+id; user_id; token_hash; expires_at; revoked_at; device_info
+token_hash unik; rotasi dan pencabutan.
+audit_logs
+id; actor_id; branch_id; action; entity_type/id; before_json; after_json; ip; correlation_id
+append-only; index waktu/aktor/entitas.
+employees
+id; employee_no; user_id; branch_id; name; employment_status; join_date
+employee_no unik; data HR.
+coaches
+id; employee_id; specialty; level_capabilities; payroll_scheme_id; is_active
+satu employee dapat menjadi coach.
+students
+id; student_no; branch_id; name; birth_date; address; status
+student_no unik; data personal terbatas.
+parents
+id; user_id; name; phone; email; address; verification_status
+user_id opsional hingga portal diaktifkan.
+student_parent_links
+student_id; parent_id; relationship; is_primary; notification_flags
+PK gabungan; minimal satu wali utama bila diwajibkan.
+courses
+id; code; name; category; meeting_duration_min; is_active
+code unik.
+course_levels
+id; course_id; code; name; sequence; is_active
+unik course_id + code.
+classrooms
+id; branch_id; code; name; capacity; is_active
+unik branch_id + code.
+class_groups
+id; branch_id; course_level_id; code; capacity; primary_coach_id; status
+unik dalam cabang; kapasitas positif.
+class_schedules
+id; class_group_id; occurrence_date; start_at; end_at; room_id; coach_id; series_id; status
+constraint start<end; index coach/room/date.
+enrollments
+id; student_id; class_group_id; course_level_id; start_date; end_date; status; transfer_from_id
+mencegah enrollment aktif duplikat.
+holidays
+id; branch_id; holiday_date; name; type
+unik branch+date+type.
+packages
+id; code; course_id/level_id; meeting_count; validity_days; is_active
+meeting_count >0; code unik.
+price_lists
+id; branch_id; package_id/item_type; amount; effective_from/to; status
+tidak ada periode aktif tumpang tindih.
+invoices
+id; invoice_no; branch_id; student_id; parent_id; issue_date; due_date; status; subtotal; discount; tax; total
+invoice_no unik; total >=0; immutable setelah ISSUED.
+invoice_items
+id; invoice_id; item_type; item_id; description; qty; unit_price; discount; line_total
+line_total dihitung server; referensi item.
+payments
+id; payment_no; branch_id; payer_id; paid_at; method_id; amount; status; reference_no; proof_file_id
+payment_no unik; amount>0; referensi kanal unik bila perlu.
+payment_allocations
+id; payment_id; invoice_id; allocated_amount
+Σ alokasi <= payment.amount; amount>0.
+student_quotas
+id; student_id; enrollment_id; package_id; source_invoice_item_id; initial_qty; balance_qty; active_at; expires_at; status
+balance 0..initial+adjustment; lot kuota.
+quota_transactions
+id; quota_id; type; quantity; source_type; source_id; posted_at; reversal_of_id
+append-only; unique sumber untuk debit attendance.
+attendance_sessions
+id; schedule_id; opened_at; closed_at; opened_by; status
+satu session per occurrence.
+attendance_records
+id; session_id; student_id; enrollment_id; status; checkin_at; inclass_at; checkout_at; late_minutes
+unique session+student; status final konsisten.
+attendance_validations
+id; attendance_id; stage; actor_id; validated_at; result; notes
+stage CHECKIN/IN_CLASS/CHECKOUT/CORRECTION.
+makeup_requests
+id; attendance_id; student_id; reason_id; requested_at; due_date; status; eligibility_expires_at
+maksimal satu aktif per attendance.
+makeup_schedules
+id; request_id; schedule_id/custom_start; coach_id; room_id; status; completed_at
+satu jadwal aktif per request.
+accounts
+id; code; name; type; parent_id; normal_balance; is_postable; is_active
+COA; code unik; tree.
+journal_entries
+id; journal_no; branch_id; date; source_type/id; description; status; posted_at; reversal_of_id
+journal_no unik; posted immutable.
+journal_entry_details
+id; journal_id; account_id; debit; credit; dimension_json
+debit xor credit; total seimbang per jurnal.
+expenses
+id; expense_no; branch_id; vendor_id; category_id; date; amount; status; proof_file_id
+amount>0; approval dan jurnal.
+salary_tiers
+id; scheme_id; min_students; max_students; base_amount; effective_from/to
+rentang tidak tumpang tindih.
+payroll_periods
+id; code; start_date; end_date; cutoff_at; status
+periode unik dan tidak tumpang tindih sesuai kebijakan.
+payrolls
+id; period_id; employee_id; branch_id; status; gross; deductions; net; approved_at; paid_at
+unique period+employee+version.
+payroll_details
+id; payroll_id; component_code; type; quantity; rate; amount; source_json
+rincian komponen dan sumber.
+coach_incentives
+id; payroll_id; coach_id; target_meetings; actual_meetings; percentage; amount
+terhubung ke detail occurrence.
+products
+id; sku; name; category_id; unit_id; sale_price; min_stock_default; is_active
+SKU unik.
+warehouses
+id; branch_id; code; name; is_active
+unik branch+code.
+inventory_stocks
+warehouse_id; product_id; quantity; avg_cost; version
+PK gabungan; cache saldo yang direkonsiliasi ke ledger.
+inventory_transactions
+id; warehouse_id; product_id; type; qty; unit_cost; source_type/id; posted_at; reversal_of_id
+append-only; qty>0; sumber unik.
+stock_transfers
+id; transfer_no; from_warehouse_id; to_warehouse_id; status; shipped_at; received_at
+from ≠ to; transfer_no unik.
+stock_transfer_items
+id; transfer_id; product_id; requested_qty; shipped_qty; received_qty; notes
+kuantitas tidak negatif.
+stock_opnames
+id; warehouse_id; opname_no; cutoff_at; status; approved_at
+satu opname aktif per gudang bila freeze.
+stock_opname_items
+id; opname_id; product_id; system_qty; counted_qty; variance_qty; adjustment_tx_id
+variance=counted-system.
+notifications
+id; recipient_user_id; type; title; body; context_type/id; status; read_at
+scope penerima; index unread.
+notification_deliveries
+id; notification_id; channel; provider; status; attempts; sent_at; error
+idempotency key per event-channel.
+files
+id; storage_key; original_name; mime_type; size; checksum; classification; uploaded_by
+storage_key unik; validasi/scan.
+system_settings
+id; key; scope_type/id; value_json; data_type; effective_from; is_secret
+key unik per scope; secret terenkripsi.
+report_jobs
+id; requested_by; report_code; parameters_json; format; status; file_id; started_at; completed_at
+job asynchronous dan audit ekspor.
+10.4 Index, Constraint, dan Partisi
+Jenis
+Rekomendasi
+Unique
+users.email/username; branches.code; students.student_no; employees.employee_no; invoices.invoice_no; payments.payment_no; products.sku; journal_entries.journal_no.
+Pencarian
+students(name, phone melalui wali); audit_logs(created_at, actor_id, entity_type/id); schedules(date, branch, coach, room); invoices(status, due_date, branch).
+Transaksi
+attendance(session_id, student_id); quota_transactions(quota_id, posted_at); inventory_transactions(warehouse_id, product_id, posted_at); journal details(journal_id).
+Partial index
+Record aktif: deleted_at IS NULL atau is_active=true; invoice outstanding; notification unread.
+Check constraint
+Jumlah/nominal positif; start_at<end_at; debit/credit valid; status dalam enumerasi; from_warehouse≠to_warehouse.
+Partisi opsional
+audit_logs, notifications, journal_entries/details, inventory_transactions, quota_transactions dapat dipartisi bulanan/tahunan bila volume membesar.
+10.5 Transaksi, Locking, dan Konsistensi
+Gunakan database transaction untuk pembayaran–alokasi–kuota–jurnal; presensi final–debit kuota–make-up; payroll–jurnal; dan mutasi stok.
+Gunakan row-level lock atau optimistic concurrency pada saldo kuota dan stok untuk mencegah overspend/negative balance.
+Gunakan idempotency key pada endpoint pembayaran, presensi, posting, ekspor, webhook, dan job yang dapat dicoba ulang.
+Gunakan transactional outbox untuk event lintas layanan/worker sehingga notifikasi atau posting asynchronous tidak hilang setelah commit.
+Setiap reconciliation job hanya melaporkan selisih dan tidak memperbaiki data otomatis tanpa aturan/approval yang eksplisit.
+11. Spesifikasi API
+11.1 Konvensi API
+Aspek
+Ketentuan
+Base URL
+/api/v1
+Format
+REST JSON; UTF-8; nama field camelCase pada kontrak eksternal, snake_case di database.
+Autentikasi
+Bearer access token atau HttpOnly cookie sesuai arsitektur frontend; refresh token diproteksi.
+Otorisasi
+Permission + scope cabang diperiksa pada setiap endpoint terproteksi.
+Pagination
+page, pageSize atau cursor; respons menyertakan meta total/nextCursor.
+Filter/sort
+Query parameter tervalidasi; whitelist field sort/filter untuk mencegah abuse.
+Idempotency
+Header Idempotency-Key untuk mutasi kritis; server menyimpan hasil sesuai TTL.
+Correlation
+Header X-Correlation-ID diterima/dibuat dan diteruskan ke log/audit/event.
+Waktu
+ISO-8601; timestamp UTC; tanggal bisnis YYYY-MM-DD.
+Error
+Struktur konsisten: code, message, details, correlationId; tanpa stack trace di production.
+Versioning
+Major version pada path; perubahan breaking membutuhkan /v2 atau masa deprecation.
+Dokumentasi
+OpenAPI/Swagger tersedia di environment non-public atau dilindungi.
+11.2 Katalog Endpoint Minimum
+Metode
+Endpoint
+Izin Minimum
+Tujuan
+POST
+/auth/login
+Publik
+Login dan menerbitkan sesi.
+POST
+/auth/refresh
+Refresh token
+Rotasi refresh token.
+POST
+/auth/logout
+Authenticated
+Mencabut sesi saat ini.
+POST
+/auth/logout-all
+Authenticated
+Mencabut seluruh sesi pengguna.
+POST
+/auth/forgot-password
+Publik
+Meminta reset password.
+POST
+/auth/reset-password
+Publik + token
+Mengatur password baru.
+GET
+/auth/me
+Authenticated
+Profil, role, permission, scope.
+GET
+/auth/sessions
+Authenticated
+Daftar sesi aktif sendiri.
+DELETE
+/auth/sessions/{id}
+Authenticated
+Mencabut sesi tertentu.
+GET
+/users
+user.view
+Daftar pengguna sesuai scope.
+POST
+/users
+user.create
+Membuat akun.
+GET
+/users/{id}
+user.view
+Detail akun.
+PATCH
+/users/{id}
+user.edit
+Mengubah profil/status.
+POST
+/users/{id}/roles
+user.assignRole
+Menetapkan role/scope.
+DELETE
+/users/{id}/roles/{roleId}
+user.assignRole
+Melepas role.
+GET
+/roles
+role.view
+Daftar role.
+POST
+/roles
+role.create
+Membuat role custom.
+PATCH
+/roles/{id}
+role.edit
+Mengubah role.
+PUT
+/roles/{id}/permissions
+role.configure
+Mengganti permission role.
+GET
+/permissions
+role.view
+Katalog permission.
+GET
+/access-reviews
+access.export
+Laporan akses.
+GET
+/branches
+branch.view
+Daftar cabang.
+POST
+/branches
+branch.create
+Membuat cabang.
+GET
+/branches/{id}
+branch.view
+Detail cabang.
+PATCH
+/branches/{id}
+branch.edit
+Mengubah cabang.
+GET
+/classrooms
+classroom.view
+Daftar ruang.
+POST
+/classrooms
+classroom.create
+Membuat ruang.
+PATCH
+/classrooms/{id}
+classroom.edit
+Mengubah ruang.
+GET
+/courses
+course.view
+Daftar kursus.
+POST
+/courses
+course.create
+Membuat kursus.
+PATCH
+/courses/{id}
+course.edit
+Mengubah kursus.
+GET
+/course-levels
+course.view
+Daftar level.
+POST
+/course-levels
+course.create
+Membuat level.
+GET
+/holidays
+calendar.view
+Kalender libur.
+POST
+/holidays
+calendar.configure
+Menambah hari libur.
+GET
+/settings
+settings.view
+Konfigurasi efektif.
+PUT
+/settings/{key}
+settings.configure
+Mengubah konfigurasi.
+GET
+/students
+student.view
+Cari/daftar siswa.
+POST
+/students
+student.create
+Membuat siswa.
+GET
+/students/{id}
+student.view
+Profil 360° siswa.
+PATCH
+/students/{id}
+student.edit
+Mengubah siswa.
+POST
+/students/import
+student.import
+Impor siswa.
+GET
+/students/imports/{jobId}
+student.import
+Status impor.
+GET
+/parents
+parent.view
+Daftar wali.
+POST
+/parents
+parent.create
+Membuat wali.
+PATCH
+/parents/{id}
+parent.edit
+Mengubah wali.
+POST
+/students/{id}/parents
+student.edit
+Menghubungkan wali.
+DELETE
+/students/{id}/parents/{parentId}
+student.edit
+Melepas wali.
+GET
+/employees
+employee.view
+Daftar karyawan.
+POST
+/employees
+employee.create
+Membuat karyawan.
+PATCH
+/employees/{id}
+employee.edit
+Mengubah karyawan.
+GET
+/coaches
+coach.view
+Daftar coach.
+POST
+/coaches
+coach.create
+Membuat profil coach.
+PATCH
+/coaches/{id}
+coach.edit
+Mengubah coach.
+GET
+/class-groups
+class.view
+Daftar kelas/grup.
+POST
+/class-groups
+class.create
+Membuat kelas.
+GET
+/class-groups/{id}
+class.view
+Detail kelas.
+PATCH
+/class-groups/{id}
+class.edit
+Mengubah kelas.
+GET
+/enrollments
+enrollment.view
+Daftar enrollment.
+POST
+/enrollments
+enrollment.create
+Mendaftarkan siswa.
+GET
+/enrollments/{id}
+enrollment.view
+Detail enrollment.
+PATCH
+/enrollments/{id}
+enrollment.edit
+Mengubah enrollment/status.
+POST
+/enrollments/{id}/transfer
+enrollment.transfer
+Transfer kelas/cabang.
+GET
+/schedules
+schedule.view
+Kalender/list jadwal.
+POST
+/schedules
+schedule.create
+Membuat jadwal/seri.
+GET
+/schedules/{id}
+schedule.view
+Detail occurrence.
+PATCH
+/schedules/{id}
+schedule.edit
+Mengubah jadwal dan scope seri.
+POST
+/schedules/{id}/cancel
+schedule.cancel
+Membatalkan occurrence/seri.
+POST
+/schedules/{id}/substitute-coach
+schedule.edit
+Menetapkan coach pengganti.
+GET
+/schedules/conflicts
+schedule.view
+Memeriksa bentrok.
+GET
+/packages
+package.view
+Daftar paket.
+POST
+/packages
+package.create
+Membuat paket.
+PATCH
+/packages/{id}
+package.edit
+Mengubah paket.
+GET
+/price-lists
+price.view
+Daftar harga.
+POST
+/price-lists
+price.create
+Membuat versi harga.
+PATCH
+/price-lists/{id}
+price.edit
+Mengubah harga draft/masa depan.
+GET
+/invoices
+invoice.view
+Daftar invoice.
+POST
+/invoices
+invoice.create
+Membuat invoice draft.
+GET
+/invoices/{id}
+invoice.view
+Detail invoice.
+PATCH
+/invoices/{id}
+invoice.edit
+Mengubah invoice draft.
+POST
+/invoices/{id}/issue
+invoice.issue
+Menerbitkan invoice.
+POST
+/invoices/{id}/void
+invoice.void
+Void invoice.
+GET
+/invoices/{id}/pdf
+invoice.view
+Unduh PDF invoice.
+GET
+/payments
+payment.view
+Daftar pembayaran.
+POST
+/payments
+payment.create
+Mencatat pembayaran.
+GET
+/payments/{id}
+payment.view
+Detail pembayaran.
+POST
+/payments/{id}/verify
+payment.approve
+Verifikasi pembayaran.
+POST
+/payments/{id}/reject
+payment.approve
+Menolak pembayaran.
+POST
+/payments/{id}/reverse
+payment.void
+Reversal pembayaran.
+GET
+/payments/{id}/receipt
+payment.view
+Unduh kuitansi.
+POST
+/refunds
+refund.create
+Mengajukan refund.
+POST
+/refunds/{id}/approve
+refund.approve
+Menyetujui refund.
+POST
+/refunds/{id}/pay
+refund.pay
+Membayar refund.
+GET
+/students/{id}/quotas
+quota.view
+Saldo dan lot kuota siswa.
+GET
+/students/{id}/quota-ledger
+quota.view
+Ledger kuota.
+POST
+/quotas/{id}/adjustments
+quota.adjust
+Adjustment/reversal kuota.
+GET
+/quota-reconciliations
+quota.reconcile
+Rekonsiliasi kuota.
+GET
+/attendance/sessions
+attendance.view
+Daftar sesi presensi.
+POST
+/attendance/check-in
+attendance.checkin
+Validasi datang.
+POST
+/attendance/in-class
+attendance.inclass
+Validasi masuk kelas.
+POST
+/attendance/check-out
+attendance.checkout
+Validasi pulang.
+POST
+/attendance/{id}/mark-absent
+attendance.inclass
+Menandai tidak hadir.
+POST
+/attendance/{id}/correct
+attendance.correct
+Koreksi presensi final.
+GET
+/attendance/exceptions
+attendance.view
+Daftar exception real-time.
+GET
+/students/{id}/attendance
+attendance.view
+Riwayat siswa.
+GET
+/makeup-requests
+makeup.view
+Daftar make-up.
+POST
+/makeup-requests
+makeup.create
+Membuat request manual sah.
+GET
+/makeup-requests/{id}
+makeup.view
+Detail request.
+POST
+/makeup-requests/{id}/schedule
+makeup.schedule
+Menjadwalkan make-up.
+POST
+/makeup-requests/{id}/reschedule
+makeup.schedule
+Reschedule.
+POST
+/makeup-requests/{id}/complete
+makeup.complete
+Menyelesaikan.
+POST
+/makeup-requests/{id}/cancel
+makeup.cancel
+Membatalkan.
+GET
+/accounts
+finance.view
+COA.
+POST
+/accounts
+finance.configure
+Membuat akun.
+PATCH
+/accounts/{id}
+finance.configure
+Mengubah akun.
+GET
+/journal-entries
+journal.view
+Daftar jurnal.
+POST
+/journal-entries
+journal.create
+Membuat jurnal draft.
+POST
+/journal-entries/{id}/submit
+journal.submit
+Mengajukan jurnal.
+POST
+/journal-entries/{id}/approve
+journal.approve
+Menyetujui jurnal.
+POST
+/journal-entries/{id}/post
+journal.post
+Posting jurnal.
+POST
+/journal-entries/{id}/reverse
+journal.reverse
+Reversal jurnal.
+GET
+/expenses
+expense.view
+Daftar pengeluaran.
+POST
+/expenses
+expense.create
+Membuat pengeluaran.
+POST
+/expenses/{id}/approve
+expense.approve
+Menyetujui pengeluaran.
+POST
+/accounting-periods/{id}/close
+period.close
+Closing periode.
+POST
+/accounting-periods/{id}/reopen
+period.reopen
+Membuka kembali periode.
+GET
+/finance/reconciliations
+finance.reconcile
+Rekonsiliasi subledger.
+GET
+/salary-tiers
+payroll.configure
+Daftar strata.
+POST
+/salary-tiers
+payroll.configure
+Membuat versi strata.
+GET
+/payroll-periods
+payroll.view
+Daftar periode.
+POST
+/payroll-periods
+payroll.create
+Membuat periode.
+POST
+/payroll-periods/{id}/calculate
+payroll.calculate
+Kalkulasi payroll.
+GET
+/payroll-periods/{id}/preview
+payroll.view
+Preview hasil.
+POST
+/payrolls/{id}/review
+payroll.review
+Review payroll.
+POST
+/payrolls/{id}/approve
+payroll.approve
+Approve payroll.
+POST
+/payrolls/{id}/mark-paid
+payroll.pay
+Tandai bayar/posting.
+GET
+/payrolls/{id}/payslip
+payroll.view
+Unduh slip.
+GET
+/products
+inventory.view
+Daftar barang.
+POST
+/products
+inventory.create
+Membuat barang.
+PATCH
+/products/{id}
+inventory.edit
+Mengubah barang.
+GET
+/warehouses
+inventory.view
+Daftar gudang.
+POST
+/inventory/receipts
+inventory.receive
+Penerimaan stok.
+POST
+/inventory/issues
+inventory.issue
+Pengeluaran stok.
+GET
+/inventory/stocks
+inventory.view
+Posisi stok.
+GET
+/inventory/ledger
+inventory.view
+Kartu stok.
+GET
+/stock-transfers
+inventory.view
+Daftar transfer.
+POST
+/stock-transfers
+inventory.transfer
+Membuat transfer.
+POST
+/stock-transfers/{id}/submit
+inventory.transfer
+Mengajukan transfer.
+POST
+/stock-transfers/{id}/approve
+inventory.approve
+Approve transfer.
+POST
+/stock-transfers/{id}/ship
+inventory.ship
+Kirim barang.
+POST
+/stock-transfers/{id}/receive
+inventory.receive
+Terima barang.
+GET
+/stock-opnames
+inventory.view
+Daftar opname.
+POST
+/stock-opnames
+inventory.opname
+Membuat opname.
+POST
+/stock-opnames/{id}/count
+inventory.opname
+Input hitung fisik.
+POST
+/stock-opnames/{id}/approve
+inventory.approve
+Approve variance/adjustment.
+GET
+/dashboards/owner
+dashboard.owner
+KPI Owner.
+GET
+/dashboards/front-admin
+dashboard.front
+KPI Admin Depan.
+GET
+/dashboards/coach
+dashboard.coach
+KPI Coach.
+GET
+/dashboards/back-admin
+dashboard.back
+KPI Admin Belakang.
+GET
+/reports
+report.view
+Katalog laporan.
+POST
+/report-jobs
+report.export
+Membuat ekspor.
+GET
+/report-jobs/{id}
+report.export
+Status ekspor.
+GET
+/report-jobs/{id}/download
+report.export
+Unduh file.
+GET
+/notifications
+notification.view
+Notification center.
+PATCH
+/notifications/{id}/read
+notification.view
+Tandai dibaca.
+GET
+/audit-logs
+audit.view
+Cari audit.
+GET
+/health
+Internal/monitor
+Health check.
+GET
+/version
+Authenticated
+Versi aplikasi.
+11.3 Contoh Struktur Respons
+Respons sukses tunggal:
+{  "data": { "id": "uuid", "status": "ACTIVE" },  "meta": { "correlationId": "01J..." }}
+Respons daftar:
+{  "data": [ ... ],  "meta": { "page": 1, "pageSize": 25, "total": 126, "correlationId": "01J..." }}
+Respons error:
+{  "error": {    "code": "QUOTA_INSUFFICIENT",    "message": "Kuota siswa tidak mencukupi.",    "details": { "studentId": "uuid", "balance": 0 },    "correlationId": "01J..."  }}
+11.4 HTTP Status dan Error Domain
+Kode
+Makna
+200/201/204
+Berhasil membaca/membuat/memperbarui tanpa body.
+400
+Format atau parameter tidak valid.
+401
+Tidak terautentikasi/token tidak valid.
+403
+Tidak memiliki permission atau scope data.
+404
+Resource tidak ditemukan dalam scope pengguna.
+409
+Konflik state, duplikasi, optimistic lock, bentrok jadwal.
+422
+Validasi bisnis gagal, contoh kuota tidak cukup atau periode tertutup.
+429
+Rate limit tercapai.
+500
+Kesalahan internal; detail teknis hanya di log.
+AUTH_INVALID_CREDENTIALS
+Login gagal.
+ACCESS_SCOPE_DENIED
+Record berada di luar scope.
+SCHEDULE_CONFLICT
+Bentrok coach/ruang/siswa/kelas.
+QUOTA_INSUFFICIENT
+Saldo kuota tidak valid.
+INVOICE_IMMUTABLE
+Invoice sudah terbit dan tidak dapat diedit.
+PERIOD_CLOSED
+Tanggal berada pada periode tertutup.
+STOCK_INSUFFICIENT
+Stok tersedia tidak mencukupi.
+OPTIMISTIC_LOCK_FAILED
+Data telah berubah; klien perlu memuat ulang.
+IDEMPOTENCY_CONFLICT
+Kunci idempotensi digunakan dengan payload berbeda.
+11.5 Validasi Kontrak dan Dokumentasi
+Gunakan DTO/schema validation pada seluruh input; field tidak dikenal ditolak atau diabaikan secara konsisten sesuai kebijakan.
+OpenAPI menjadi kontrak publik internal dan harus diperbarui bersama kode. Contoh request/response untuk endpoint kritis wajib tersedia.
+Consumer-driven contract test direkomendasikan untuk frontend, worker, dan integrasi eksternal.
+Webhook, bila ditambahkan, harus memiliki signature, timestamp tolerance, replay protection, dan retry policy.
+12. Spesifikasi UI/UX dan Design System
+12.1 Arah Visual
+Aplikasi menggunakan identitas “DIPA Learning Design System” dengan karakter Smart, Friendly, Energetic, dan Educational. Tampilan admin tetap profesional dan padat informasi, sedangkan portal orang tua/siswa lebih ramah, sederhana, dan ilustratif.
+Token
+Nilai
+Penggunaan
+Primary Orange
+#FF9900
+CTA utama, menu aktif, badge, progress, highlight.
+Secondary Sky Blue
+#4CB7E8
+Informasi, statistik, grafik, tombol sekunder.
+Accent Yellow
+#FFC928
+Energi belajar, peringatan ringan, highlight edukasi.
+Navy Text/Header
+#243B64
+Judul, navigasi, area profesional/keuangan.
+Background
+#F5F7FB
+Latar halaman.
+Surface
+#FFFFFF
+Card, modal, tabel, form.
+Success
+#5CC85C
+Hadir, lunas, sukses, aktif.
+Danger
+#EF5350
+Error, tidak hadir, overdue, stok kritis.
+Warning
+#FFC928 / orange shade
+Terlambat, pending, kuota hampir habis.
+Info
+#4CB7E8
+Make-up, informasi, status proses.
+12.2 Tipografi dan Komponen
+Elemen
+Spesifikasi
+Font utama
+Poppins; fallback Noto Sans/Arial/sans-serif.
+H1
+32 px, Bold; digunakan hemat pada dashboard/halaman utama.
+H2
+24 px, SemiBold.
+H3
+18 px, SemiBold.
+Body
+14–16 px, Regular; line-height minimal 1.5.
+Caption
+12 px; tidak digunakan untuk informasi kritis tanpa alternatif.
+Primary button
+Tinggi 44–48 px; radius 24 px; orange; teks putih; state hover/focus/disabled/loading.
+Secondary button
+Outline/sky blue; radius 24 px.
+Input
+Radius 12 px; label selalu terlihat; helper/error text spesifik.
+Card
+Radius 20 px; shadow 0 8px 24px rgba(0,0,0,.08); padding 16–24 px.
+Modal
+Radius 24 px; fokus terkunci; aksi destruktif jelas.
+Table
+Header lembut/clean; sticky header bila panjang; density dapat disesuaikan.
+Icon
+Lucide Icons atau Material Symbols Rounded; konsisten 20/24 px.
+Illustration
+Flat education illustration pada empty state, onboarding, dan portal siswa; tidak menggantikan informasi.
+12.3 Layout dan Navigasi per Peran
+Peran
+Prioritas Perangkat
+Navigasi Utama
+Super Admin
+Desktop-first
+Sidebar: Dashboard, Pengguna, Role & Permission, Cabang, Konfigurasi, Audit, Health.
+Owner
+Desktop/tablet
+Executive dashboard, seluruh cabang, drill-down laporan, approval.
+Admin Depan
+Desktop/tablet
+Kedatangan hari ini, pencarian cepat, check-in, siswa, paket, invoice, pembayaran.
+Coach
+Tablet/mobile responsive
+Jadwal hari ini, daftar siswa, validasi kelas, ketidakhadiran, make-up, performa.
+Admin Belakang
+Desktop/tablet
+Checkout, exception, make-up, jadwal, ruang, coach pengganti.
+Finance
+Desktop-first
+Invoice, pembayaran, rekonsiliasi, jurnal, pengeluaran, closing, laporan.
+HR
+Desktop-first
+Karyawan, strata, payroll, approval, slip, laporan.
+Inventory
+Desktop/tablet
+Barang, stok, penerimaan, pengeluaran, transfer, opname.
+Orang Tua
+Mobile-first
+Ringkasan anak, jadwal, kehadiran, kuota, invoice, pembayaran, make-up, notifikasi.
+Siswa
+Mobile-first
+Jadwal, kehadiran, kuota, informasi pembelajaran sesuai scope.
+12.4 Inventaris Layar Minimum
+Area
+Layar Minimum
+Umum
+Login; lupa/reset password; profile; change password; notification center; forbidden; not found; maintenance; session expired.
+Super Admin
+Dashboard sistem; users list/detail/form; roles; permission matrix; branch list/form; settings; audit log; active sessions; access review; job monitor.
+Owner
+Executive dashboard; branch comparison; revenue; attendance; student growth; coach performance; quota; make-up; finance; stock; approvals.
+Admin Depan
+Today arrivals; student search/profile; registration; parent; enrollment; check-in; package catalog; invoice form/detail; payment form; receipt.
+Coach
+Today schedule; class roster; in-class validation; mark absent/late; makeup execution; student history; meeting percentage.
+Admin Belakang
+Checkout queue; incomplete attendance; makeup board/calendar; scheduling; room occupancy; substitute coach.
+Finance
+Invoice aging; payment verification; reconciliation; expense; COA; journals; periods; cashbook; P&L/cashflow; export jobs.
+HR
+Employee/coach; salary tiers; payroll periods; calculation preview; exceptions; approval; payslip; performance.
+Inventory
+Product; warehouse; stock position; receipt/issue; transfer; stock ledger; min-stock alerts; stock opname.
+Orang Tua/Siswa
+Child switcher; home; schedule; attendance timeline; quota ledger; invoice/payment history; makeup status; document viewer.
+12.5 Aturan UX
+Setiap aksi berisiko tinggi menampilkan ringkasan dampak, membutuhkan konfirmasi, dan menggunakan bahasa bisnis yang jelas; hindari konfirmasi umum “Apakah Anda yakin?” tanpa konteks.
+Status selalu ditampilkan dengan teks dan ikon, bukan hanya warna.
+Form panjang dibagi menjadi bagian/logical step; autosave draft digunakan bila kehilangan data berisiko.
+Daftar besar menyediakan search, filter, saved views, pagination, dan bulk action hanya bila aman.
+Nominal IDR memakai format lokal, tanggal menggunakan format Indonesia, dan zona waktu/cabang terlihat pada transaksi waktu-sensitif.
+Loading state, empty state, error state, no permission, stale data, offline/connection failure, dan conflict state wajib didesain.
+Untuk check-in/validasi cepat, fokus keyboard, scanner input, dan target sentuh minimal 44×44 px harus didukung.
+Setelah aksi berhasil, tampilkan hasil dan tautan ke transaksi; jangan hanya mengandalkan toast yang cepat hilang.
+Desain memenuhi WCAG 2.1 AA: contrast, keyboard navigation, focus visible, labels, semantic structure, alt text, dan reduced motion.
+UI tidak boleh menampilkan tombol yang tidak berizin, tetapi backend tetap melakukan validasi otorisasi.
+12.6 Pola Status dan Empty/Error State
+Kondisi
+Pola UI
+Hadir/Lunas/Approved/Received
+Hijau + ikon check + label teks.
+Pending/Partially Paid/Due Soon
+Orange/kuning + ikon clock/info.
+Terlambat/Make-up
+Kuning atau biru sesuai konteks; label eksplisit.
+Tidak Hadir/Overdue/Failed/Rejected
+Merah + ikon warning/error.
+Draft/Inactive/Cancelled
+Abu-abu/neutral.
+Empty State
+Ilustrasi ringan, penjelasan mengapa kosong, dan satu CTA yang relevan bila diizinkan.
+Error State
+Kode referensi/correlation ID, pesan tindakan, retry atau kontak support; tanpa stack trace.
+13. Dashboard, KPI, dan Laporan
+13.1 Definisi KPI Utama
+KPI
+Definisi
+Dimensi/Catatan
+Siswa Aktif
+Jumlah siswa dengan status ACTIVE dan minimal satu enrollment ACTIVE pada tanggal cut-off.
+Harian; filter cabang/kursus/level.
+Siswa Baru
+Enrollment pertama siswa yang mulai pada periode.
+Bulanan/periodik.
+Siswa Berhenti
+Enrollment WITHDRAWN/CANCELLED sesuai tanggal efektif.
+Bulanan; alasan wajib.
+Kehadiran %
+Jumlah attendance PRESENT/LATE/MAKEUP eligible ÷ total pertemuan wajib ×100%.
+Definisi denominator harus konsisten.
+Pendapatan
+Kredit akun pendapatan dari jurnal posted pada periode.
+Per cabang, kursus, paket.
+Penerimaan Kas
+Pembayaran VERIFIED/posted masuk kas/bank pada periode.
+Tidak sama dengan pendapatan akrual.
+Piutang
+Outstanding invoice pada cut-off.
+Aging berdasarkan due date.
+Kuota Hampir Habis
+Saldo <= threshold dan >0, status ACTIVE.
+Threshold configurable.
+Make-up Pending
+Request PENDING/SCHEDULED belum selesai pada cut-off.
+Pisahkan due soon/overdue.
+Meeting Percentage
+Realisasi meeting ÷ target meeting ×100%.
+Per coach/periode.
+Nilai Stok
+Σ quantity × valuation cost per lokasi.
+Metode moving average baseline.
+Laba/Rugi
+Pendapatan posted − beban posted.
+Per cabang/konsolidasi.
+13.2 Katalog Laporan Minimum
+Kode
+Laporan
+Isi Utama
+Akses
+Format
+RPT-01
+Master Siswa
+Siswa, wali, cabang, status, enrollment aktif.
+Admin/Owner
+Excel/CSV
+RPT-02
+Enrollment & Transfer
+Riwayat kursus, kelas, coach, cabang, status.
+Operasional/Owner
+PDF/Excel
+RPT-03
+Jadwal Kelas
+Occurrence, coach, ruang, kapasitas, peserta.
+Operasional/Coach
+PDF/Excel
+RPT-04
+Presensi Siswa
+Datang, masuk, pulang, status, keterlambatan.
+Operasional/Owner/Parent own
+PDF/Excel
+RPT-05
+Datang Belum Masuk
+Check-in tanpa validasi coach.
+Front/Back Admin
+Screen/Excel
+RPT-06
+Belum Checkout
+Masuk kelas tanpa validasi pulang.
+Back Admin
+Screen/Excel
+RPT-07
+Keterlambatan & Ketidakhadiran
+Menit terlambat, alasan, eligibility make-up.
+Operasional/Owner
+PDF/Excel
+RPT-08
+Ledger Kuota
+Kredit, debit, saldo, expiry, sumber.
+Admin/Finance/Parent own
+PDF/Excel
+RPT-09
+Rekonsiliasi Kuota
+Invoice/payment vs kuota vs attendance.
+Finance/Owner
+Excel
+RPT-10
+Make-up Pending & Selesai
+Status, due date, jadwal, SLA, coach.
+Operasional/Owner/Parent own
+PDF/Excel
+RPT-11
+Daftar Invoice
+Nomor, siswa, tanggal, due date, total, status.
+Finance/Admin/Owner
+PDF/Excel
+RPT-12
+Pembayaran
+Metode, rekening, jumlah, verifier, alokasi.
+Finance/Owner
+PDF/Excel
+RPT-13
+Aging Piutang
+Current, 1–30, 31–60, 61–90, >90 hari.
+Finance/Owner
+PDF/Excel
+RPT-14
+Rekonsiliasi Pembayaran
+Payment, allocation, invoice, kas, jurnal, selisih.
+Finance/Owner
+Excel
+RPT-15
+Pendapatan per Paket/Kursus
+Pendapatan, quantity, siswa, cabang.
+Finance/Owner
+PDF/Excel
+RPT-16
+Buku Kas/Bank
+Saldo awal, mutasi, saldo akhir.
+Finance/Owner
+PDF/Excel
+RPT-17
+Pengeluaran
+Vendor, kategori, cabang, approval, jurnal.
+Finance/Owner
+PDF/Excel
+RPT-18
+Laba Rugi
+Pendapatan dan beban per akun/cabang.
+Finance/Owner
+PDF/Excel
+RPT-19
+Jumlah Siswa per Coach
+Siswa aktif dan perubahan strata.
+HR/Owner
+PDF/Excel
+RPT-20
+Target & Realisasi Meeting
+Occurrence target, hadir, make-up, persentase.
+HR/Coach own/Owner
+PDF/Excel
+RPT-21
+Payroll Register
+Komponen gaji, potongan, net, status.
+HR/Finance/Owner
+PDF/Excel
+RPT-22
+Slip Gaji
+Slip individual.
+Employee own/HR
+PDF
+RPT-23
+Posisi Stok
+Qty, average cost, value per gudang.
+Inventory/Owner
+PDF/Excel
+RPT-24
+Kartu Stok
+Mutasi dan saldo per barang/lokasi.
+Inventory/Finance
+PDF/Excel
+RPT-25
+Stok Minimum
+Barang <= reorder level.
+Inventory/Owner
+Screen/Excel
+RPT-26
+Stock Opname & Variance
+System, counted, variance, adjustment.
+Inventory/Owner/Finance
+PDF/Excel
+RPT-27
+Audit Trail
+Aktor, aksi, objek, before/after, IP, waktu.
+Super Admin/Owner terbatas
+CSV/Excel
+RPT-28
+Access Review
+Akun, role, permission, scope, last login.
+Super Admin/Owner
+PDF/Excel
+13.3 Aturan Ekspor dan Penyajian
+Setiap laporan menampilkan nama laporan, DIPA Learning Center/cabang, periode, filter, generated_at, generated_by, zona waktu, nomor halaman, dan klasifikasi bila sensitif.
+PDF menggunakan layout cetak yang stabil; Excel memiliki header terstruktur, tipe data benar, tidak menggabungkan sel pada data tabular, serta sheet metadata bila diperlukan.
+Ekspor besar diproses asynchronous; file memiliki masa berlaku unduhan dan disimpan sesuai retensi.
+Data sensitif dapat dimasking; ekspor harus memerlukan permission khusus dan dicatat pada audit.
+Angka laporan memakai cut-off konsisten dan tidak berubah selama satu proses generate.
+Format tanda tangan, nomor dokumen, logo, dan legal footer harus disetujui pada workshop template laporan.
+14. Persyaratan Keamanan, Privasi, dan Audit
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+SEC-001
+Seluruh komunikasi production menggunakan HTTPS/TLS modern; HTTP dialihkan ke HTTPS.
+Must
+Pemindaian konfigurasi tidak menemukan endpoint plaintext.
+SEC-002
+Password mengikuti kebijakan panjang minimum, kompleksitas yang wajar, blok password umum, dan reset aman.
+Must
+Uji kebijakan menerima password kuat dan menolak password terlarang.
+SEC-003
+Secret, key, dan credential tidak disimpan di source code/repository; gunakan environment secret manager.
+Must
+Secret scanning CI lulus dan image tidak memuat secret.
+SEC-004
+RBAC dan branch scope diterapkan server-side pada seluruh query dan mutasi.
+Must
+Uji horizontal/vertical privilege escalation gagal.
+SEC-005
+Input divalidasi dan output di-encode; ORM/parameterized query digunakan untuk mencegah injection.
+Must
+SAST/DAST dan pengujian injection kritis lulus.
+SEC-006
+CORS, CSP, HSTS, secure headers, CSRF protection (bila cookie), dan cookie Secure/HttpOnly/SameSite dikonfigurasi.
+Must
+Security header scan memenuhi baseline yang disetujui.
+SEC-007
+Rate limiting diterapkan pada login, reset password, pencarian sensitif, dan endpoint mahal.
+Must
+Permintaan berlebih menghasilkan 429 tanpa mengganggu pengguna normal.
+SEC-008
+File upload dibatasi tipe/ukuran, nama disanitasi, disimpan di luar web root, dan discan bila layanan tersedia.
+Must
+File executable/berbahaya ditolak dan tidak dapat dieksekusi.
+SEC-009
+Data sensitif di log harus dimasking; password, token, full payment credential, dan secret dilarang dicatat.
+Must
+Review log tidak menemukan nilai terlarang.
+SEC-010
+Audit log kritis append-only dan dilindungi dari perubahan pengguna aplikasi.
+Must
+Akun aplikasi hanya memiliki hak insert/read terbatas yang sesuai.
+SEC-011
+Backup dienkripsi saat transit dan at rest; akses backup dibatasi serta restore diuji berkala.
+Must
+Restore drill berhasil sesuai RPO/RTO.
+SEC-012
+Dependency dan container image dipindai terhadap kerentanan; patch kritis mengikuti SLA.
+Must
+Build production gagal untuk severity kritis yang tidak memiliki pengecualian disetujui.
+SEC-013
+MFA harus disiapkan dan direkomendasikan untuk Super Admin, Owner, Finance, dan HR.
+Should
+Ketika diaktifkan, login memerlukan faktor kedua dan recovery aman.
+SEC-014
+Data personal hanya dikumpulkan sesuai kebutuhan bisnis, ditampilkan sesuai least privilege, dan diproses sesuai kebijakan privasi.
+Must
+Data mapping dan permission review tersedia.
+SEC-015
+Session timeout idle dan absolute lifetime dapat dikonfigurasi; aktivitas sensitif dapat meminta re-authentication.
+Must
+Sesi berakhir sesuai konfigurasi dan token tidak dapat digunakan kembali.
+SEC-016
+Sistem memiliki prosedur incident response, pencatatan security event, dan mekanisme revoke credential/token.
+Must
+Simulasi insiden dapat mengidentifikasi, menahan, memulihkan, dan mendokumentasikan kejadian.
+14.1 Klasifikasi Data
+Klasifikasi
+Contoh
+Kontrol
+Publik
+Informasi kursus/brand yang memang dipublikasikan.
+Kontrol integritas dan publishing.
+Internal
+Konfigurasi operasional umum, jadwal internal, dokumentasi.
+Hanya akun terautentikasi sesuai peran.
+Rahasia
+Data siswa/wali, pembayaran, absensi, gaji, keuangan, audit.
+Least privilege, masking, audit, enkripsi transit/at rest.
+Sangat Rahasia
+Password hash, token, secret, backup key, data rekening sensitif.
+Secret manager, akses sangat terbatas, rotasi, tidak diekspor.
+14.2 Retensi Minimum yang Harus Diputuskan
+Data
+Kebijakan Baseline
+Audit keamanan dan transaksi
+Rekomendasi baseline 5–7 tahun atau mengikuti kewajiban internal/legal.
+Invoice, pembayaran, jurnal, payroll
+Mengikuti kebijakan akuntansi/perpajakan yang berlaku dan persetujuan legal.
+Presensi dan make-up
+Minimal selama masa siswa aktif + periode arsip yang ditetapkan.
+File bukti
+Mengikuti transaksi induk; hapus aman setelah masa retensi.
+Refresh token/session
+Sampai kedaluwarsa/revoke + log keamanan terbatas.
+Report export sementara
+7–30 hari sesuai sensitivitas; dapat dihapus lebih cepat.
+Backup
+Harian/mingguan/bulanan sesuai strategi; rotasi dan immutable copy.
+Catatan Kepatuhan: Kebijakan privasi, retensi, hak akses data anak, persetujuan wali, dan kewajiban akuntansi/perpajakan harus divalidasi oleh penanggung jawab legal/keuangan DIPA sebelum go-live. SRS ini menetapkan kontrol sistem, bukan opini hukum.
+15. Persyaratan Nonfungsional
+ID
+Kebutuhan Fungsional
+Prioritas
+Kriteria Penerimaan
+NFR-PERF-001
+Respons API interaktif p95 <2 detik pada beban normal, di luar ekspor/report berat.
+Must
+Load test pada dataset target memenuhi p95 dan error rate yang disetujui.
+NFR-PERF-002
+Dashboard utama tampil usable <3 detik setelah autentikasi pada jaringan kantor yang wajar.
+Must
+Pengukuran RUM/synthetic memenuhi target untuk mayoritas sesi.
+NFR-CAP-001
+Sistem baseline mendukung minimal 7 cabang, >1.000 siswa aktif, 100 pengguna concurrent, dan pertumbuhan data 5 tahun.
+Must
+Capacity test dengan data sintetis dan concurrency target lulus.
+NFR-AVL-001
+Target availability production baseline 99,5% per bulan, di luar maintenance terjadwal.
+Must
+Monitoring availability dan incident log dapat menghitung SLA.
+NFR-REL-001
+Operasi kritis harus idempoten, atomik, dan tidak menghasilkan duplikasi setelah retry.
+Must
+Chaos/retry test tidak membuat transaksi ganda.
+NFR-DR-001
+Baseline RPO 1 jam dan RTO 4 jam; nilai final disetujui Owner/IT.
+Must
+Restore drill memenuhi target pada environment uji.
+NFR-SCL-001
+Frontend, API, worker, dan storage dapat diskalakan independen; aplikasi API stateless.
+Must
+Penambahan instance tidak memerlukan perubahan kode atau session affinity wajib.
+NFR-USE-001
+UI responsive pada desktop, tablet, dan mobile sesuai prioritas per role.
+Must
+UAT pada resolusi/perangkat target lulus.
+NFR-ACC-001
+Fitur inti memenuhi WCAG 2.1 AA.
+Must
+Audit keyboard, contrast, label, dan screen reader pada alur kritis lulus.
+NFR-COMP-001
+Mendukung dua versi terbaru Chrome, Edge, Firefox, dan Safari; mobile browser modern untuk portal.
+Must
+Regression test browser target lulus.
+NFR-MNT-001
+Kode menggunakan TypeScript strict, modular domain, lint/format, unit test, dan dokumentasi.
+Must
+Pipeline CI menolak pelanggaran quality gate.
+NFR-OBS-001
+Sistem menyediakan structured log, metrics, tracing/correlation ID, health check, dan alert.
+Must
+Insiden uji dapat ditelusuri lintas frontend–API–worker–database.
+NFR-LOC-001
+Bahasa utama Indonesia, format tanggal/angka ID locale id-ID, mata uang IDR.
+Must
+UI dan laporan menampilkan format lokal yang benar.
+NFR-PORT-001
+Environment development, test, staging, dan production dapat direproduksi melalui konfigurasi dan container.
+Must
+Deployment dari repository bersih berhasil menggunakan dokumentasi.
+NFR-BKP-001
+Backup database dan file berjalan otomatis, terpantau, dienkripsi, dan diuji restore.
+Must
+Job gagal menghasilkan alert; restore sampling berkala berhasil.
+NFR-DOC-001
+Dokumentasi arsitektur, API, migration, deployment, runbook, dan user guide diperbarui bersama release.
+Must
+Release tidak ditutup bila dokumen wajib belum diperbarui.
+NFR-PRV-001
+Data di non-production harus disintesis atau dimasking.
+Must
+Tidak ada data personal production utuh pada dev/test tanpa approval.
+NFR-QUAL-001
+Tidak ada defect severity Critical/High terbuka saat go-live kecuali risk acceptance tertulis.
+Must
+Daftar defect dan approval go-live tersedia.
+15.1 Kapasitas dan Baseline Infrastruktur
+Parameter
+Baseline
+Siswa aktif
+1.000+ saat ini; desain minimal 10.000 tanpa redesain domain.
+Cabang
+3 saat ini; target 7; desain dapat berkembang lebih lanjut.
+Jenis kursus
+8–9 saat ini; master tidak membatasi jumlah.
+Concurrent users
+Baseline 100; load test menyesuaikan jam check-in puncak.
+Attendance/day
+Baseline sintetis 2.000 validasi tahap per hari; diskalakan berdasarkan jadwal aktual.
+Dokumen
+Invoice, kuitansi, slip, bukti bayar, bukti pengeluaran; gunakan object storage.
+Report jobs
+Queue terpisah agar ekspor tidak menghambat transaksi.
+Database
+PostgreSQL dengan connection pooling, index, query monitoring, dan backup PITR bila tersedia.
+Cache/queue
+Redis untuk cache terbatas, distributed lock, queue, rate limit, dan idempotency support.
+16. Dokumen, File, Notifikasi, dan Integrasi
+16.1 Dokumen yang Dihasilkan Sistem
+Dokumen
+Konten Minimum
+Invoice
+Nomor, cabang, siswa/wali, item, diskon/pajak, total, jatuh tempo, status, instruksi pembayaran, QR/reference opsional.
+Kuitansi
+Nomor pembayaran, metode, tanggal, payer, alokasi invoice, jumlah, verifier, status.
+Slip Gaji
+Periode, karyawan/coach, komponen, target/realisasi meeting, gross, potongan, net, status pembayaran.
+Laporan PDF
+Judul, periode/filter, organisasi/cabang, generated metadata, tabel/grafik, nomor halaman, footer.
+Bukti Transaksi
+Bukti bayar, bukti pengeluaran, bukti transfer stok, dan hasil opname yang diunggah.
+Template Impor
+Header baku, contoh, instruksi, data validation, version template, dan sheet referensi kode.
+16.2 Penyimpanan File
+Gunakan object storage kompatibel S3/MinIO untuk file; database hanya menyimpan metadata dan storage key.
+Nama file storage tidak menggunakan nama asli; akses melalui signed URL berumur pendek atau proxy terotorisasi.
+File diklasifikasikan, memiliki checksum, ukuran, MIME type, uploader, waktu, dan relasi transaksi.
+Lifecycle policy menghapus file sementara/ekspor sesuai retensi; backup file diselaraskan dengan backup database.
+Thumbnail/preview dibuat asynchronous dan tidak mengubah file asli.
+16.3 Integrasi Baseline dan Ekstensi
+Integrasi
+Status
+Ketentuan
+Email
+Baseline
+Invoice, kuitansi, reset password, reminder, notifikasi operasional. Adapter provider.
+WhatsApp Business API
+Future/opsional
+Notifikasi orang tua, invoice, reminder; membutuhkan consent, template approval, dan provider.
+Payment Gateway
+Future/opsional
+Virtual account/QRIS/card; webhook signed, idempotent, reconciliation.
+Google Calendar
+Future/opsional
+Sinkronisasi jadwal coach/kelas; konflik dan ownership harus diputuskan.
+Dapodik/Platform pendidikan
+Future/opsional
+Hanya bila ada kebutuhan dan kontrak data yang sah.
+SSO/OAuth
+Future/opsional
+Untuk staf; tetap memetakan role dan branch scope internal.
+BI/Data Warehouse
+Future/opsional
+Ekstraksi read-only atau event stream; tidak menjadi source of truth transaksi.
+Scanner QR/Barcode
+Extension point
+Input identifikasi siswa/barang; fallback pencarian manual.
+16.4 Domain Event Minimum
+Event
+Payload Minimum
+Konsumen
+PaymentVerified
+paymentId, invoice allocations, branchId, occurredAt
+Aktivasi kuota, jurnal, kuitansi, notifikasi.
+AttendanceCompleted
+attendanceId, studentId, scheduleId, finalStatus
+Debit kuota, payroll facts, laporan.
+AttendanceExceptionDetected
+attendanceId, exceptionType
+Dashboard/reminder operasional.
+MakeupRequested/Scheduled/Completed
+requestId, studentId, dueDate/scheduleId
+Reminder, notifikasi, laporan, payroll.
+InvoiceIssued/Overdue
+invoiceId, dueDate, outstanding
+PDF, reminder, aging.
+PayrollApproved/Paid
+payrollId, periodId, employeeId
+Slip, jurnal, notifikasi.
+StockBelowMinimum
+productId, warehouseId, balance
+Alert inventaris.
+StockTransferReceived
+transferId, from/to, items
+Kartu stok dan notifikasi.
+UserAccessChanged
+userId, roles/scopes
+Revoke cache/sesi bila perlu; audit.
+17. Migrasi Data dan Cutover
+17.1 Lingkup Migrasi
+Kelompok
+Data
+Master
+Cabang, kursus, level, ruang, paket, harga, barang, COA, metode pembayaran, alasan.
+Orang
+Siswa, wali, karyawan, coach, hubungan dan status.
+Akademik
+Enrollment aktif, kelas, jadwal masa depan, coach assignment.
+Saldo awal
+Kuota aktif per lot/sumber, piutang invoice, kas/bank, akun GL, stok per lokasi, payroll outstanding bila ada.
+Historis
+Kehadiran, pembayaran, invoice, make-up, stok, dan laporan lama sesuai kebutuhan/biaya migrasi.
+File
+Bukti dan dokumen yang masih wajib dipertahankan.
+17.2 Tahapan Migrasi
+Tahap
+Aktivitas
+1. Inventarisasi
+Identifikasi semua sumber: spreadsheet, aplikasi lama, arsip kertas, format laporan, owner data, kualitas, dan volume.
+2. Data mapping
+Peta field sumber→target, kode referensi, transformasi, default, dan rule penolakan.
+3. Cleansing
+Duplikasi siswa/wali, nomor kosong, tanggal tidak valid, harga tidak konsisten, saldo tanpa sumber.
+4. Template & staging
+Impor ke staging table; simpan source row, batch, checksum, dan error.
+5. Dry run
+Minimal dua kali migrasi percobaan pada staging dengan data representatif.
+6. Rekonsiliasi
+Bandingkan jumlah record, total uang, saldo kuota, stok, piutang, dan sample individual.
+7. UAT migrasi
+Pemilik proses memvalidasi sample dan total kontrol.
+8. Cutover
+Freeze sumber, backup, migrasi final, verifikasi, switch user, dan komunikasi.
+9. Hypercare
+Pantau error, exception, dan reconciliation intensif 1–4 minggu.
+10. Arsip legacy
+Simpan read-only sesuai retensi; tetapkan tanggal decommission.
+17.3 Aturan Saldo Awal
+Kuota awal dimigrasikan sebagai quota transaction bertipe OPENING_BALANCE dengan batch dan bukti sumber; tidak mengubah saldo langsung.
+Stok awal dimigrasikan sebagai inventory transaction OPENING_BALANCE per barang/lokasi beserta biaya awal.
+Saldo akun dan piutang dimigrasikan melalui jurnal pembukaan serta invoice/open item yang dapat direkonsiliasi.
+Password lama tidak boleh dipindahkan plaintext; gunakan reset password atau migrasi hash hanya bila algoritma kompatibel dan disetujui.
+Semua batch migrasi harus dapat diulang secara idempoten atau dibatalkan sebelum go-live.
+17.4 Kriteria Rekonsiliasi Cutover
+Kontrol
+Kriteria
+Record count
+Jumlah master aktif dan transaksi per kelompok cocok atau memiliki daftar selisih disetujui.
+Uang
+Total invoice outstanding, pembayaran, kas/bank, GL trial balance, dan payroll outstanding cocok hingga toleransi pembulatan.
+Kuota
+Total saldo dan sample ledger per siswa cocok.
+Stok
+Total kuantitas dan nilai per gudang/barang cocok.
+Jadwal
+Seluruh occurrence masa depan dan peserta aktif tersedia tanpa bentrok baru.
+Akses
+Semua pengguna yang diperlukan dapat login/reset dan memiliki role/scope benar.
+Dokumen
+Sample invoice, kuitansi, bukti, dan slip dapat dibuka.
+18. Strategi Pengujian dan Penerimaan
+18.1 Tingkat Pengujian
+Jenis
+Cakupan
+Pelaksana
+Unit Test
+Service domain, formula, validator, state transition, permission helper.
+Developer; otomatis di CI.
+Integration Test
+Repository/database, transaction, queue/outbox, storage, email adapter.
+Developer/QA; environment test.
+API Contract Test
+OpenAPI schema, status code, error model, backward compatibility.
+Developer/QA.
+End-to-End
+Alur login, pendaftaran, pembayaran-kuota, attendance, make-up, payroll, stok, laporan.
+QA; staging.
+Security Test
+SAST, dependency scan, DAST, authz, session, injection, file upload, privilege escalation.
+Security/QA.
+Performance Test
+Load, stress, soak, report job, peak check-in.
+QA/DevOps.
+Migration Test
+Mapping, idempotency, error handling, reconciliation, cutover rehearsal.
+Data/QA/Business.
+UAT
+Skenario bisnis per role menggunakan data representatif.
+Process owner/end user.
+DR Test
+Backup restore, failover prosedural, RPO/RTO.
+DevOps/Owner IT.
+18.2 Skenario Penerimaan Minimum
+ID
+Area
+Kriteria Penerimaan
+AT-01
+Login & RBAC
+Pengguna tiap role hanya melihat menu, endpoint, cabang, kelas, dan data yang menjadi haknya.
+AT-02
+User lifecycle
+Create, disable, lock, reset, role change, session revoke, dan audit berfungsi.
+AT-03
+Student enrollment
+Siswa/wali/enrollment dibuat tanpa duplikasi dan konflik kapasitas ditangani.
+AT-04
+Invoice
+Harga efektif, diskon, issue, PDF, immutable, void/reissue menghasilkan nilai benar.
+AT-05
+Payment→Quota
+Pembayaran verified mengubah invoice, membuat kuota, kuitansi, dan jurnal tepat satu kali.
+AT-06
+Partial/overpayment
+Alokasi parsial dan unapplied balance direkonsiliasi benar.
+AT-07
+Quota lock
+Saldo 0/kedaluwarsa mencegah attendance sesuai rule; adjustment memiliki approval/audit.
+AT-08
+Attendance 3 lapis
+Check-in, in-class, checkout, timestamp, exception, parent view, dan debit kuota konsisten.
+AT-09
+Absence/make-up
+Tidak hadir/terlambat menghasilkan request, jadwal bebas bentrok, reminder, complete tanpa debit ganda.
+AT-10
+Schedule conflict
+Bentrok coach/ruang/siswa/kelas dan holiday terdeteksi; override diaudit.
+AT-11
+Payroll
+Strata, target/realisasi, meeting %, adjustment, approval, slip, jurnal, dan lock benar.
+AT-12
+Finance
+Jurnal seimbang, closing menolak transaksi, reversal dan laporan dapat ditelusuri.
+AT-13
+Inventory
+Receipt, issue, transfer, min stock, opname, adjustment, dan ledger cocok.
+AT-14
+Dashboard/report
+KPI cocok dengan transaksi sumber; filter, drill-down, PDF/Excel, dan scope benar.
+AT-15
+Audit
+Aksi kritis memiliki actor/time/before/after/correlation; log tidak dapat diubah aplikasi.
+AT-16
+Performance
+Peak load memenuhi target p95/error rate dan report job tidak menghambat transaksi.
+AT-17
+Backup/restore
+Restore menghasilkan data dan file konsisten dalam RPO/RTO.
+AT-18
+Migration
+Total kontrol dan sample individual sesuai; rollback/cutover rehearsal berhasil.
+18.3 Severity Defect dan Gate Go-Live
+Severity
+Definisi
+Go-Live
+Critical
+Kehilangan/korupsi data, bypass auth, transaksi finansial ganda/salah besar, sistem tidak dapat digunakan.
+Tidak boleh terbuka.
+High
+Fungsi inti gagal tanpa workaround layak, laporan utama salah, akses data lintas cabang.
+Tidak boleh terbuka kecuali risk acceptance tertulis luar biasa.
+Medium
+Fungsi non-kritis terganggu dengan workaround.
+Dapat ditunda dengan rencana dan persetujuan.
+Low
+Kosmetik atau peningkatan minor.
+Masuk backlog.
+UAT ditandatangani oleh pemilik proses untuk modul terkait dan Product Owner.
+Data migration reconciliation, security gate, performance gate, backup restore, monitoring, runbook, dan training harus selesai sebelum go-live.
+Daftar known issues, workaround, risk owner, dan target penyelesaian harus disepakati.
+19. DevOps, Deployment, dan Operasional
+19.1 Topologi Deployment
+Gambar 19-1. Topologi deployment containerized untuk staging/production
+Docker berfungsi sebagai lapisan konsistensi lingkungan dan deployment, bukan fitur yang terlihat pengguna. Pengguna akhir mengakses aplikasi melalui browser; pengelolaan container dilakukan developer/administrator server.
+19.2 Environment
+Environment
+Tujuan
+Ketentuan
+Local Development
+Frontend, API, PostgreSQL, Redis, worker, dan storage dapat dijalankan melalui Docker Compose atau service lokal yang terdokumentasi.
+Data dummy; hot reload.
+Test/CI
+Environment sementara untuk unit/integration/contract test.
+Database terisolasi; data sintetis.
+Staging
+Semirip mungkin dengan production.
+UAT, migration rehearsal, performance/security test terbatas.
+Production
+High-availability sesuai kebutuhan, HTTPS, backup, monitoring, access terbatas.
+Data riil; change control.
+Disaster Recovery
+Backup/restore target atau warm standby sesuai RTO/RPO.
+Akses sangat terbatas dan diuji.
+19.3 Struktur Repository Modular
+sim-dipa/├── apps/│   ├── api/                 # NestJS REST API│   ├── web/                 # Next.js web application│   └── worker/              # Background jobs, notification, report├── packages/│   ├── contracts/           # Shared API types/schema│   ├── ui/                  # Design system components│   ├── config/              # Shared lint/ts/build configuration│   └── testing/             # Fixtures and test utilities├── prisma/                  # Schema, migrations, seed├── docs/                    # SRS, ADR, API, runbook, diagrams├── infra/│   ├── docker/│   ├── nginx/│   ├── monitoring/│   └── scripts/├── docker-compose.yml├── .env.example└── README.md
+19.4 Pipeline CI/CD
+Tahap
+Gate
+Pull Request
+Install locked dependencies; lint; format check; type check; unit test; SAST; secret scan; migration validation.
+Build
+Build frontend/API/worker; generate OpenAPI; build container image; SBOM; image vulnerability scan.
+Test Deploy
+Deploy ke environment test; integration, contract, E2E; ephemeral database.
+Staging
+Deploy dengan approval; migration dry-run; smoke test; UAT/performance/security sesuai release.
+Production
+Manual approval/change ticket; backup/pre-check; migrate; rolling/blue-green deploy; smoke test; monitoring.
+Rollback
+Rollback aplikasi ke image sebelumnya; migration harus backward compatible atau memiliki prosedur restore/forward fix.
+19.5 Strategi Database Migration
+Migration disimpan dalam version control, bersifat deterministic, dan diuji dari database kosong serta versi production terakhir.
+Gunakan pola expand–migrate–contract untuk perubahan breaking: tambah struktur kompatibel, migrasi data, pindahkan aplikasi, baru hapus struktur lama pada release terpisah.
+Migration production dijalankan satu kali oleh job berizin; aplikasi tidak menjalankan schema migration otomatis pada startup.
+Untuk tabel besar, perubahan index/column dirancang non-blocking sejauh mungkin.
+Backup/pre-migration snapshot dan rollback/forward-fix plan wajib tersedia.
+19.6 Backup dan Disaster Recovery
+Objek
+Ketentuan
+Database
+Backup penuh harian + WAL/PITR bila tersedia; retensi harian/mingguan/bulanan; enkripsi.
+Object storage
+Versioning/replication atau backup terjadwal; konsisten dengan metadata database.
+Configuration
+Infrastructure as Code, environment template, secret inventory (tanpa menyalin secret ke repo).
+Restore test
+Minimal triwulanan atau setelah perubahan besar; catat waktu, hasil, gap, dan tindak lanjut.
+RPO/RTO
+Baseline RPO 1 jam, RTO 4 jam; final pada keputusan Owner/IT.
+Runbook DR
+Kriteria deklarasi, PIC, komunikasi, restore, verifikasi, DNS/switch, dan post-incident review.
+19.7 Monitoring dan Alerting
+Lapisan
+Metric
+Alert
+Availability
+HTTP health, synthetic login/dashboard, certificate expiry.
+Alert bila gagal berulang.
+API
+Request rate, p50/p95/p99 latency, 4xx/5xx, saturation.
+Alert error/latency di atas threshold.
+Database
+Connection, slow query, lock, replication/backup, disk.
+Alert connection exhaustion, backup gagal, storage tinggi.
+Queue/Worker
+Queue depth, oldest job age, failure/retry/dead-letter.
+Alert backlog atau job kritis gagal.
+Business
+Payment without quota/journal, attendance without quota debit, negative/variance balance, overdue report job.
+Alert rekonsiliasi dan exception.
+Security
+Login failure spike, token replay, privilege changes, export sensitif, suspicious IP.
+Alert ke PIC security/IT.
+Infrastructure
+CPU, memory, disk, container restart, Nginx errors, storage availability.
+Threshold + trend.
+19.8 Runbook Operasional Minimum
+Deployment dan rollback; database migration; rotate secret/certificate; restore backup; queue stuck; report failed; storage unavailable.
+Unlock/reset account; revoke all sessions; suspected account compromise; audit export; incident escalation.
+Rekonsiliasi pembayaran–invoice–kuota–jurnal; koreksi attendance; reopen periode; reversal jurnal; payroll revision; stock discrepancy.
+Onboarding/offboarding user dan quarterly access review.
+Kontak PIC, jalur eskalasi, severity, template komunikasi, dan post-incident review.
+20. Roadmap Pengembangan Modular
+Gambar 20-1. Roadmap modular implementasi Sistem Informasi DIPA
+Fase
+Cakupan
+Exit Criteria
+Fase 0 — Discovery & Baseline
+Validasi SRS, workshop kebijakan, prototype UX, arsitektur, data inventory, backlog, acceptance baseline.
+SRS approved; TBD kritis ditutup; prototype disetujui.
+Fase 1 — Foundation
+Monorepo, environment, PostgreSQL/Prisma, auth, user, RBAC, branch scope, audit, health, CI/CD.
+Login/RBAC/audit aman; deployment staging.
+Fase 2 — Akademik
+Siswa, wali, employee/coach, kursus, level, kelas, ruang, enrollment, jadwal, konflik.
+Pendaftaran dan jadwal UAT lulus.
+Fase 3 — Billing & Kuota
+Paket, price list, invoice, pembayaran, alokasi, kuitansi, quota ledger, auto-lock, rekonsiliasi awal.
+Payment→quota end-to-end lulus.
+Fase 4 — Operasional
+Attendance tiga lapis, exception dashboard, make-up, reminder, parent view/notifikasi baseline.
+Attendance/make-up UAT dan load peak lulus.
+Fase 5 — HR & Payroll
+Employee HR, strata, meeting facts, payroll calculation/approval/slip/journal.
+Payroll parallel run cocok dengan manual.
+Fase 6A — Inventaris
+Produk, gudang, receipt/issue, transfer, min stock, opname, valuation.
+Stock reconciliation lulus.
+Fase 6B — Keuangan
+COA, journals, expenses, cashbook, periods, closing, P&L/cashflow, subledger reconciliation.
+Trial balance dan laporan finance lulus.
+Fase 7 — Reporting & Executive
+Dashboard per role, report catalog, PDF/Excel jobs, KPI definitions, access review.
+KPI/report reconciliation dan UAT Owner lulus.
+Fase 8 — Integrasi & Optimasi
+Payment gateway/WhatsApp/SSO/mobile bila disetujui; performance, HA, analytics.
+Business case dan acceptance integrasi.
+20.1 Prinsip Delivery
+Setiap fase menghasilkan increment yang dapat diuji dan didemonstrasikan; hindari membangun seluruh aplikasi sebelum validasi.
+Foundation dan data model lintas modul harus cukup stabil, tetapi detail modul dikembangkan berdasarkan prioritas dan dependency.
+Setiap fase mencakup analisis rinci, UX, implementasi, migration, test, dokumentasi, training, dan sign-off.
+Feature flag dan pilot cabang digunakan untuk menurunkan risiko; rollout bertahap sebelum seluruh cabang.
+Backlog harus mempertahankan ID SRS agar requirement–code–test–defect dapat dilacak.
+21. Traceability Matrix
+Domain
+Requirement
+Use Case
+Entitas Utama
+Acceptance Test
+Authentication & Security
+FR-AUTH; FR-RBAC; SEC; NFR-AVL/PRV
+UC-01
+users, roles, permissions, refresh_tokens, audit_logs
+AT-01, AT-02, AT-15
+Student & Enrollment
+FR-STD; FR-MST
+UC-02
+students, parents, links, enrollments
+AT-03, AT-18
+Scheduling
+FR-SCH
+UC-02, UC-08
+class_groups, class_schedules, classrooms, holidays
+AT-03, AT-10
+Billing & Payment
+FR-BIL
+UC-03, UC-04
+invoices, invoice_items, payments, allocations
+AT-04–06
+Quota
+FR-QTA
+UC-04–06
+student_quotas, quota_transactions
+AT-05, AT-07–09
+Attendance
+FR-ATT
+UC-05, UC-06
+attendance_sessions, records, validations
+AT-08, AT-09
+Make-up
+FR-MKU
+UC-07
+makeup_requests, makeup_schedules
+AT-09
+Finance
+FR-FIN
+UC-04, UC-09, UC-11
+accounts, journals, expenses
+AT-05, AT-12, AT-14
+HR/Payroll
+FR-HR
+UC-09
+salary_tiers, payroll_periods, payrolls/details, incentives
+AT-11
+Inventory
+FR-INV
+UC-10
+products, warehouses, stock ledger, transfer, opname
+AT-13
+Notification
+FR-NTF
+UC-03–08, UC-12
+notifications, deliveries
+AT-04, AT-08, AT-09
+Reporting
+FR-RPT
+UC-11, UC-12
+report_jobs + domain tables
+AT-14
+Administration/Audit
+FR-ADM
+UC-01, UC-11
+settings, audit_logs, files, report_jobs
+AT-02, AT-15–17
+Migration
+Bab 17; NFR-DR/BKP
+—
+staging/batch metadata + all domain tables
+AT-18
+DevOps
+Bab 19; NFR-PORT/OBS
+—
+Infrastructure configuration
+AT-16, AT-17
+22. Register Keputusan dan TBD
+Item berikut sengaja dicatat agar tidak “terlewatkan”. Status TBD berarti implementasi final memerlukan keputusan Product Owner/pemilik proses. Developer boleh membuat konfigurasi/placeholder, tetapi tidak boleh mengunci asumsi sebagai kebijakan final.
+ID
+Topik
+Keputusan yang Dibutuhkan
+Pemilik
+Batas Waktu
+Status
+TBD-01
+Refund/pembatalan paket
+Eligibility, formula, biaya administrasi, kuota terpakai, approver, SLA.
+Owner + Finance
+Sebelum Fase 3 build final
+Open
+TBD-02
+Masa berlaku kuota
+Expiry per paket, grace period, freeze/suspend, prioritas konsumsi lot.
+Owner + Operasional
+Sebelum Fase 3
+Open
+TBD-03
+Pembayaran
+Cicilan, minimal aktivasi, over/underpayment, unapplied credit, write-off.
+Finance + Owner
+Sebelum Fase 3
+Open
+TBD-04
+Diskon
+Jenis, batas persen/nominal, promo, eligibility, approval matrix.
+Owner + Finance
+Sebelum Fase 3
+Open
+TBD-05
+Waktu debit kuota
+Saat check-in, masuk kelas, checkout, atau status final; rule pembatalan.
+Owner + Operasional
+Sebelum Fase 4
+Open
+TBD-06
+Keterlambatan
+Ambang 15 menit baseline; per kursus/cabang; dampak kuota/make-up.
+Operasional + Owner
+Sebelum Fase 4
+Open
+TBD-07
+Make-up eligibility/SLA
+Alasan sah, minggu sama, 3–4 hari kerja, expiry, jumlah reschedule.
+Operasional + Owner
+Sebelum Fase 4
+Open
+TBD-08
+Make-up dan kuota
+Apakah absence mengonsumsi kuota; kapan reversal; make-up menambah meeting coach.
+Owner + HR + Operasional
+Sebelum Fase 4/5
+Open
+TBD-09
+Coach/jadwal exception
+Coach pengganti, kelas gabungan, libur, pembatalan, room overflow, override authority.
+Operasional + HR
+Sebelum Fase 2/4
+Open
+TBD-10
+Formula payroll
+Strata, jumlah siswa, target/realisasi, persentase, insentif, potongan, rounding, cut-off.
+HR + Owner + Finance
+Sebelum Fase 5
+Open
+TBD-11
+Valuasi stok
+Moving average baseline vs FIFO; HPP merchandise; stok negatif.
+Finance + Inventory
+Sebelum Fase 6A
+Open
+TBD-12
+Akuntansi
+COA, basis kas/akrual, mapping jurnal, period close, tax, consolidated report.
+Finance + Owner/Akuntan
+Sebelum Fase 6B
+Open
+TBD-13
+Template laporan
+Format existing, rumus KPI, tanda tangan, nomor dokumen, legal footer, logo.
+Semua process owner
+Sebelum Fase 7
+Open
+TBD-14
+Approval matrix
+Limit nominal dan maker-checker untuk diskon, void, refund, expense, journal, payroll, stock.
+Owner + Finance
+Sebelum modul terkait
+Open
+TBD-15
+SLA/DR/retensi
+Availability, RPO/RTO, backup retention, audit/data retention, support hours.
+Owner + IT + Legal
+Sebelum production
+Open
+TBD-16
+Perangkat front desk
+Desktop/tablet, QR/barcode scanner, printer invoice/kuitansi, jaringan cabang.
+Operasional + IT
+Sebelum UX/procurement
+Open
+TBD-17
+Kanal notifikasi
+Email/WhatsApp/SMS/push, consent, template, biaya, provider, quiet hours.
+Owner + Operasional
+Sebelum Fase 4
+Open
+TBD-18
+Migrasi saldo awal
+Sumber kebenaran, cut-off, histori yang dimigrasi, toleransi selisih, sign-off.
+Owner data + Finance/Ops
+Sebelum cutover
+Open
+22.1 Prosedur Penutupan TBD
+Workshop melibatkan Product Owner, process owner, developer lead, QA, dan pihak keuangan/legal bila relevan.
+Keputusan dicatat dalam change log/ADR, menyebut tanggal efektif, contoh kasus, pengecualian, approver, dan dampak pada requirement/test.
+Setelah disetujui, status menjadi Closed dan requirement/BR/formula/API/report diperbarui tanpa menghapus histori versi.
+Perubahan setelah baseline mengikuti Change Request dengan analisis biaya, jadwal, risiko, migration, dan regression test.
+Lampiran A — Glosarium dan Singkatan
+Istilah
+Definisi
+API
+Application Programming Interface; kontrak komunikasi antar aplikasi.
+Approval Matrix
+Aturan siapa yang menyetujui transaksi berdasarkan jenis, nilai, cabang, atau risiko.
+Audit Trail
+Rekam jejak aktor, waktu, aksi, objek, nilai sebelum/sesudah, dan konteks.
+Branch Scope
+Batas cabang yang dapat dilihat/diubah oleh pengguna.
+Coach
+Pengajar/guru pada DIPA Learning Center.
+COA
+Chart of Accounts; daftar akun akuntansi.
+Correlation ID
+Pengenal satu alur permintaan untuk penelusuran log lintas komponen.
+Enrollment
+Pendaftaran siswa pada kursus/level/kelas untuk periode tertentu.
+Idempotency
+Sifat bahwa retry permintaan yang sama tidak menghasilkan transaksi ganda.
+JWT
+JSON Web Token yang digunakan sebagai access token.
+Ledger
+Catatan transaksi append-only yang membentuk saldo.
+Make-up Class
+Kelas pengganti bagi pertemuan yang memenuhi kebijakan.
+Meeting Percentage
+Persentase realisasi meeting terhadap target meeting.
+Occurrence
+Satu kejadian jadwal kelas pada tanggal/waktu tertentu.
+Outbox
+Pola transaksi untuk menyimpan event bersama perubahan database agar pengiriman andal.
+PITR
+Point-in-Time Recovery database.
+RBAC
+Role-Based Access Control.
+RPO
+Recovery Point Objective; toleransi kehilangan data maksimum.
+RTO
+Recovery Time Objective; target waktu pemulihan layanan.
+SLA
+Service Level Agreement/target layanan.
+SRS
+Software Requirements Specification.
+UAT
+User Acceptance Test.
+Void
+Pembatalan transaksi melalui status/reversal, bukan penghapusan histori.
+Lampiran B — Contoh Payload API Kritis
+B.1 Login
+Request
+{  "email": "admin@dipa.co.id",  "password": "********"}
+Response
+{  "data": {    "user": {      "id": "uuid",      "name": "Admin DIPA",      "roles": ["FRONT_ADMIN"],      "branchScopes": ["branch-uuid"]    },    "accessToken": "<token bila tidak menggunakan cookie>"  }}
+B.2 Mencatat Pembayaran
+Request
+{  "invoiceIds": ["invoice-uuid"],  "paidAt": "2026-07-14T10:15:00+07:00",  "methodId": "method-uuid",  "amount": 1500000,  "referenceNo": "TRX-001",  "proofFileId": "file-uuid",  "allocations": [    { "invoiceId": "invoice-uuid", "amount": 1500000 }  ]}
+Response setelah verifikasi
+{  "data": {    "paymentId": "payment-uuid",    "status": "VERIFIED",    "invoiceStatus": "PAID",    "quotaIds": ["quota-uuid"],    "journalEntryId": "journal-uuid",    "receiptUrl": "/api/v1/payments/payment-uuid/receipt"  }}
+B.3 Check-in Presensi
+Request
+{  "studentId": "student-uuid",  "scheduleId": "schedule-uuid",  "source": "FRONT_DESK",  "occurredAt": "2026-07-14T08:01:12+07:00"}
+Response
+{  "data": {    "attendanceId": "attendance-uuid",    "status": "CHECKED_IN",    "quota": { "balance": 4, "expiresAt": "2026-08-31" },    "nextAction": "WAIT_IN_CLASS_VALIDATION"  }}
+Lampiran C — Definition of Done
+Aspek
+Kriteria Selesai
+Requirement
+Requirement ID, acceptance criteria, business rule, dependency, dan TBD relevan telah jelas.
+UX
+Flow, state loading/empty/error/permission/conflict, responsive, accessibility, dan copy telah direview.
+Development
+Kode modular, strict type, lint/format lulus, error handling, audit, permission, idempotency, dan transaction diterapkan.
+Database
+Migration, index, constraint, seed/reference data, rollback/forward plan, dan data dictionary diperbarui.
+API
+OpenAPI, validation, error code, permission, scope, pagination, idempotency, dan examples diperbarui.
+Testing
+Unit/integration/E2E/security regression sesuai risiko; acceptance test lulus; test evidence tersedia.
+Security
+Secret scan, dependency/container scan, access control test, logging/masking, dan file controls lulus.
+Performance
+Query/endpoint kritis memenuhi target atau memiliki baseline serta rencana perbaikan.
+Observability
+Structured log, metric, trace/correlation, dashboard, dan alert untuk fitur kritis tersedia.
+Documentation
+SRS/ADR/API/runbook/user guide/release notes diperbarui.
+Deployment
+CI/CD lulus; staging smoke test; migration rehearsal; rollback; backup pre-deploy.
+Business Acceptance
+UAT dan process owner sign-off; training/support material tersedia.
+Lampiran D — Checklist Kesiapan Go-Live
+Area
+Checklist
+Governance
+SRS baseline dan semua TBD kritis Closed; scope release dan change freeze disetujui.
+Users
+Akun, role, branch scope, approval matrix, onboarding/offboarding, dan support contact siap.
+Data
+Migrasi final, rekonsiliasi, backup source, sampling, dan sign-off selesai.
+Application
+UAT, regression, security, performance, accessibility, dan browser/device test lulus.
+Finance
+Opening balance, COA/mapping, invoice numbering, period, reports, dan tax/legal format disetujui.
+Operations
+Jadwal, room, package, price, quota, attendance rule, make-up, dan exception process siap.
+HR
+Strata/formula/cut-off/approval/payroll parallel run siap bila modul termasuk release.
+Inventory
+Opening stock, warehouse, valuation, transfer/opname rule siap bila modul termasuk release.
+Infrastructure
+Domain/DNS, TLS, firewall, secrets, backup, monitoring, capacity, storage, queue, email siap.
+DR
+Restore test, RPO/RTO, runbook, emergency contacts, dan komunikasi incident siap.
+Training
+Admin/coach/finance/HR/inventory/owner/orang tua menerima panduan sesuai rollout.
+Support
+Hypercare schedule, ticket channel, severity/SLA, known issues, dan escalation matrix tersedia.
+Lampiran E — Catatan Baseline dan Persetujuan
+Dokumen ini merangkum seluruh kebutuhan yang telah dibahas untuk Sistem Informasi Manajemen DIPA Learning Center dan mengubah kebutuhan tingkat awal menjadi baseline yang dapat digunakan developer, UI/UX designer, database engineer, QA, DevOps, serta pemilik proses.
+Status Dokumen: SRS Versi 2.0 — Baseline Pengembangan. Semua kebutuhan berlabel Must harus masuk scope sesuai fase atau memiliki change request/deferment tertulis. Item pada Bab 22 wajib ditutup sebelum modul terkait dianggap final.
+Dengan persetujuan dokumen ini, para pihak menyatakan telah memahami ruang lingkup, dependensi, risiko, asumsi, kriteria penerimaan, dan daftar keputusan terbuka. Persetujuan tidak menghilangkan proses change control untuk temuan baru selama desain dan implementasi.
+Peran
+Nama
+Tanda Tangan
+Tanggal
+Product Owner/Owner DIPA
+Project Manager
+Lead Developer/Architect
+Process Owner Operasional
+Process Owner Finance/HR/Inventory
+QA/UAT Lead

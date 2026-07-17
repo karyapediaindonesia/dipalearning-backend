@@ -1,0 +1,338 @@
+Untuk SIM-DIPA Learning Center, Master Tahun Ajaran/Periode berfungsi sebagai pengendali waktu operasional akademik. Master ini menjadi acuan untuk:
+Enrollment siswa. 
+Pembukaan kelas. 
+Jadwal pembelajaran. 
+Kalender akademik. 
+Laporan akademik. 
+Progress siswa. 
+Presensi. 
+Evaluasi. 
+Namun perlu dibedakan:
+Tahun Ajaran/Periode → master waktu utama. 
+Kalender Akademik → kegiatan detail dalam periode tersebut. 
+Jadwal Kelas → pertemuan aktual. 
+Jadi Tahun Ajaran/Periode hanya menentukan kapan suatu periode akademik berlangsung, bukan jadwal harian.
+Master Tahun Ajaran / Periode
+Struktur Konsep
+Tahun Ajaran
+        |
+        |
+        ├── Periode Akademik
+        │        |
+        │        ├── Kalender Akademik
+        │        ├── Kelas
+        │        ├── Enrollment
+        │        └── Laporan
+Contoh:
+Tahun Ajaran 2026/2027
+|
+├── Semester 1
+|       01 Juli 2026 - 31 Desember 2026
+|
+└── Semester 2
+        01 Januari 2027 - 30 Juni 2027
+Form Master Tahun Ajaran / Periode
+Saya sarankan dibagi menjadi:
+Identitas Periode 
+Rentang Waktu 
+Konfigurasi Akademik 
+Status Periode 
+Administrasi 
+1. Identitas Periode
+Berisi informasi dasar periode.
+Field
+Keterangan
+Wajib
+ID Periode
+Generate sistem
+Ya
+Kode Periode
+Kode unik
+Ya
+Nama Periode
+Nama tampilan
+Ya
+Tahun Ajaran
+Tahun akademik
+Ya
+Jenis Periode
+Tahun/Semester/Term
+Ya
+Deskripsi
+Catatan
+Opsional
+Contoh:
+Field
+Nilai
+Kode
+TA-2026-2027-S1
+Nama
+Semester 1 Tahun Ajaran 2026/2027
+Jenis
+Semester
+2. Tahun Ajaran
+Jika DIPA menggunakan konsep sekolah/kursus, sebaiknya Tahun Ajaran menjadi entitas induk.
+Master Tahun Ajaran
+Field
+Keterangan
+Kode Tahun Ajaran
+Unik
+Nama Tahun Ajaran
+Contoh 2026/2027
+Tahun Mulai
+2026
+Tahun Selesai
+2027
+Status
+Aktif/nonaktif
+Contoh:
+TA-2026
+Nama:
+2026/2027
+Mulai:
+2026
+Selesai:
+2027
+3. Periode Akademik
+Satu tahun ajaran dapat memiliki beberapa periode.
+Contoh:
+2026/2027
+├── Term 1
+├── Term 2
+├── Term 3
+└── Term 4
+Field:
+Field
+Keterangan
+Tahun Ajaran
+Relasi
+Nama Periode
+Semester/Term
+Urutan Periode
+1,2,3
+Tanggal Mulai
+Awal
+Tanggal Selesai
+Akhir
+4. Rentang Waktu Akademik
+Menentukan batas operasional.
+Field
+Keterangan
+Tanggal Mulai Periode
+Awal
+Tanggal Selesai Periode
+Akhir
+Periode Pendaftaran Mulai
+Registrasi
+Periode Pendaftaran Selesai
+Registrasi
+Periode Pembelajaran Mulai
+Kelas mulai
+Periode Pembelajaran Selesai
+Kelas selesai
+Contoh:
+Periode:
+Semester 1
+Pendaftaran:
+01 Juni - 30 Juni 2026
+Belajar:
+01 Juli - 31 Desember 2026
+5. Cakupan Periode
+Karena SIM-DIPA multi cabang, perlu menentukan cakupan.
+Field
+Keterangan
+Berlaku Untuk
+Global/Cabang
+Cabang
+Jika khusus cabang
+Contoh:
+Global
+Semester 1 berlaku semua cabang
+Cabang
+Semester Intensif Juli
+Cabang Surabaya Barat
+6. Konfigurasi Akademik
+Pengaturan yang terkait periode.
+Field
+Fungsi
+Periode Aktif Enrollment
+Apakah bisa daftar
+Periode Aktif Jadwal
+Apakah bisa buat jadwal
+Periode Aktif Presensi
+Apakah presensi dibuka
+Periode Aktif Penilaian
+Apakah progress aktif
+Periode Aktif Invoice
+Keuangan
+Contoh:
+Semester 1
+Enrollment:
+✓ Aktif
+Scheduling:
+✓ Aktif
+Assessment:
+✓ Aktif
+7. Status Periode
+Status diperlukan untuk mengontrol penggunaan.
+Status
+Fungsi
+Draft
+Persiapan
+Open
+Aktif digunakan
+Locked
+Tidak boleh perubahan
+Closed
+Selesai
+Archived
+Arsip
+Contoh alur:
+DRAFT
+ |
+OPEN
+ |
+LOCKED
+ |
+CLOSED
+ |
+ARCHIVED
+8. Kalender Akademik Terkait
+Tidak dimasukkan sebagai field langsung, tetapi relasi.
+Contoh:
+Tahun Ajaran 2026/2027
+Periode Semester 1
+    |
+    |
+    └── Kalender Akademik
+          - Awal belajar
+          - Libur
+          - Evaluasi
+          - Akhir periode
+9. Cabang yang Menggunakan Periode
+Jika cabang memiliki periode berbeda.
+Tambahkan:
+Tabel:
+branch_academic_period
+Field:
+Field
+Cabang
+Periode
+Status
+Tanggal efektif
+Catatan
+Contoh:
+Semester 1 2026
+✓ Surabaya Barat
+✓ Surabaya Timur
+✓ Malang
+10. Audit dan Administrasi
+Otomatis:
+Field
+Dibuat oleh
+Tanggal dibuat
+Diubah oleh
+Tanggal perubahan
+Catatan perubahan
+Tampilan Form
+================================================
+MASTER TAHUN AJARAN / PERIODE
+================================================
+1. IDENTITAS
+Kode Periode
+[ TA-2026-S1 ]
+Nama Periode
+[ Semester 1 2026/2027 ]
+Tahun Ajaran
+[ 2026/2027 ▼ ]
+Jenis
+[ Semester ▼ ]
+================================================
+2. RENTANG WAKTU
+Tanggal Mulai
+[ 01-07-2026 ]
+Tanggal Selesai
+[ 31-12-2026 ]
+Pendaftaran Mulai
+[ 01-06-2026 ]
+Pendaftaran Selesai
+[ 30-06-2026 ]
+================================================
+3. CAKUPAN
+Berlaku Untuk
+(✓) Semua Cabang
+( ) Cabang Tertentu
+================================================
+4. STATUS
+Status
+[ OPEN ▼ ]
+================================================
+Catatan
+[...........................]
+[Simpan]
+================================================
+Struktur Database
+academic_years
+id
+code
+name
+start_year
+end_year
+status
+academic_periods
+id
+academic_year_id
+code
+name
+period_type
+sequence
+start_date
+end_date
+registration_start
+registration_end
+learning_start
+learning_end
+status
+branch_academic_periods
+branch_id
+academic_period_id
+status
+Hubungan dengan Modul SIM-DIPA
+Modul
+Menggunakan Tahun Ajaran/Periode
+Registrasi
+Menentukan periode masuk
+Enrollment
+Menentukan periode siswa
+Kursus
+Program berjalan pada periode
+Kelas
+Kelas dibuat dalam periode
+Jadwal
+Jadwal memiliki periode
+Presensi
+Mengacu periode
+Progress
+Laporan periode
+Invoice
+Periode layanan
+Laporan
+Filter akademik
+Rekomendasi untuk DIPA Learning Center
+Karena DIPA bukan sekolah formal, jangan terlalu kaku memakai "Semester".
+Lebih fleksibel:
+Tahun Ajaran
+2026/2027
+Periode:
+- Term 1
+- Term 2
+- Term 3
+- Program Intensif Juli
+- Program Liburan
+- Program Private
+Jadi Master Tahun Ajaran/Periode sebaiknya mendukung konsep sekolah + kursus, sehingga tetap cocok untuk pertumbuhan DIPA ke depan.
+Export response as a Google Docs file
+Export response as a Word file
+Export response as a PDF file
+Top of Form
+Bottom of Form

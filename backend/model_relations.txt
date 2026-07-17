@@ -1,0 +1,455 @@
+
+APP: apps.core
+========================================
+
+Model: SystemConfiguration
+--------------------
+
+Model: Province
+--------------------
+  - cities (ForeignKey)
+    -> Targets: City
+
+Model: City
+--------------------
+  - province (ForeignKey)
+    -> Targets: Province
+    -> On Delete: CASCADE
+
+APP: apps.dashboard
+========================================
+
+APP: apps.accounts
+========================================
+
+Model: Permission
+--------------------
+  - role (ManyToManyField)
+    -> Targets: Role
+
+Model: Role
+--------------------
+  - user (ManyToManyField)
+    -> Targets: User
+  - permissions (ManyToManyField)
+    -> Targets: Permission
+    -> On Delete: None
+
+Model: User
+--------------------
+  - logentry (ForeignKey)
+    -> Targets: LogEntry
+  - managed_branches (ForeignKey)
+    -> Targets: Branch
+  - auditlog (ForeignKey)
+    -> Targets: AuditLog
+  - prospect_followups (ForeignKey)
+    -> Targets: Prospect
+  - prospectstatushistory (ForeignKey)
+    -> Targets: ProspectStatusHistory
+  - enrollmenthistory (ForeignKey)
+    -> Targets: EnrollmentHistory
+  - employee_profile (OneToOneField)
+    -> Targets: Employee
+  - employeehistory (ForeignKey)
+    -> Targets: EmployeeHistory
+  - payment (ForeignKey)
+    -> Targets: Payment
+  - groups (ManyToManyField)
+    -> Targets: Group
+    -> On Delete: None
+  - user_permissions (ManyToManyField)
+    -> Targets: Permission
+    -> On Delete: None
+  - roles (ManyToManyField)
+    -> Targets: Role
+    -> On Delete: None
+  - assigned_branches (ManyToManyField)
+    -> Targets: Branch
+    -> On Delete: None
+
+APP: apps.branches
+========================================
+
+Model: Branch
+--------------------
+  - user (ManyToManyField)
+    -> Targets: User
+  - sub_branches (ForeignKey)
+    -> Targets: Branch
+  - rooms (ForeignKey)
+    -> Targets: Room
+  - holidays (ForeignKey)
+    -> Targets: Holiday
+  - academic_periods (ForeignKey)
+    -> Targets: BranchAcademicPeriod
+  - classes (ForeignKey)
+    -> Targets: StudyClass
+  - prospect_target_branches (ForeignKey)
+    -> Targets: Prospect
+  - prospect_alt_branches (ForeignKey)
+    -> Targets: Prospect
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+  - employeebranchassignment (ForeignKey)
+    -> Targets: EmployeeBranchAssignment
+  - parent_branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: SET_NULL
+  - person_in_charge (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL
+
+Model: Room
+--------------------
+  - branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: CASCADE
+
+Model: Holiday
+--------------------
+  - branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: CASCADE
+
+APP: apps.academics
+========================================
+
+Model: Course
+--------------------
+  - levels (ForeignKey)
+    -> Targets: Level
+  - classes (ForeignKey)
+    -> Targets: StudyClass
+  - prospectinterest (ForeignKey)
+    -> Targets: ProspectInterest
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+
+Model: Level
+--------------------
+  - next_levels (ForeignKey)
+    -> Targets: Level
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+  - course (ForeignKey)
+    -> Targets: Course
+    -> On Delete: CASCADE
+  - prerequisite (ForeignKey)
+    -> Targets: Level
+    -> On Delete: SET_NULL
+
+Model: Package
+--------------------
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+  - invoiceitem (ForeignKey)
+    -> Targets: InvoiceItem
+  - studentquota (ForeignKey)
+    -> Targets: StudentQuota
+
+Model: AcademicYear
+--------------------
+  - periods (ForeignKey)
+    -> Targets: AcademicPeriod
+
+Model: AcademicPeriod
+--------------------
+  - branch_assignments (ForeignKey)
+    -> Targets: BranchAcademicPeriod
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+  - academic_year (ForeignKey)
+    -> Targets: AcademicYear
+    -> On Delete: CASCADE
+
+Model: BranchAcademicPeriod
+--------------------
+  - branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: CASCADE
+  - academic_period (ForeignKey)
+    -> Targets: AcademicPeriod
+    -> On Delete: CASCADE
+
+Model: StudyClass
+--------------------
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+  - branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: CASCADE
+  - course (ForeignKey)
+    -> Targets: Course
+    -> On Delete: CASCADE
+  - coach (ForeignKey)
+    -> Targets: Employee
+    -> On Delete: SET_NULL
+
+APP: apps.attendance
+========================================
+
+Model: AbsenceReason
+--------------------
+
+APP: apps.finance
+========================================
+
+Model: PaymentMethod
+--------------------
+  - payment (ForeignKey)
+    -> Targets: Payment
+
+Model: FeeCategory
+--------------------
+  - subcategories (ForeignKey)
+    -> Targets: FeeCategory
+  - parent (ForeignKey)
+    -> Targets: FeeCategory
+    -> On Delete: SET_NULL
+
+APP: apps.audit
+========================================
+
+Model: AuditLog
+--------------------
+  - user (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL
+
+APP: apps.students
+========================================
+
+Model: ProspectStatus
+--------------------
+  - prospects (ForeignKey)
+    -> Targets: Prospect
+  - old_histories (ForeignKey)
+    -> Targets: ProspectStatusHistory
+  - new_histories (ForeignKey)
+    -> Targets: ProspectStatusHistory
+
+Model: Prospect
+--------------------
+  - parent (OneToOneField)
+    -> Targets: ProspectParent
+  - address (OneToOneField)
+    -> Targets: ProspectAddress
+  - source (OneToOneField)
+    -> Targets: ProspectSource
+  - interests (ForeignKey)
+    -> Targets: ProspectInterest
+  - status_histories (ForeignKey)
+    -> Targets: ProspectStatusHistory
+  - guardian (OneToOneField)
+    -> Targets: ProspectGuardian
+  - student_profile (OneToOneField)
+    -> Targets: Student
+  - status (ForeignKey)
+    -> Targets: ProspectStatus
+    -> On Delete: SET_NULL
+  - pic_followup (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL
+  - target_branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: SET_NULL
+  - alt_branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: SET_NULL
+
+Model: ProspectParent
+--------------------
+  - prospect (OneToOneField)
+    -> Targets: Prospect
+    -> On Delete: CASCADE
+
+Model: ProspectAddress
+--------------------
+  - prospect (OneToOneField)
+    -> Targets: Prospect
+    -> On Delete: CASCADE
+
+Model: ProspectSource
+--------------------
+  - prospect (OneToOneField)
+    -> Targets: Prospect
+    -> On Delete: CASCADE
+
+Model: ProspectInterest
+--------------------
+  - prospect (ForeignKey)
+    -> Targets: Prospect
+    -> On Delete: CASCADE
+  - course (ForeignKey)
+    -> Targets: Course
+    -> On Delete: SET_NULL
+
+Model: ProspectStatusHistory
+--------------------
+  - prospect (ForeignKey)
+    -> Targets: Prospect
+    -> On Delete: CASCADE
+  - old_status (ForeignKey)
+    -> Targets: ProspectStatus
+    -> On Delete: SET_NULL
+  - new_status (ForeignKey)
+    -> Targets: ProspectStatus
+    -> On Delete: SET_NULL
+  - changed_by (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL
+
+Model: ProspectGuardian
+--------------------
+  - prospect (OneToOneField)
+    -> Targets: Prospect
+    -> On Delete: CASCADE
+
+Model: Student
+--------------------
+  - enrollments (ForeignKey)
+    -> Targets: Enrollment
+  - invoices (ForeignKey)
+    -> Targets: Invoice
+  - quotas (ForeignKey)
+    -> Targets: StudentQuota
+  - prospect (OneToOneField)
+    -> Targets: Prospect
+    -> On Delete: SET_NULL
+
+Model: Enrollment
+--------------------
+  - histories (ForeignKey)
+    -> Targets: EnrollmentHistory
+  - student (ForeignKey)
+    -> Targets: Student
+    -> On Delete: CASCADE
+  - course (ForeignKey)
+    -> Targets: Course
+    -> On Delete: CASCADE
+  - level (ForeignKey)
+    -> Targets: Level
+    -> On Delete: CASCADE
+  - package (ForeignKey)
+    -> Targets: Package
+    -> On Delete: SET_NULL
+  - branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: CASCADE
+  - study_class (ForeignKey)
+    -> Targets: StudyClass
+    -> On Delete: SET_NULL
+  - coach (ForeignKey)
+    -> Targets: Employee
+    -> On Delete: SET_NULL
+  - academic_period (ForeignKey)
+    -> Targets: AcademicPeriod
+    -> On Delete: SET_NULL
+
+Model: EnrollmentHistory
+--------------------
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+    -> On Delete: CASCADE
+  - changed_by (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL
+
+APP: apps.hr
+========================================
+
+Model: JobPosition
+--------------------
+  - subordinates (ForeignKey)
+    -> Targets: JobPosition
+  - employees (ForeignKey)
+    -> Targets: Employee
+  - parent_position (ForeignKey)
+    -> Targets: JobPosition
+    -> On Delete: SET_NULL
+
+Model: Employee
+--------------------
+  - assigned_classes (ForeignKey)
+    -> Targets: StudyClass
+  - enrollment (ForeignKey)
+    -> Targets: Enrollment
+  - branch_assignments (ForeignKey)
+    -> Targets: EmployeeBranchAssignment
+  - coach_profile (OneToOneField)
+    -> Targets: CoachProfile
+  - documents (ForeignKey)
+    -> Targets: EmployeeDocument
+  - histories (ForeignKey)
+    -> Targets: EmployeeHistory
+  - user (OneToOneField)
+    -> Targets: User
+    -> On Delete: SET_NULL
+  - job_position (ForeignKey)
+    -> Targets: JobPosition
+    -> On Delete: SET_NULL
+
+Model: EmployeeBranchAssignment
+--------------------
+  - employee (ForeignKey)
+    -> Targets: Employee
+    -> On Delete: CASCADE
+  - branch (ForeignKey)
+    -> Targets: Branch
+    -> On Delete: CASCADE
+
+Model: CoachProfile
+--------------------
+  - employee (OneToOneField)
+    -> Targets: Employee
+    -> On Delete: CASCADE
+
+Model: EmployeeDocument
+--------------------
+  - employee (ForeignKey)
+    -> Targets: Employee
+    -> On Delete: CASCADE
+
+Model: EmployeeHistory
+--------------------
+  - employee (ForeignKey)
+    -> Targets: Employee
+    -> On Delete: CASCADE
+  - changed_by (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL
+
+APP: apps.billing
+========================================
+
+Model: Invoice
+--------------------
+  - items (ForeignKey)
+    -> Targets: InvoiceItem
+  - payments (ForeignKey)
+    -> Targets: Payment
+  - student (ForeignKey)
+    -> Targets: Student
+    -> On Delete: CASCADE
+
+Model: InvoiceItem
+--------------------
+  - invoice (ForeignKey)
+    -> Targets: Invoice
+    -> On Delete: CASCADE
+  - package (ForeignKey)
+    -> Targets: Package
+    -> On Delete: SET_NULL
+
+Model: Payment
+--------------------
+  - invoice (ForeignKey)
+    -> Targets: Invoice
+    -> On Delete: CASCADE
+  - payment_method (ForeignKey)
+    -> Targets: PaymentMethod
+    -> On Delete: SET_NULL
+  - verified_by (ForeignKey)
+    -> Targets: User
+    -> On Delete: SET_NULL

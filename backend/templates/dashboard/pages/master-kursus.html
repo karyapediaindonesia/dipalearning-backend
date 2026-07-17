@@ -1,0 +1,136 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+{% block title %}Master Kursus | DIPA Learning{% endblock %}
+
+
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+<div class="row page-titles">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active"><a href="javascript:void(0)">Data Master</a></li>
+        <li class="breadcrumb-item"><a href="javascript:void(0)">Master Kursus</a></li>
+    </ol>
+</div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="card-title">Data Master Kursus</h4>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#courseModal" onclick="resetForm()">
+                    <i class="fa fa-plus me-2"></i>Tambah Kursus
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="courseTable" class="display" style="min-width: 845px">
+                        <thead>
+                            <tr>
+                                <th>Kode</th><th>Nama Kursus</th><th>Kategori</th><th>Mode</th><th>Durasi</th><th>Status</th><th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr>
+                                <td><strong>{{ course.code }}</strong></td><td>{{ course.name }}</td>
+                                <td>{{ course.get_category_display }}</td><td>{{ course.get_learning_mode_display }}</td>
+                                <td>{{ course.default_duration }} mnt</td>
+                                <td>{% if course.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>{% else %}<span class="badge light badge-warning">Nonaktif</span>{% endif %}</td>
+                                <td>
+                                    <div class="d-flex">
+                                        <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                data-obj='{"id":"{{ course.id }}", "code":"{{ course.code|escapejs }}", "name":"{{ course.name|escapejs }}", "category":"{{ course.category }}", "learning_type":"{{ course.learning_type }}", "learning_mode":"{{ course.learning_mode }}", "default_duration":"{{ course.default_duration }}", "status":"{{ course.status }}", "notes":"{{ course.notes|escapejs }}"}'
+                                                onclick="editCourse(this)" title="Edit">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </button>
+                                        <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteCourse({{ course.id }}, '{{ course.name|escapejs }}')" title="Hapus">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="courseModal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Tambah Master Kursus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="errorBox" class="alert alert-danger" style="display: none;"><ul id="errorList" class="mb-0"></ul></div>
+                <form id="courseForm">
+                    <input type="hidden" id="course_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label class="form-label">Kode Kursus <span class="text-danger">*</span></label><input type="text" class="form-control" id="code" placeholder="Contoh: KRS-ENG-01"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Nama Kursus <span class="text-danger">*</span></label><input type="text" class="form-control" id="name" placeholder="Contoh: Bahasa Inggris Dasar"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Kategori <span class="text-danger">*</span></label>
+                            <select class="form-control" id="category">
+                                <option value="ACADEMIC">Akademik</option><option value="LANGUAGE">Bahasa</option>
+                                <option value="TECHNOLOGY">Teknologi</option><option value="CREATIVITY">Kreativitas</option>
+                                <option value="PRESCHOOL">Persiapan sekolah</option><option value="SELF_DEV">Pengembangan diri</option><option value="SPECIAL">Program khusus</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Tipe Belajar <span class="text-danger">*</span></label>
+                            <select class="form-control" id="learning_type"><option value="INDIVIDUAL">Individual</option><option value="GROUP">Kelompok</option><option value="BOTH">Keduanya</option></select>
+                        </div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Mode Belajar <span class="text-danger">*</span></label>
+                            <select class="form-control" id="learning_mode"><option value="OFFLINE">Tatap muka</option><option value="ONLINE">Online</option><option value="HYBRID">Hybrid</option></select>
+                        </div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Durasi (menit) <span class="text-danger">*</span></label><input type="number" class="form-control" id="default_duration" value="60" placeholder="Contoh: 60"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Status <span class="text-danger">*</span></label><select class="form-control" id="status"><option value="ACTIVE">Aktif</option><option value="INACTIVE">Nonaktif</option></select></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveCourse()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+{% endblock %}
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script>
+    $(document).ready(function() { $('#courseTable').DataTable({
+            language: {
+                search:       "Cari:",
+                lengthMenu:   "Tampilkan _MENU_ data",
+                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
+                zeroRecords:  "Tidak ada data ditemukan.",
+                emptyTable:   "Tidak ada data. Klik tombol Tambah.",
+                paginate: {
+                    previous: '<i class="fa fa-angle-double-left"></i>',
+                    next:     '<i class="fa fa-angle-double-right"></i>'
+                }
+            }
+        }); });
+    function showErrors(msgs) { $('#errorList').html(msgs.map(m => `<li>${m}</li>`).join('')); $('#errorBox').show(); }
+    function resetForm() { $('#errorBox').hide(); $('#course_id').val(''); $('#code').val(''); $('#name').val(''); $('#modalTitle').text('Tambah Kursus'); }
+    function editCourse(btn) {
+        const d = $(btn).data('obj'); resetForm();
+        $('#course_id').val(d.id); $('#code').val(d.code); $('#name').val(d.name); $('#category').val(d.category);
+        $('#learning_type').val(d.learning_type); $('#learning_mode').val(d.learning_mode); $('#default_duration').val(d.default_duration);
+        $('#status').val(d.status); $('#modalTitle').text('Edit Kursus'); $('#courseModal').modal('show');
+    }
+    function saveCourse() {
+        const id = $('#course_id').val();
+        const data = { code: $('#code').val(), name: $('#name').val(), category: $('#category').val(), learning_type: $('#learning_type').val(), learning_mode: $('#learning_mode').val(), default_duration: parseInt($('#default_duration').val()), status: $('#status').val() };
+        const method = id ? 'PUT' : 'POST'; const url = id ? `/api/v1/academics/courses/${id}/` : '/api/v1/academics/courses/';
+        fetch(url, { method: method, headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
+    }
+    function deleteCourse(id, name) { if(confirm(`Hapus ${name}?`)) fetch(`/api/v1/academics/courses/${id}/`, {method: 'DELETE', headers: {'X-CSRFToken': '{{ csrf_token }}'}}).then(r => r.ok ? location.reload() : alert('Gagal')); }
+</script>
+{% endblock %}

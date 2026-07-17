@@ -1,0 +1,464 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+<style>
+    .section-title {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Tahun Ajaran & Periode</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h4 class="card-title">Tahun Ajaran Induk</h4>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#yearModal" onclick="resetYearForm()">
+                            <i class="fa fa-plus"></i> Tambah
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-responsive-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Nama</th>
+                                        <th>Rentang</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for y in academic_years %}
+                                    <tr>
+                                        <td><strong>{{ y.name }}</strong></td>
+                                        <td>{{ y.start_year }} - {{ y.end_year }}</td>
+                                        <td>
+                                            <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                    onclick="editYear({{ y.id }}, '{{ y.code }}', '{{ y.name }}', {{ y.start_year }}, {{ y.end_year }}, '{{ y.status }}')">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h4 class="card-title">Daftar Periode Akademik</h4>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#periodModal" onclick="resetPeriodForm()">
+                            <i class="fa fa-plus"></i> Tambah Periode
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="periodTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th>Kode / TA</th>
+                                        <th>Nama Periode</th>
+                                        <th>Tgl Belajar</th>
+                                        <th>Cakupan</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in academic_periods %}
+                                    <tr>
+                                        <td><strong>{{ p.code }}</strong><br><small>{{ p.academic_year.name }}</small></td>
+                                        <td>{{ p.name }}<br><small class="text-muted">{{ p.get_period_type_display }} (Seq: {{ p.sequence }})</small></td>
+                                        <td>{{ p.learning_start|date:"d M Y" }}<br>s.d<br>{{ p.learning_end|date:"d M Y" }}</td>
+                                        <td>
+                                            {% if p.is_global %}
+                                                <span class="badge badge-primary light">Semua Cabang</span>
+                                            {% else %}
+                                                <span class="badge badge-info light">Spesifik Cabang</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if p.status == 'OPEN' %}
+                                            <span class="badge badge-success light">Buka</span>
+                                            {% elif p.status == 'CLOSED' %}
+                                            <span class="badge badge-danger light">Tutup</span>
+                                            {% else %}
+                                            <span class="badge badge-warning light">{{ p.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-id="{{ p.id }}"
+                                                        onclick="editPeriod(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deletePeriod({{ p.id }}, '{{ p.name|escapejs }}')" title="Hapus">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Academic Year -->
+<div class="modal fade" id="yearModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Form Tahun Ajaran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="yearForm">
+                    <input type="hidden" id="year_id">
+                    <div class="mb-3">
+                        <label class="form-label">Kode <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="year_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nama <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="year_name" required placeholder="Misal: 2026/2027">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Tahun Mulai</label>
+                            <input type="number" class="form-control" id="year_start" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Tahun Selesai</label>
+                            <input type="number" class="form-control" id="year_end" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-control" id="year_status">
+                            <option value="ACTIVE">Aktif</option>
+                            <option value="INACTIVE">Nonaktif</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveYear()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Academic Period -->
+<div class="modal fade" id="periodModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="periodModalTitle">Form Periode Akademik</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="periodForm">
+                    <input type="hidden" id="period_id">
+                    
+                    <!-- 1. IDENTITAS -->
+                    <div class="section-title">1. Identitas Periode & Tahun Ajaran</div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Kode Periode <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="p_code" required>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label class="form-label">Nama Periode <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="p_name" required placeholder="Misal: Semester 1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Tahun Ajaran <span class="text-danger">*</span></label>
+                            <select class="form-control" id="p_academic_year" required>
+                                <option value="">-- Pilih --</option>
+                                {% for y in academic_years %}
+                                <option value="{{ y.id }}">{{ y.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Jenis</label>
+                            <select class="form-control" id="p_type">
+                                <option value="SEMESTER">Semester</option>
+                                <option value="TERM">Term</option>
+                                <option value="INTENSIVE">Intensif / Spesial</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Urutan</label>
+                            <input type="number" class="form-control" id="p_seq" value="1">
+                        </div>
+                    </div>
+
+                    <!-- 2. RENTANG WAKTU -->
+                    <div class="section-title">2. Rentang Waktu Pendaftaran & Belajar</div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Pendaftaran Mulai</label>
+                            <input type="date" class="form-control" id="p_reg_start">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Pendaftaran Selesai</label>
+                            <input type="date" class="form-control" id="p_reg_end">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">KBM Mulai (Belajar) <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="p_learn_start" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">KBM Selesai <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="p_learn_end" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Periode Mulai</label>
+                            <input type="date" class="form-control" id="p_start">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Periode Selesai</label>
+                            <input type="date" class="form-control" id="p_end">
+                        </div>
+                    </div>
+
+                    <!-- 3. CAKUPAN CABANG -->
+                    <div class="section-title">3. Cakupan Cabang</div>
+                    <div class="row mb-3">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check custom-checkbox mb-3">
+                                <input type="checkbox" class="form-check-input" id="p_is_global" checked onchange="toggleBranchSelect()">
+                                <label class="form-check-label" for="p_is_global">Berlaku untuk SEMUA Cabang</label>
+                            </div>
+                        </div>
+                        <div class="col-md-12" id="branch_selection_div" style="display:none;">
+                            <label class="form-label">Pilih Cabang (Hanya berlaku untuk cabang berikut)</label>
+                            <select class="form-control select2" id="p_branches" multiple style="width: 100%;">
+                                {% for b in branches %}
+                                <option value="{{ b.id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 4. STATUS -->
+                    <div class="section-title">4. Status</div>
+                    <div class="row mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Status Periode <span class="text-danger">*</span></label>
+                            <select class="form-control" id="p_status" required>
+                                <option value="DRAFT">Draft (Persiapan)</option>
+                                <option value="OPEN">Open (Sedang Aktif)</option>
+                                <option value="LOCKED">Locked (Tidak bisa diubah)</option>
+                                <option value="CLOSED">Closed (Selesai)</option>
+                                <option value="ARCHIVED">Archived (Arsip)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Catatan</label>
+                            <input type="text" class="form-control" id="p_notes">
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="savePeriod()">Simpan Periode</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#periodTable').DataTable();
+        $('.select2').select2({
+            dropdownParent: $('#periodModal')
+        });
+    });
+
+    // --- TAHUN AJARAN ---
+    function resetYearForm() {
+        $('#yearForm')[0].reset();
+        $('#year_id').val('');
+    }
+
+    function editYear(id, code, name, start, end, status) {
+        $('#year_id').val(id);
+        $('#year_code').val(code);
+        $('#year_name').val(name);
+        $('#year_start').val(start);
+        $('#year_end').val(end);
+        $('#year_status').val(status);
+        $('#yearModal').modal('show');
+    }
+
+    function saveYear() {
+        const id = $('#year_id').val();
+        const payload = {
+            code: $('#year_code').val(),
+            name: $('#year_name').val(),
+            start_year: $('#year_start').val(),
+            end_year: $('#year_end').val(),
+            status: $('#year_status').val()
+        };
+
+        const url = id ? `/api/v1/academics/academic-years/${id}/` : '/api/v1/academics/academic-years/';
+        const method = id ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url, type: method, contentType: 'application/json',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: JSON.stringify(payload),
+            success: function() { location.reload(); },
+            error: function(xhr) { alert('Error: ' + xhr.responseText); }
+        });
+    }
+
+    // --- PERIODE AKADEMIK ---
+    function toggleBranchSelect() {
+        if($('#p_is_global').is(':checked')) {
+            $('#branch_selection_div').hide();
+        } else {
+            $('#branch_selection_div').show();
+        }
+    }
+
+    function resetPeriodForm() {
+        $('#periodForm')[0].reset();
+        $('#period_id').val('');
+        $('#p_is_global').prop('checked', true);
+        toggleBranchSelect();
+        $('#p_branches').val(null).trigger('change');
+        $('#periodModalTitle').text('Form Periode Akademik');
+    }
+
+    function editPeriod(btn) {
+        const id = $(btn).data('id');
+        $.get(`/api/v1/academics/academic-periods/${id}/`, function(data) {
+            resetPeriodForm();
+            $('#period_id').val(data.id);
+            $('#p_code').val(data.code);
+            $('#p_name').val(data.name);
+            $('#p_academic_year').val(data.academic_year);
+            $('#p_type').val(data.period_type);
+            $('#p_seq').val(data.sequence);
+            $('#p_reg_start').val(data.registration_start);
+            $('#p_reg_end').val(data.registration_end);
+            $('#p_learn_start').val(data.learning_start);
+            $('#p_learn_end').val(data.learning_end);
+            $('#p_start').val(data.start_date);
+            $('#p_end').val(data.end_date);
+            $('#p_status').val(data.status);
+            $('#p_notes').val(data.notes);
+            
+            if(data.is_global) {
+                $('#p_is_global').prop('checked', true);
+            } else {
+                $('#p_is_global').prop('checked', false);
+                const b_ids = data.branch_assignments.map(a => a.branch);
+                $('#p_branches').val(b_ids).trigger('change');
+            }
+            toggleBranchSelect();
+            
+            $('#periodModalTitle').text('Edit Periode Akademik');
+            $('#periodModal').modal('show');
+        });
+    }
+
+    function savePeriod() {
+        const id = $('#period_id').val();
+        
+        let branchData = [];
+        const isGlobal = $('#p_is_global').is(':checked');
+        if(!isGlobal) {
+            const selected = $('#p_branches').val() || [];
+            if(selected.length === 0) {
+                alert('Silakan pilih minimal 1 cabang jika tidak Global.');
+                return;
+            }
+            selected.forEach(b => { branchData.push({branch: b}); });
+        }
+
+        const payload = {
+            code: $('#p_code').val(),
+            name: $('#p_name').val(),
+            academic_year: $('#p_academic_year').val(),
+            period_type: $('#p_type').val(),
+            sequence: $('#p_seq').val(),
+            registration_start: $('#p_reg_start').val() || null,
+            registration_end: $('#p_reg_end').val() || null,
+            learning_start: $('#p_learn_start').val() || null,
+            learning_end: $('#p_learn_end').val() || null,
+            start_date: $('#p_start').val() || null,
+            end_date: $('#p_end').val() || null,
+            status: $('#p_status').val(),
+            notes: $('#p_notes').val(),
+            is_global: isGlobal,
+            branch_assignments: branchData
+        };
+
+        const url = id ? `/api/v1/academics/academic-periods/${id}/` : '/api/v1/academics/academic-periods/';
+        const method = id ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url, type: method, contentType: 'application/json',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: JSON.stringify(payload),
+            success: function() { location.reload(); },
+            error: function(xhr) { alert('Error: ' + xhr.responseText); }
+        });
+    }
+
+    function deletePeriod(id, name) {
+        if(confirm(`Yakin ingin menghapus periode ${name}?`)) {
+            $.ajax({
+                url: `/api/v1/academics/academic-periods/${id}/`,
+                type: 'DELETE',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                success: function() { location.reload(); }
+            });
+        }
+    }
+</script>
+{% endblock %}

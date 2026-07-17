@@ -1,0 +1,86 @@
+{% load static %}
+<!--**********************************
+    Sidebar start
+***********************************-->
+<div class="dlabnav">
+    <div class="dlabnav-scroll">
+        <ul class="metismenu" id="menu">
+            <li class="dropdown header-profile">
+                <a class="nav-link" href="#" role="button" onclick="event.preventDefault(); event.stopPropagation(); this.nextElementSibling.classList.toggle('show');">
+                        {% if request.user.photo %}
+                        <img src="{{ request.user.photo.url }}" alt="" style="object-fit: cover;">
+                        {% else %}
+                        <img src="{% static 'dashboard/images/profile/pic1.jpg' %}" alt="">
+                        {% endif %}
+                    <div class="header-info ms-3">
+                        <span class="font-w600 ">Hi,<b>{{ request.user.first_name|default:request.user.username }}</b></span>
+                        <small class="text-end font-w400">{{ request.user.email }}</small>
+                    </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <a href="{% url 'dashboard:app-profile' %}" class="dropdown-item ai-icon">
+                        <svg id="icon-user1" xmlns="http://www.w3.org/2000/svg" class="text-primary" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span class="ms-2">Profile </span>
+                    </a>
+                    <a href="javascript:void(0)" class="dropdown-item ai-icon">
+                        <svg id="icon-inbox" xmlns="http://www.w3.org/2000/svg" class="text-success" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        <span class="ms-2">Inbox </span>
+                    </a>
+                    <a href="{% url 'dashboard:page_logout' %}" class="dropdown-item ai-icon">
+                        <svg id="icon-logout" xmlns="http://www.w3.org/2000/svg" class="text-danger" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        <span class="ms-2">Logout </span>
+                    </a>
+                </div>
+            </li>
+            
+            <li><a class="has-arrow ai-icon" href="javascript:void()" aria-expanded="false">
+                    <i class="flaticon-050-info"></i>
+                    <span class="nav-text">Kesiswaan</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'dashboard:registrasi_siswa' %}">Registrasi Calon Siswa</a></li>
+                    <li><a href="{% url 'dashboard:enrollment_siswa' %}">Enrollment Siswa</a></li>
+                </ul>
+            </li>
+            
+            <li><a class="has-arrow ai-icon" href="javascript:void()" aria-expanded="false">
+                    <i class="flaticon-025-dashboard"></i>
+                    <span class="nav-text">Master Data</span>
+                </a>
+                <ul aria-expanded="false">
+                    <li><a href="{% url 'dashboard:master_cabang' %}">Cabang</a></li>
+                    <li><a href="{% url 'dashboard:master_ruangan' %}">Ruangan</a></li>
+                    <li><a href="{% url 'dashboard:master_kursus' %}">Kursus</a></li>
+                    <li><a href="{% url 'dashboard:master_level' %}">Level</a></li>
+                    <li><a href="{% url 'dashboard:master_hari_libur' %}">Hari Libur</a></li>
+                    <li><a href="{% url 'dashboard:master_alasan_absen' %}">Alasan Absen</a></li>
+                    <li><a href="{% url 'dashboard:master_metode_bayar' %}">Metode Pembayaran</a></li>
+                    <li><a href="{% url 'dashboard:master_kategori_biaya' %}">Kategori Biaya</a></li>
+                    <li><a href="{% url 'dashboard:master_jabatan' %}">Master Jabatan</a></li>
+                    <li><a href="{% url 'dashboard:master_status_prospek' %}">Status Prospek</a></li>
+                    <li><a href="{% url 'dashboard:master_karyawan' %}">Master Karyawan</a></li>
+                    <li><a href="{% url 'dashboard:master_tahun_ajaran' %}">Tahun Ajaran / Periode</a></li>
+                </ul>
+            </li>
+            
+        </ul>
+        <div class="copyright">
+            <p><strong>Dipa Learning Admin Dashboard</strong> © 2026 All Rights Reserved</p>
+            <p class="fs-12">Made with <span class="heart"></span> by Karyapedia</p>
+        </div>
+    </div>
+</div>
+<!--**********************************
+    Sidebar end
+***********************************-->
+<script>
+document.addEventListener('click', function(e) {
+    var profileMenu = document.querySelector('.header-profile .dropdown-menu');
+    var profileToggle = document.querySelector('.header-profile .nav-link');
+    if (profileMenu && profileToggle) {
+        if (!profileToggle.contains(e.target) && !profileMenu.contains(e.target)) {
+            profileMenu.classList.remove('show');
+        }
+    }
+});
+</script>

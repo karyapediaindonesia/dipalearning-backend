@@ -1,0 +1,391 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+<style>
+    .section-title {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Kesiswaan</a></li>
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Enrollment Siswa</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Daftar Enrollment Aktif</h4>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#enrollmentModal" onclick="resetForm()">
+                            <i class="fa fa-plus me-2"></i>Buat Enrollment Baru
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="enrollTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th>No Enrollment</th>
+                                        <th>Siswa</th>
+                                        <th>Program & Kelas</th>
+                                        <th>Mulai</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for enroll in enrollments %}
+                                    <tr>
+                                        <td><strong>{{ enroll.enrollment_no }}</strong></td>
+                                        <td>{{ enroll.student.full_name }}<br><small class="text-muted">{{ enroll.student.student_number }}</small></td>
+                                        <td>{{ enroll.course.name }} - {{ enroll.level.name }}<br><small class="text-muted">{{ enroll.study_class.name|default:"Belum ditempatkan" }}</small></td>
+                                        <td>{{ enroll.start_date|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if enroll.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>
+                                            {% elif enroll.status == 'DRAFT' %}<span class="badge light badge-light">Draft</span>
+                                            {% else %}<span class="badge light badge-warning">{{ enroll.status }}</span>{% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-enroll='{"id":"{{ enroll.id }}"}'
+                                                        onclick="editEnrollment(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Form Enrollment -->
+<div class="modal fade" id="enrollmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Form Enrollment Siswa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="enrollmentForm">
+                    <input type="hidden" id="enrollment_id">
+
+                    <!-- 1. DATA SISWA -->
+                    <div class="section-title">1. Data Siswa</div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-primary">Pilih Calon Siswa (Sudah Lunas) <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="prospect_id" required>
+                                <option value="">-- Pilih Prospect --</option>
+                                {% for p in prospects %}
+                                <option value="{{ p.id }}">{{ p.prospect_number }} - {{ p.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info py-2 mb-0" id="studentInfoBox" style="display:none;">
+                                <strong>Nama:</strong> <span id="info_name"></span><br>
+                                <strong>Telepon:</strong> <span id="info_phone"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. PROGRAM -->
+                    <div class="section-title">2. Program</div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Kursus <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="course_id" required>
+                                <option value="">-- Pilih Kursus --</option>
+                                {% for c in courses %}
+                                <option value="{{ c.id }}">{{ c.code }} - {{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Level <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="level_id" required>
+                                <option value="">-- Pilih Level --</option>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Paket <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="package_id" required>
+                                <option value="">-- Pilih Paket --</option>
+                                {% for p in packages %}
+                                <option value="{{ p.id }}">{{ p.name }} ({{ p.meetings_quota }}x)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 3. PENEMPATAN -->
+                    <div class="section-title">3. Penempatan</div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Cabang <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="branch_id" required>
+                                <option value="">-- Pilih Cabang --</option>
+                                {% for b in branches %}
+                                <option value="{{ b.id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kelas</label>
+                            <select class="form-control select2" id="study_class_id">
+                                <option value="">-- Pilih Kelas --</option>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Coach (Pengajar)</label>
+                            <select class="form-control select2" id="coach_id">
+                                <option value="">-- Pilih Coach --</option>
+                                {% for c in coaches %}
+                                <option value="{{ c.id }}">{{ c.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 4. PERIODE & 5. STATUS -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="section-title">4. Periode</div>
+                            <div class="mb-3">
+                                <label class="form-label">Periode Akademik</label>
+                                <select class="form-control" id="academic_period_id">
+                                    <option value="">-- Pilih Periode --</option>
+                                    {% for p in periods %}
+                                    <option value="{{ p.id }}">{{ p.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="start_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tanggal Selesai</label>
+                                    <input type="date" class="form-control" id="end_date">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="section-title">5. Status & Administrasi</div>
+                            <div class="mb-3">
+                                <label class="form-label">Status Enrollment <span class="text-danger">*</span></label>
+                                <select class="form-control" id="status" required>
+                                    <option value="DRAFT">DRAFT</option>
+                                    <option value="PENDING">PENDING PAYMENT</option>
+                                    <option value="ACTIVE" selected>ACTIVE</option>
+                                    <option value="SUSPENDED">SUSPENDED</option>
+                                    <option value="COMPLETED">COMPLETED</option>
+                                    <option value="CANCELLED">CANCELLED</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nomor Invoice Referensi</label>
+                                <input type="text" class="form-control" id="invoice_id" placeholder="Misal: INV-2026-0001">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Catatan</label>
+                                <textarea class="form-control" id="notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveEnrollment()">Simpan Enrollment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+
+<script>
+    let currentData = {};
+
+    $(document).ready(function() {
+        $('#enrollTable').DataTable();
+        $('.select2').select2({
+            dropdownParent: $('#enrollmentModal')
+        });
+
+        // Pre-fill prospect if passed in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const preselectProspect = urlParams.get('prospect_id');
+        if (preselectProspect) {
+            $('#enrollmentModal').modal('show');
+            $('#prospect_id').val(preselectProspect).trigger('change');
+        }
+
+        // Prospect Change to show info
+        $('#prospect_id').change(function() {
+            const pid = $(this).val();
+            if(pid) {
+                // Fetch prospect data
+                $.get(`/api/v1/students/prospects/${pid}/`, function(data) {
+                    $('#info_name').text(data.full_name);
+                    let phone = "-";
+                    if(data.guardian) phone = data.guardian.phone;
+                    else if(data.parent) phone = data.parent.whatsapp;
+                    $('#info_phone').text(phone);
+                    $('#studentInfoBox').show();
+                });
+            } else {
+                $('#studentInfoBox').hide();
+            }
+        });
+
+        // Cascading Course -> Level
+        $('#course_id').change(function() {
+            const cid = $(this).val();
+            $('#level_id').empty().append('<option value="">-- Pilih Level --</option>');
+            if(cid) {
+                $.get(`/api/v1/academics/levels/`, function(data) {
+                    const levels = data.filter(l => l.course == cid);
+                    levels.forEach(l => {
+                        $('#level_id').append(`<option value="${l.id}">${l.name}</option>`);
+                    });
+                });
+            }
+        });
+
+        // Cascading Branch + Course -> Class
+        function loadClasses() {
+            const bid = $('#branch_id').val();
+            const cid = $('#course_id').val();
+            $('#study_class_id').empty().append('<option value="">-- Pilih Kelas --</option>');
+            if(bid && cid) {
+                $.get(`/api/v1/academics/study-classes/?branch_id=${bid}&course_id=${cid}`, function(data) {
+                    data.forEach(c => {
+                        $('#study_class_id').append(`<option value="${c.id}">${c.name} (${c.coach_name || 'No Coach'})</option>`);
+                    });
+                });
+            }
+        }
+
+        $('#branch_id').change(loadClasses);
+        $('#course_id').change(loadClasses);
+    });
+
+    function resetForm() {
+        $('#enrollmentForm')[0].reset();
+        $('#enrollment_id').val('');
+        $('.select2').val('').trigger('change');
+        $('#modalTitle').text('Form Enrollment Siswa');
+        $('#studentInfoBox').hide();
+    }
+
+    function editEnrollment(btn) {
+        const data = JSON.parse(btn.getAttribute('data-enroll'));
+        // Not fully implemented for Edit logic due to complexity of nested data fetching in this demo,
+        // but typically you would fetch /api/v1/students/enrollments/{id}/ and populate.
+        alert('Fitur edit enrollment (pindah kelas/status) sedang disiapkan.');
+    }
+
+    function saveEnrollment() {
+        const id = $('#enrollment_id').val();
+        const prospect_id = $('#prospect_id').val();
+        
+        // Validation
+        if(!prospect_id || !$('#course_id').val() || !$('#level_id').val() || !$('#package_id').val() || !$('#branch_id').val() || !$('#start_date').val()) {
+            alert('Lengkapi semua isian wajib (tanda *)');
+            return;
+        }
+
+        // Convert prospect to student logic should ideally be in backend, but we'll assume the backend
+        // handles it. Actually, our Enrollment model requires `student_id`. We need to ensure Student exists.
+        // We will do a trick: we'll call a custom endpoint or let's create a Student first if not exists.
+        
+        // For simplicity in this simulation, let's create Student first, then Enrollment.
+        $.ajax({
+            url: '/api/v1/students/students/',
+            type: 'POST',
+            contentType: 'application/json',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: JSON.stringify({
+                prospect: prospect_id,
+                full_name: $('#info_name').text() || 'Siswa Baru',
+                status: 'ACTIVE'
+            }),
+            success: function(studentData) {
+                // Now create Enrollment
+                const payload = {
+                    student: studentData.id,
+                    course: $('#course_id').val(),
+                    level: $('#level_id').val(),
+                    package: $('#package_id').val(),
+                    branch: $('#branch_id').val(),
+                    study_class: $('#study_class_id').val() || null,
+                    coach: $('#coach_id').val() || null,
+                    academic_period: $('#academic_period_id').val() || null,
+                    start_date: $('#start_date').val(),
+                    end_date: $('#end_date').val() || null,
+                    status: $('#status').val(),
+                    invoice_id: $('#invoice_id').val(),
+                    notes: $('#notes').val()
+                };
+
+                $.ajax({
+                    url: '/api/v1/students/enrollments/',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                    data: JSON.stringify(payload),
+                    success: function() {
+                        alert('Berhasil menyimpan data Enrollment!');
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('Gagal membuat Enrollment: ' + xhr.responseText);
+                    }
+                });
+            },
+            error: function(xhr) {
+                alert('Gagal membuat profil Siswa: ' + xhr.responseText);
+            }
+        });
+    }
+</script>
+{% endblock %}

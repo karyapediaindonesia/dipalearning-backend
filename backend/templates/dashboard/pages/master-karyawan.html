@@ -1,0 +1,416 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+<style>
+    .section-title {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        margin-top: 20px;
+        margin-bottom: 15px;
+        border-left: 4px solid #007bff;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Master Karyawan</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title">Daftar Karyawan</h4>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#employeeModal" onclick="resetForm()">
+                            <i class="fa fa-plus me-2"></i>Tambah Karyawan
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="employeeTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th>No Karyawan</th>
+                                        <th>Nama Lengkap</th>
+                                        <th>Jabatan</th>
+                                        <th>Jenis</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for emp in employees %}
+                                    <tr>
+                                        <td><strong>{{ emp.employee_number }}</strong></td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if emp.photo %}
+                                                <img src="{{ emp.photo.url }}" class="rounded-circle me-2" width="35" height="35" alt="">
+                                                {% else %}
+                                                <img src="{% static 'dashboard/images/profile/pic1.jpg' %}" class="rounded-circle me-2" width="35" height="35" alt="">
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ emp.full_name }}</h6>
+                                                    <small>{{ emp.phone|default:"-" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ emp.job_title }}<br><small class="text-muted">{{ emp.department|default:"-" }}</small></td>
+                                        <td>{{ emp.get_employee_type_display }}</td>
+                                        <td>
+                                            {% if emp.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>
+                                            {% else %}<span class="badge light badge-danger">{{ emp.get_status_display }}</span>{% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-id="{{ emp.id }}"
+                                                        onclick="editEmployee(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteEmployee({{ emp.id }}, '{{ emp.full_name|escapejs }}')" title="Hapus">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Create / Edit -->
+<div class="modal fade" id="employeeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Form Master Karyawan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="employeeForm">
+                    <input type="hidden" id="employee_id">
+                    
+                    <!-- 1. IDENTITAS -->
+                    <div class="section-title">1. Identitas Karyawan</div>
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="full_name" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Nama Panggilan</label>
+                            <input type="text" class="form-control" id="nickname">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Jenis Kelamin</label>
+                            <select class="form-control" id="gender">
+                                <option value="">-- Pilih --</option>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Jabatan <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="job_position" required onchange="checkCoachProfile()">
+                                <option value="">-- Pilih Jabatan --</option>
+                                {% for p in job_positions %}
+                                <option value="{{ p.id }}" data-isteaching="{{ p.is_teaching_position|yesno:'true,false' }}">{{ p.name }} (Lvl {{ p.level }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Nama Panggilan</label>
+                            <input type="text" class="form-control" id="nickname">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Jenis Kelamin</label>
+                            <select class="form-control" id="gender">
+                                <option value="">-- Pilih --</option>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Tempat Lahir</label>
+                            <input type="text" class="form-control" id="birth_place">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Tanggal Lahir</label>
+                            <input type="date" class="form-control" id="birth_date">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">NIK (KTP)</label>
+                            <input type="text" class="form-control" id="nik">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">NPWP</label>
+                            <input type="text" class="form-control" id="npwp">
+                        </div>
+                    </div>
+
+                    <!-- 2. KONTAK -->
+                    <div class="section-title">2. Data Kontak</div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">No. HP</label>
+                            <input type="text" class="form-control" id="phone">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">WhatsApp</label>
+                            <input type="text" class="form-control" id="whatsapp">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Email Pribadi</label>
+                            <input type="email" class="form-control" id="personal_email">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Email Kerja</label>
+                            <input type="email" class="form-control" id="work_email">
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Alamat Lengkap</label>
+                            <textarea class="form-control" id="address" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 3. KEPEGAWAIAN -->
+                    <div class="section-title">3. Data Kepegawaian & Organisasi</div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Jenis Karyawan <span class="text-danger">*</span></label>
+                            <select class="form-control" id="employee_type" required>
+                                <option value="FULL_TIME">Full Time</option>
+                                <option value="PART_TIME">Part Time</option>
+                                <option value="FREELANCE">Freelance</option>
+                                <option value="INTERN">Intern</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Jabatan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="job_title" placeholder="Misal: Coach, Branch Manager" required onkeyup="checkCoachProfile()">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Departemen</label>
+                            <input type="text" class="form-control" id="department">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-control" id="status" required>
+                                <option value="DRAFT">Draft</option>
+                                <option value="ACTIVE" selected>Active</option>
+                                <option value="LEAVE">Leave</option>
+                                <option value="SUSPENDED">Suspended</option>
+                                <option value="RESIGNED">Resigned</option>
+                                <option value="TERMINATED">Terminated</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Penempatan Cabang (Bisa lebih dari 1)</label>
+                            <select class="form-control select2" id="branch_assignments" multiple>
+                                {% for b in branches %}
+                                <option value="{{ b.id }}">{{ b.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Tanggal Bergabung</label>
+                            <input type="date" class="form-control" id="join_date">
+                        </div>
+                    </div>
+
+                    <!-- 4. KHUSUS COACH -->
+                    <div id="coach_section" style="display:none;">
+                        <div class="section-title">4. Profil Coach (Khusus Jabatan Coach)</div>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Spesialisasi Kursus</label>
+                                <input type="text" class="form-control" id="coach_specialization" placeholder="Misal: English, Mathematics">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Level Mengajar</label>
+                                <input type="text" class="form-control" id="coach_level" placeholder="Misal: Beginner - Advanced">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveEmployee()">Simpan Karyawan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#employeeTable').DataTable();
+        $('.select2').select2({
+            dropdownParent: $('#employeeModal')
+        });
+    });
+
+    function checkCoachProfile() {
+        const sel = $('#job_position').find(':selected');
+        const isTeaching = sel.data('isteaching');
+        if(isTeaching === true) {
+            $('#coachProfileSection').show();
+        } else {
+            $('#coachProfileSection').hide();
+            $('#coach_specialization').val('');
+            $('#coach_level').val('');
+        }
+    }
+
+    function resetForm() {
+        $('#employeeForm')[0].reset();
+        $('#employee_id').val('');
+        $('#branch_assignments').val(null).trigger('change');
+        $('#coach_section').hide();
+        $('#modalTitle').text('Form Master Karyawan');
+    }
+
+    function editEmployee(btn) {
+        const id = $(btn).data('id');
+        $.get(`/api/v1/hr/employees/${id}/`, function(data) {
+            resetForm();
+            $('#employee_id').val(data.id);
+            $('#full_name').val(data.full_name);
+            $('#nickname').val(data.nickname);
+            $('#gender').val(data.gender);
+            $('#job_position').val(data.job_position).trigger('change');
+            $('#department').val(data.department);
+            $('#phone').val(data.phone);
+            $('#birth_place').val(data.birth_place);
+            $('#birth_date').val(data.birth_date);
+            $('#nik').val(data.nik);
+            $('#npwp').val(data.npwp);
+            $('#phone').val(data.phone);
+            $('#whatsapp').val(data.whatsapp);
+            $('#personal_email').val(data.personal_email);
+            $('#work_email').val(data.work_email);
+            $('#address').val(data.address);
+            $('#employee_type').val(data.employee_type);
+            $('#job_title').val(data.job_title);
+            $('#department').val(data.department);
+            $('#status').val(data.status);
+            $('#join_date').val(data.join_date);
+            
+            checkCoachProfile();
+            if(data.coach_profile) {
+                $('#coach_specialization').val(data.coach_profile.specialization);
+                $('#coach_level').val(data.coach_profile.teaching_level);
+            }
+
+            if(data.branch_assignments) {
+                const b_ids = data.branch_assignments.map(a => a.branch);
+                $('#branch_assignments').val(b_ids).trigger('change');
+            }
+
+            $('#modalTitle').text('Edit Karyawan');
+            $('#employeeModal').modal('show');
+        });
+    }
+
+    function saveEmployee() {
+        if(!$('#full_name').val() || !$('#job_title').val() || !$('#employee_type').val() || !$('#status').val()) {
+            alert('Harap isi Nama Lengkap, Jenis Karyawan, Jabatan, dan Status!');
+            return;
+        }
+
+        const id = $('#employee_id').val();
+        
+        let branchData = [];
+        const selectedBranches = $('#branch_assignments').val() || [];
+        selectedBranches.forEach(b => {
+            branchData.push({branch: b});
+        });
+
+        let coachData = null;
+        if($('#coach_section').is(':visible')) {
+            coachData = {
+                specialization: $('#coach_specialization').val(),
+                teaching_level: $('#coach_level').val()
+            };
+        }
+
+        const payload = {
+            full_name: $('#full_name').val(),
+            nickname: $('#nickname').val(),
+            gender: $('#gender').val() || null,
+            birth_place: $('#birth_place').val(),
+            birth_date: $('#birth_date').val() || null,
+            nik: $('#nik').val(),
+            npwp: $('#npwp').val(),
+            phone: $('#phone').val(),
+            whatsapp: $('#whatsapp').val(),
+            personal_email: $('#personal_email').val(),
+            work_email: $('#work_email').val(),
+            address: $('#address').val(),
+            employee_type: $('#employee_type').val(),
+            job_position: $('#job_position').val(),
+            department: $('#department').val(),
+            status: $('#status').val(),
+            join_date: $('#join_date').val() || null,
+            branch_assignments: branchData,
+            coach_profile: coachData
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/v1/hr/employees/${id}/` : '/api/v1/hr/employees/';
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: JSON.stringify(payload),
+            success: function() {
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('Terjadi kesalahan: ' + xhr.responseText);
+            }
+        });
+    }
+
+    function deleteEmployee(id, name) {
+        if(confirm(`Yakin ingin menghapus ${name}?`)) {
+            $.ajax({
+                url: `/api/v1/hr/employees/${id}/`,
+                type: 'DELETE',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                success: function() {
+                    location.reload();
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

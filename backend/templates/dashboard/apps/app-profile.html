@@ -1,0 +1,118 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<style>
+    .profile-photo {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 20px;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .profile-placeholder {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background-color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        color: #94a3b8;
+        margin: 0 auto 20px;
+        border: 4px solid #fff;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        {% include 'dashboard/elements/breadcrumb.html' %}
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        {% if request.user.photo %}
+                            <img src="{{ request.user.photo.url }}" alt="Profile Photo" class="profile-photo">
+                        {% else %}
+                            <div class="profile-placeholder">
+                                {% if request.user.first_name %}
+                                    {{ request.user.first_name.0|upper }}
+                                {% else %}
+                                    {{ request.user.username.0|upper }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        <h4 class="text-primary mb-0">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
+                        <p class="text-muted">{{ request.user.email }}</p>
+                        
+                        <div class="mt-4">
+                            <span class="badge badge-primary">Active</span>
+                            {% for role in request.user.roles.all %}
+                                <span class="badge badge-secondary">{{ role.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Account Settings</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="basic-form">
+                            <form method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="mb-3 col-md-6">
+                                        <label class="form-label">First Name</label>
+                                        <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}" placeholder="First Name">
+                                    </div>
+                                    <div class="mb-3 col-md-6">
+                                        <label class="form-label">Last Name</label>
+                                        <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}" placeholder="Last Name">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" value="{{ request.user.email }}" placeholder="Email" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Profile Photo</label>
+                                    <input type="file" name="photo" class="form-control" accept="image/*">
+                                    <small class="text-muted">Leave blank if you don't want to change your photo.</small>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary mt-3">Save Changes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+{% endblock %}

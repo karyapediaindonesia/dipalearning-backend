@@ -1,0 +1,265 @@
+{% extends 'dashboard/elements/layouts/admin.html' %}
+{% load static %}
+
+{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="content-body">
+    <div class="container-fluid">
+        
+        <div class="row page-titles">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
+                <li class="breadcrumb-item active"><a href="javascript:void(0)">Master Jabatan</a></li>
+            </ol>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h4 class="card-title">Daftar Jabatan (Job Positions)</h4>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#positionModal" onclick="resetForm()">
+                            <i class="fa fa-plus"></i> Tambah Jabatan
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="positionTable" class="display" style="min-width: 845px">
+                                <thead>
+                                    <tr>
+                                        <th>Level</th>
+                                        <th>Kode</th>
+                                        <th>Nama Jabatan</th>
+                                        <th>Kategori</th>
+                                        <th>Atasan</th>
+                                        <th>Khusus Pengajar?</th>
+                                        <th>Status</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in positions %}
+                                    <tr>
+                                        <td>{{ p.level }}</td>
+                                        <td><strong>{{ p.code }}</strong></td>
+                                        <td>{{ p.name }}</td>
+                                        <td>{{ p.get_category_display }}</td>
+                                        <td>{{ p.parent_position.name|default:"-" }}</td>
+                                        <td>
+                                            {% if p.is_teaching_position %}
+                                            <span class="badge badge-primary light">Ya</span>
+                                            {% else %}
+                                            <span class="badge badge-light">Tidak</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if p.status %}
+                                            <span class="badge badge-success light">Aktif</span>
+                                            {% else %}
+                                            <span class="badge badge-danger light">Nonaktif</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex">
+                                                <button class="btn btn-primary shadow btn-xs sharp me-1" 
+                                                        data-id="{{ p.id }}"
+                                                        onclick="editPosition(this)" title="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deletePosition({{ p.id }}, '{{ p.name|escapejs }}')" title="Hapus">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Position -->
+<div class="modal fade" id="positionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Form Jabatan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="positionForm">
+                    <input type="hidden" id="pos_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kode Jabatan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="pos_code" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Jabatan <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="pos_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Level Jabatan</label>
+                            <input type="number" class="form-control" id="pos_level" value="1" help="1 = Tertinggi">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Kategori</label>
+                            <select class="form-control" id="pos_category">
+                                <option value="MANAGEMENT">Management</option>
+                                <option value="ACADEMIC">Academic</option>
+                                <option value="SALES">Sales & Marketing</option>
+                                <option value="FINANCE">Finance & Admin</option>
+                                <option value="SUPPORT">Support & Ops</option>
+                                <option value="OTHER">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Atasan Langsung (Parent)</label>
+                            <select class="form-control select2" id="pos_parent" style="width: 100%;">
+                                <option value="">-- Tidak Ada --</option>
+                                {% for p in positions %}
+                                <option value="{{ p.id }}">{{ p.name }} (Lvl {{ p.level }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <hr class="mt-3 mb-3">
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="pos_is_teaching">
+                                <label class="form-check-label" for="pos_is_teaching"><strong>Jabatan Pengajar / Coach</strong></label>
+                                <br><small class="text-muted">Karyawan dengan jabatan ini akan otomatis memiliki Profil Pengajar.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="pos_schedule" checked>
+                                <label class="form-check-label" for="pos_schedule">Menggunakan Jadwal Shift/Kerja</label>
+                            </div>
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="pos_attendance" checked>
+                                <label class="form-check-label" for="pos_attendance">Wajib Absensi</label>
+                            </div>
+                            <div class="form-check custom-checkbox mb-2">
+                                <input type="checkbox" class="form-check-input" id="pos_payroll" checked>
+                                <label class="form-check-label" for="pos_payroll">Masuk Payroll</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" id="pos_status">
+                                <option value="true">Aktif</option>
+                                <option value="false">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="savePosition()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        $('#positionTable').DataTable();
+        $('.select2').select2({
+            dropdownParent: $('#positionModal')
+        });
+    });
+
+    function resetForm() {
+        $('#positionForm')[0].reset();
+        $('#pos_id').val('');
+        $('#pos_parent').val('').trigger('change');
+        $('#pos_is_teaching').prop('checked', false);
+        $('#pos_schedule').prop('checked', true);
+        $('#pos_attendance').prop('checked', true);
+        $('#pos_payroll').prop('checked', true);
+        $('#modalTitle').text('Tambah Jabatan');
+    }
+
+    function editPosition(btn) {
+        const id = $(btn).data('id');
+        $.get(`/api/v1/hr/job-positions/${id}/`, function(data) {
+            resetForm();
+            $('#pos_id').val(data.id);
+            $('#pos_code').val(data.code);
+            $('#pos_name').val(data.name);
+            $('#pos_level').val(data.level);
+            $('#pos_category').val(data.category);
+            $('#pos_parent').val(data.parent_position).trigger('change');
+            
+            $('#pos_is_teaching').prop('checked', data.is_teaching_position);
+            $('#pos_schedule').prop('checked', data.requires_schedule);
+            $('#pos_attendance').prop('checked', data.requires_attendance);
+            $('#pos_payroll').prop('checked', data.requires_payroll);
+            
+            $('#pos_status').val(data.status ? "true" : "false");
+            
+            $('#modalTitle').text('Edit Jabatan');
+            $('#positionModal').modal('show');
+        });
+    }
+
+    function savePosition() {
+        const id = $('#pos_id').val();
+        
+        const payload = {
+            code: $('#pos_code').val(),
+            name: $('#pos_name').val(),
+            level: $('#pos_level').val(),
+            category: $('#pos_category').val(),
+            parent_position: $('#pos_parent').val() || null,
+            is_teaching_position: $('#pos_is_teaching').is(':checked'),
+            requires_schedule: $('#pos_schedule').is(':checked'),
+            requires_attendance: $('#pos_attendance').is(':checked'),
+            requires_payroll: $('#pos_payroll').is(':checked'),
+            status: $('#pos_status').val() === "true"
+        };
+
+        const url = id ? `/api/v1/hr/job-positions/${id}/` : '/api/v1/hr/job-positions/';
+        const method = id ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url, type: method, contentType: 'application/json',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: JSON.stringify(payload),
+            success: function() { location.reload(); },
+            error: function(xhr) { alert('Error: ' + xhr.responseText); }
+        });
+    }
+
+    function deletePosition(id, name) {
+        if(confirm(`Yakin ingin menghapus jabatan ${name}?`)) {
+            $.ajax({
+                url: `/api/v1/hr/job-positions/${id}/`,
+                type: 'DELETE',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                success: function() { location.reload(); },
+                error: function(xhr) { alert('Gagal menghapus. Mungkin ada karyawan terkait jabatan ini.'); }
+            });
+        }
+    }
+</script>
+{% endblock %}
