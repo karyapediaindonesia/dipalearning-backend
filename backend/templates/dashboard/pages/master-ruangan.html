@@ -59,12 +59,12 @@
                                 <td>
                                     <div class="d-flex">
                                         <button class="btn btn-info shadow btn-xs sharp me-1" 
-                                                data-room='{"id":"{{ room.id }}", "branch":"{{ room.branch_id }}", "branch_name":"{{ room.branch.name|escapejs }}", "code":"{{ room.code|escapejs }}", "name":"{{ room.name|escapejs }}", "room_type":"{{ room.room_type }}", "capacity_ideal":"{{ room.capacity_ideal }}", "capacity_max":"{{ room.capacity_max }}", "facilities":{{ room.facilities|safe|default:"[]" }}, "status":"{{ room.status }}", "notes":"{{ room.notes|escapejs }}"}'
+                                                data-room='{"id":"{{ room.id }}", "branch":"{{ room.branch_id }}", "branch_name":"{{ room.branch.name|escapejs }}", "code":"{{ room.code|escapejs }}", "name":"{{ room.name|escapejs }}", "room_type":"{{ room.room_type }}", "capacity_ideal":"{{ room.capacity_ideal }}", "capacity_max":"{{ room.capacity_max }}", "facilities":"{{ room.facilities|join:', '|escapejs }}", "status":"{{ room.status }}", "notes":"{{ room.notes|escapejs }}"}'
                                                 onclick="viewRoom(this)" title="Lihat Detail">
                                             <i class="fas fa-eye"></i>
                                         </button>
                                         <button class="btn btn-primary shadow btn-xs sharp me-1" 
-                                                data-room='{"id":"{{ room.id }}", "branch":"{{ room.branch_id }}", "code":"{{ room.code|escapejs }}", "name":"{{ room.name|escapejs }}", "room_type":"{{ room.room_type }}", "capacity_ideal":"{{ room.capacity_ideal }}", "capacity_max":"{{ room.capacity_max }}", "facilities":{{ room.facilities|safe|default:"[]" }}, "status":"{{ room.status }}", "notes":"{{ room.notes|escapejs }}"}'
+                                                data-room='{"id":"{{ room.id }}", "branch":"{{ room.branch_id }}", "code":"{{ room.code|escapejs }}", "name":"{{ room.name|escapejs }}", "room_type":"{{ room.room_type }}", "capacity_ideal":"{{ room.capacity_ideal }}", "capacity_max":"{{ room.capacity_max }}", "facilities":"{{ room.facilities|join:', '|escapejs }}", "status":"{{ room.status }}", "notes":"{{ room.notes|escapejs }}"}'
                                                 onclick="editRoom(this)" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </button>
@@ -275,7 +275,7 @@
         $('#room_type').val(data.room_type).trigger('change');
         $('#capacity_ideal').val(data.capacity_ideal);
         $('#capacity_max').val(data.capacity_max);
-        $('#facilities').val((data.facilities || []).join(', '));
+        $('#facilities').val(data.facilities);
         $('#status').val(data.status).trigger('change');
         $('#notes').val(data.notes);
         $('#modalTitle').text('Edit Master Ruangan');
@@ -290,7 +290,7 @@
         $('#view_name').text(data.name);
         $('#view_room_type').text(data.room_type); 
         $('#view_capacity').text(data.capacity_ideal + ' / ' + data.capacity_max);
-        $('#view_facilities').text((data.facilities || []).join(', ') || '-');
+        $('#view_facilities').text(data.facilities || '-');
         
         let statusBadge = '<span class="badge light badge-success">Aktif</span>';
         if(data.status === 'INACTIVE') statusBadge = '<span class="badge light badge-warning">Nonaktif</span>';
