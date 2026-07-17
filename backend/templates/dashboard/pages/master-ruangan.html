@@ -7,6 +7,7 @@
 
 
 {% block additional_css %}
+<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
 <!-- Datatable -->
 <link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 {% endblock %}
@@ -205,6 +206,7 @@
 {% endblock %}
 
 {% block additional_js %}
+<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script>
     $(document).ready(function() {
@@ -373,17 +375,31 @@
     }
 
     function deleteRoom(id, name) {
-        if(confirm(`Apakah Anda yakin ingin menghapus ruangan "${name}"?`)) {
-            fetch(`/api/v1/branches/rooms/${id}/`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
-            })
-            .then(response => {
-                if (response.ok) location.reload();
-                else alert(`Gagal menghapus. Status: ${response.status}`);
-            })
-            .catch(err => alert(`Gagal terhubung: ${err.message}`));
-        }
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: `Apakah Anda yakin ingin menghapus ruangan "${name}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/v1/branches/rooms/${id}/`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        Swal.fire('Terhapus!', 'Ruangan telah dihapus.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error!', `Gagal menghapus. Status: ${response.status}`, 'error');
+                    }
+                })
+                .catch(err => Swal.fire('Error!', `Gagal terhubung: ${err.message}`, 'error'));
+            }
+        });
     }
 </script>
 {% endblock %}

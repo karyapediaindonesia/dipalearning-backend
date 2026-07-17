@@ -5,6 +5,7 @@
 
 
 {% block additional_css %}
+<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
 <!-- Datatable -->
 <link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 {% endblock %}
@@ -107,6 +108,7 @@
 </div>
 {% endblock %}
 {% block additional_js %}
+<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script>
     $(document).ready(function() { $('#courseTable').DataTable({
@@ -138,6 +140,27 @@
         const method = id ? 'PUT' : 'POST'; const url = id ? `/api/v1/academics/courses/${id}/` : '/api/v1/academics/courses/';
         fetch(url, { method: method, headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
     }
-    function deleteCourse(id, name) { if(confirm(`Hapus ${name}?`)) fetch(`/api/v1/academics/courses/${id}/`, {method: 'DELETE', headers: {'X-CSRFToken': '{{ csrf_token }}'}}).then(r => r.ok ? location.reload() : alert('Gagal')); }
+    function deleteCourse(id, name) { 
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: `Yakin ingin menghapus kursus "${name}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/v1/academics/courses/${id}/`, {
+                    method: 'DELETE', 
+                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
+                }).then(r => {
+                    if (r.ok) Swal.fire('Terhapus!', 'Kursus telah dihapus.', 'success').then(() => location.reload());
+                    else Swal.fire('Error!', 'Gagal menghapus kursus.', 'error');
+                }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error'));
+            }
+        });
+    }
 </script>
 {% endblock %}

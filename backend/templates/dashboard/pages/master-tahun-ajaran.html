@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block additional_css %}
+<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
 <!-- Datatable -->
 <link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 <link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
@@ -308,6 +309,7 @@
 {% endblock %}
 
 {% block additional_js %}
+<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
 <script>
@@ -468,14 +470,30 @@
     }
 
     function deletePeriod(id, name) {
-        if(confirm(`Yakin ingin menghapus periode ${name}?`)) {
-            $.ajax({
-                url: `/api/v1/academics/academic-periods/${id}/`,
-                type: 'DELETE',
-                headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                success: function() { location.reload(); }
-            });
-        }
+        Swal.fire({
+            title: 'Konfirmasi',
+            text: `Yakin ingin menghapus periode ${name}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/api/v1/academics/academic-periods/${id}/`,
+                    type: 'DELETE',
+                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                    success: function() { 
+                        Swal.fire('Terhapus!', 'Periode berhasil dihapus.', 'success').then(() => location.reload()); 
+                    },
+                    error: function() {
+                        Swal.fire('Error!', 'Gagal menghapus periode.', 'error');
+                    }
+                });
+            }
+        });
     }
 </script>
 {% endblock %}
