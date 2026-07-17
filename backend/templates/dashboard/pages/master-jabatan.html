@@ -215,7 +215,8 @@
 
     function editPosition(btn) {
         const id = $(btn).data('id');
-        $.get(`/api/v1/hr/job-positions/${id}/`, function(data) {
+        $.get(`/api/v1/hr/job-positions/${id}/`, function(res) {
+            const data = res.data || res;
             resetForm();
             $('#pos_id').val(data.id);
             $('#pos_code').val(data.code);
