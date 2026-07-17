@@ -84,7 +84,7 @@
                                                     <i class="fas fa-graduation-cap"></i>
                                                 </a>
                                                 {% endif %}
-                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteProspect({{ prospect.id }}, '{{ prospect.full_name|escapejs }}')" title="Hapus">
+                                                <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteProspect(\'{{ prospect.id }}\', '{{ prospect.full_name|escapejs }}')" title="Hapus">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
                                             </div>

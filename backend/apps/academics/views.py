@@ -10,6 +10,14 @@ class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        print("CREATE REQUEST DATA:", request.data)
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        print("UPDATE REQUEST DATA:", request.data)
+        return super().update(request, *args, **kwargs)
+
 class LevelViewSet(viewsets.ModelViewSet):
     queryset = Level.objects.select_related('course').all().order_by('course__code', 'order')
     serializer_class = LevelSerializer

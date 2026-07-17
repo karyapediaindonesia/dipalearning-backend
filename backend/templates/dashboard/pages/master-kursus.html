@@ -49,7 +49,7 @@
                                                 onclick="editCourse(this)" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </button>
-                                        <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteCourse({{ course.id }}, '{{ course.name|escapejs }}')" title="Hapus">
+                                        <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteCourse(\'{{ course.id }}\', '{{ course.name|escapejs }}')" title="Hapus">
                                             <i class="fa fa-trash"></i>
                                         </button>
                                     </div>

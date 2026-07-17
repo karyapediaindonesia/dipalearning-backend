@@ -1,66 +1,42 @@
-import os
-import re
+import glob, re
 
-css_to_add = """
-<style>
-    /* Fix DataTable wrapper layout */
-    .dataTables_wrapper .dataTables_paginate {
-        float: right;
-        clear: both;
-        margin-top: 10px;
-    }
-    .dataTables_wrapper .dataTables_paginate .paginate_button {
-        padding: 6px 10px !important;
-        white-space: nowrap !important;
-        line-height: 1.4 !important;
-    }
-    /* Pastikan info dan paginate sejajar */
-    .dataTables_wrapper .row:last-child {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-</style>
-"""
+css_block = '''{% block additional_css %}
+<!-- Datatable -->
+<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
+{% endblock %}
+'''
 
-dt_config = """{
+language_config = '''{
             language: {
                 search:       "Cari:",
                 lengthMenu:   "Tampilkan _MENU_ data",
                 info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
+                infoEmpty:    "Menampilkan 0 dari 0 data",
+                infoFiltered: "(disaring dari _MAX_ total data)",
                 zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data. Klik tombol Tambah.",
+                emptyTable:   "Tidak ada data tersedia.",
                 paginate: {
                     previous: '<i class="fa fa-angle-double-left"></i>',
                     next:     '<i class="fa fa-angle-double-right"></i>'
                 }
-            }
-        }"""
+            }'''
 
-files = [
-    'master-ruangan.html', 
-    'master-kursus.html', 
-    'master-level.html',
-    'master-hari-libur.html',
-    'master-alasan-absen.html',
-    'master-metode-bayar.html',
-    'master-kategori-biaya.html'
-]
+# Fix CSS
+for f in ['backend/templates/dashboard/pages/master-kursus.html', 'backend/templates/dashboard/pages/master-level.html', 'backend/templates/dashboard/pages/master-ruangan.html']:
+    content = open(f, encoding='utf-8').read()
+    if '{% block additional_css %}' not in content:
+        content = content.replace('{% block content %}', css_block + '\n{% block content %}')
+        open(f, 'w', encoding='utf-8').write(content)
 
-for f in files:
-    path = rf'c:\dipalearning\backend\templates\dashboard\pages\{f}'
-    if os.path.exists(path):
-        with open(path, 'r', encoding='utf-8') as file:
-            content = file.read()
-        
-        # 1. Add CSS if missing
-        if '.dataTables_wrapper .dataTables_paginate' not in content:
-            # Insert after {% block additional_css %}
-            content = content.replace('{% block additional_css %}', '{% block additional_css %}' + css_to_add)
-
-        # 2. Add language to DataTable
-        if '.DataTable();' in content:
-            content = content.replace('.DataTable();', f'.DataTable({dt_config});')
-            
-        with open(path, 'w', encoding='utf-8') as file:
-            file.write(content)
+# Fix DataTable language in all files
+for f in glob.glob('backend/templates/dashboard/pages/*.html'):
+    content = open(f, encoding='utf-8').read()
+    if 'DataTable()' in content:
+        content = content.replace('DataTable()', f'DataTable({language_config})')
+    elif 'DataTable({' in content:
+        if 'language: {' in content:
+            # Simple regex to replace the language block
+            content = re.sub(r'language:\s*\{[^\}]+\s*paginate:\s*\{[^\}]+\}\s*\}', language_config.split('{', 1)[1].strip(), content, flags=re.DOTALL)
+        else:
+            content = content.replace('DataTable({', f'DataTable({language_config}, ')
+    open(f, 'w', encoding='utf-8').write(content)
