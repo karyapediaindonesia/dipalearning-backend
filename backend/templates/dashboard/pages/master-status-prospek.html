@@ -1,35 +1,17 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-        
-        <div class="row page-titles">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
-                <li class="breadcrumb-item active"><a href="javascript:void(0)">Status Prospek</a></li>
-            </ol>
-        </div>
+{% block master_title %}Daftar Status Prospek (Pipeline){% endblock %}
+{% block card_title %}Daftar Status Prospek (Pipeline){% endblock %}
+{% block modal_id %}statusModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus"></i> Tambah Status{% endblock %}
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <h4 class="card-title">Daftar Status Prospek (Pipeline)</h4>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal" onclick="resetForm()">
-                            <i class="fa fa-plus"></i> Tambah Status
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="statusTable" class="display" style="min-width: 845px">
+{% block table_content %}
+<table id="statusTable" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
                                         <th style="width:50px">Urutan</th>
@@ -83,15 +65,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
-<!-- Modal Status -->
+{% block modal_content %}
 <div class="modal fade" id="statusModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -181,39 +157,12 @@
                             </div>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveStatus()">Simpan</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+{% block master_js %}
 <script>
     $(document).ready(function() {
-        $('#statusTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }, 
-            "order": [[0, "asc"]]
-        });
-    });
+});
 
     function resetForm() {
         $('#statusForm')[0].reset();
@@ -275,30 +224,7 @@
     }
 
     function deleteStatus(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus status ${name}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                $.ajax({
-                    url: `/api/v1/students/prospect-statuses/${id}/`,
-                    type: 'DELETE',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                    success: function() { 
-                        Swal.fire('Terhapus!', 'Status berhasil dihapus.', 'success').then(() => location.reload());
-                    },
-                    error: function(xhr) { 
-                        Swal.fire('Error!', 'Gagal menghapus. Mungkin sudah ada prospek yang menggunakan status ini.', 'error');
-                    }
-                });
-            }
-        });
+        hapusData(`/api/v1/students/prospect-statuses/${id}/`, name);
     }
 </script>
 {% endblock %}

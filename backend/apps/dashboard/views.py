@@ -3,10 +3,9 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import redirect
-
+from django.conf import settings
+@login_required(login_url='dashboard:page_login')
 def index(request):
-    if not request.user.is_authenticated:
-        return redirect('dashboard:page_login')
     context={
         "page_title":"Dashboard Light"
     }
@@ -495,9 +494,13 @@ def table_datatable_basic(request):
 
 
 def page_login(request):
+    if request.user.is_authenticated:
+        return redirect(settings.LOGIN_REDIRECT_URL)
+
     if request.method == 'POST':
         u = request.POST.get('username')
         p = request.POST.get('password')
+        next_url = request.POST.get('next') or request.GET.get('next')
         
         # We can try to authenticate using standard authenticate first.
         # If username is an email, it will require a custom backend if not set up.
@@ -517,7 +520,9 @@ def page_login(request):
                 
         if user is not None:
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return redirect('dashboard:index')
+            if next_url:
+                return redirect(next_url)
+            return redirect(settings.LOGIN_REDIRECT_URL)
         else:
             messages.error(request, 'Invalid email/username or password.')
             
@@ -526,7 +531,7 @@ def page_login(request):
 
 def page_logout(request):
     logout(request)
-    return redirect('dashboard:page_login')
+    return redirect(settings.LOGOUT_REDIRECT_URL)
 
 def page_register(request):
     return render(request,'dashboard/pages/page-register.html')

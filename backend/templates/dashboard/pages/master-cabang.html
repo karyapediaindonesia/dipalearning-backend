@@ -1,11 +1,8 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
-<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
     /* Highlight tab yang ada error */
@@ -22,29 +19,13 @@
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-        
-        <div class="row page-titles">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item active"><a href="javascript:void(0)">Master Data</a></li>
-                <li class="breadcrumb-item"><a href="javascript:void(0)">Cabang</a></li>
-            </ol>
-        </div>
+{% block master_title %}Cabang{% endblock %}
+{% block card_title %}Data Master Cabang{% endblock %}
+{% block modal_id %}branchModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus me-2"></i>Tambah Cabang{% endblock %}
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="card-title">Data Master Cabang</h4>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#branchModal" onclick="resetForm()">
-                            <i class="fa fa-plus me-2"></i>Tambah Cabang
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="branchTable" class="display w-100" style="min-width: 845px">
+{% block table_content %}
+<table id="branchTable" class="display w-100" style="min-width: 845px">
                                 <thead>
                                     <tr>
                                         <th>Kode</th>
@@ -104,16 +85,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+{% endblock %}
 
-    </div>
-</div>
-
-<!-- Modal Create / Edit -->
+{% block modal_content %}
 <div class="modal fade" id="branchModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -181,195 +155,10 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Tab 2: Alamat -->
-                        <div class="tab-pane fade" id="alamat" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
-                                    <textarea class="form-control" id="address" rows="3" 
-                                        placeholder="Contoh: Jl. Sudirman No. 12, RT 01/RW 02, Senayan"></textarea>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Provinsi <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="province" style="width: 100%;">
-                                        <option value="">Pilih Provinsi</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kota / Kabupaten <span class="text-danger">*</span></label>
-                                    <select class="form-control" id="city" style="width: 100%;" disabled>
-                                        <option value="">Pilih Kota/Kabupaten</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kecamatan</label>
-                                    <input type="text" class="form-control" id="district" placeholder="Contoh: Kebayoran Baru">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kode Pos</label>
-                                    <input type="text" class="form-control" id="postal_code" placeholder="Contoh: 12190">
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Lokasi Peta (Geser Pin atau Ketik Manual)</label>
-                                    <input type="text" class="form-control" id="map_location" placeholder="Contoh: -6.200, 106.816 atau link GMaps">
-                                    <div id="branchMap" style="height: 250px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; z-index: 1;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tab 3: Kontak -->
-                        <div class="tab-pane fade" id="kontak" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Nomor WhatsApp</label>
-                                    <input type="text" class="form-control" id="whatsapp_number" placeholder="Contoh: 081234567890">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Email Cabang</label>
-                                    <input type="email" class="form-control" id="email" placeholder="Contoh: cabang.jkt@dipalearning.com">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Penanggung Jawab <span class="text-danger">*</span></label>
-                                    <select class="default-select form-control wide" id="person_in_charge" onchange="updatePicInfo(this)">
-                                        <option value="">Pilih Penanggung Jawab</option>
-                                        {% for emp in employees %}
-                                        <option value="{{ emp.id }}" data-email="{{ emp.email|default:'-' }}" data-role="{% for role in emp.roles.all %}{{ role.name }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}">
-                                            {{ emp.first_name }} {{ emp.last_name }} ({{ emp.username }})
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Jabatan Penanggung Jawab</label>
-                                    <input type="text" class="form-control bg-light" id="pic_position" readonly>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kontak Penanggung Jawab</label>
-                                    <input type="text" class="form-control bg-light" id="pic_contact" readonly>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tab 4: Administrasi -->
-                        <div class="tab-pane fade" id="administrasi" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Status Cabang <span class="text-danger">*</span></label>
-                                    <select class="default-select form-control wide" id="status">
-                                        <option value="ACTIVE" selected>Aktif</option>
-                                        <option value="INACTIVE">Nonaktif</option>
-                                        <option value="CLOSED">Tutup</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Tanggal Operasional</label>
-                                    <input type="date" class="form-control" id="operational_date">
-                                    <small class="text-muted">Contoh: 31/12/2024 (opsional)</small>
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Catatan</label>
-                                    <textarea class="form-control" id="notes" rows="2" 
-                                        placeholder="Contoh: Cabang ini melayani area Jakarta Selatan dan sekitarnya."></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer d-flex justify-content-between align-items-center">
-                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi di semua tab</small>
-                <div>
-                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveBranch()">
-                        <i class="fa fa-save me-1"></i> Simpan Data
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal View Detail -->
-<div class="modal fade" id="viewBranchModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detail Cabang: <span id="view_code_title" class="text-primary"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <!-- Identitas -->
-                    <div class="col-xl-6">
-                        <div class="card mb-3 shadow-sm border-0 h-100">
-                            <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="la la-home text-primary me-2"></i>Identitas Cabang</h5></div>
-                            <div class="card-body">
-                                <table class="table table-borderless table-sm mb-0">
-                                    <tr><th width="35%" class="text-muted">Kode Cabang</th><td>: <span id="view_code" class="fw-bold"></span></td></tr>
-                                    <tr><th class="text-muted">Nama Cabang</th><td>: <span id="view_name" class="fw-bold"></span></td></tr>
-                                    <tr><th class="text-muted">Jenis Cabang</th><td>: <span id="view_branch_type"></span></td></tr>
-                                    <tr><th class="text-muted">Status</th><td>: <span id="view_status"></span></td></tr>
-                                    <tr><th class="text-muted">Tanggal Operasional</th><td>: <span id="view_operational_date"></span></td></tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Kontak & PIC -->
-                    <div class="col-xl-6">
-                        <div class="card mb-3 shadow-sm border-0 h-100">
-                            <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="la la-user-circle text-primary me-2"></i>Kontak & Penanggung Jawab</h5></div>
-                            <div class="card-body">
-                                <table class="table table-borderless table-sm mb-0">
-                                    <tr><th width="35%" class="text-muted">Penanggung Jawab</th><td>: <span id="view_person_in_charge_name" class="fw-bold"></span></td></tr>
-                                    <tr><th class="text-muted">Jabatan</th><td>: <span id="view_pic_position"></span></td></tr>
-                                    <tr><th class="text-muted">Kontak (Email)</th><td>: <span id="view_pic_contact"></span></td></tr>
-                                    <tr><th class="text-muted">WhatsApp</th><td>: <span id="view_whatsapp_number"></span> <a href="#" id="view_wa_link" target="_blank" class="text-success ms-2 d-none text-decoration-none"><i class="fab fa-whatsapp"></i> Chat</a></td></tr>
-                                    <tr><th class="text-muted">Email Cabang</th><td>: <span id="view_email"></span></td></tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Alamat -->
-                    <div class="col-xl-12 mt-3">
-                        <div class="card mb-3 shadow-sm border-0">
-                            <div class="card-header bg-light"><h5 class="card-title mb-0"><i class="la la-map-marker text-primary me-2"></i>Alamat & Lokasi</h5></div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6 border-end">
-                                        <p class="mb-1 text-muted"><strong>Alamat Lengkap:</strong></p>
-                                        <p id="view_address" class="mb-3"></p>
-                                        <p class="mb-1 text-muted"><strong>Catatan:</strong></p>
-                                        <p id="view_notes" class="mb-0"></p>
-                                    </div>
-                                    <div class="col-md-6 ps-4">
-                                        <table class="table table-borderless table-sm mb-0">
-                                            <tr><th width="30%" class="text-muted">Provinsi</th><td>: <span id="view_province"></span></td></tr>
-                                            <tr><th class="text-muted">Kota/Kab.</th><td>: <span id="view_city"></span></td></tr>
-                                            <tr><th class="text-muted">Kecamatan</th><td>: <span id="view_district"></span></td></tr>
-                                            <tr><th class="text-muted">Kode Pos</th><td>: <span id="view_postal_code"></span></td></tr>
-                                            <tr><th class="text-muted">Lokasi Peta</th><td>: <span id="view_map_location"></span> <a href="#" id="view_map_link" target="_blank" class="text-primary ms-2 d-none text-decoration-none"><i class="fa fa-external-link-alt"></i> Buka Peta</a></td></tr>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary light" data-bs-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
+{% block master_js %}
 <!-- Datatable -->
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     let branchMap, branchMarker;
@@ -489,21 +278,7 @@
                     });
             }
         });
-        $('#branchTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
+
     });
 
     // Daftar field wajib beserta label dan tab-nya
@@ -794,36 +569,7 @@
     };
 
     function deleteBranch(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus cabang ${name}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                fetch(`/api/v1/branches/${id}/`, {
-                    method: 'DELETE',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        Swal.fire('Terhapus!', 'Cabang telah dihapus.', 'success').then(() => location.reload());
-                    } else {
-                        Swal.fire('Error!', `Gagal menghapus cabang "${name}". Status: ${response.status}`, 'error');
-                    }
-                })
-                .catch(err => {
-                    Swal.fire('Error!', `Gagal terhubung ke server: ${err.message}`, 'error');
-                });
-            }
-        });
+        hapusData(`/api/v1/branches/${id}/`, name);
     }
 </script>
 {% endblock %}

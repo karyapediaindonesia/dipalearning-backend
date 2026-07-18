@@ -1,27 +1,12 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
+{% block master_title %}Kategori Biaya{% endblock %}
+{% block card_title %}Data Master Kategori Biaya{% endblock %}
+{% block modal_id %}categoryModal{% endblock %}
+{% block button_title %}Tambah Kategori{% endblock %}
 
-
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
-{% endblock %}
-
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Data Master Kategori Biaya</h4>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="resetForm()">
-                    <i class="fa fa-plus me-2"></i>Tambah Kategori
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
+{% block table_content %}
                     <table id="categoryTable" class="display" style="min-width: 845px">
                         <thead>
                             <tr>
@@ -61,12 +46,9 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
+{% block modal_content %}
 <!-- Modal -->
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -141,34 +123,14 @@
         </div>
     </div>
 </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.css' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
+{% block master_js %}
 <script>
     const apiBaseUrl = '/api/v1/finance/fee-categories/';
     $.ajaxSetup({ headers: { 'X-CSRFToken': '{{ csrf_token }}' } });
 
     $(document).ready(function() {
-        $('#categoryTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
         $('#categoryForm').on('submit', function(e) {
             e.preventDefault();
             const id = $('#category_id').val();
@@ -225,34 +187,7 @@
     }
 
     function deleteCategory(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus kategori biaya "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                $.ajax({
-                    url: apiBaseUrl + id + '/', type: 'DELETE',
-                    success: function() { Swal.fire('Terhapus!', 'Kategori biaya telah dihapus.', 'success').then(() => location.reload()); },
-                    error: function(xhr) {
-                        let errMsg = 'Terjadi kesalahan saat menghapus data.';
-                        if(xhr.responseJSON) {
-                            if (typeof xhr.responseJSON === 'object' && !Array.isArray(xhr.responseJSON)) {
-                                errMsg = Object.values(xhr.responseJSON).join('\n');
-                            } else {
-                                errMsg = xhr.responseJSON.detail || xhr.responseJSON[0] || errMsg;
-                            }
-                        }
-                        Swal.fire('Gagal!', errMsg, 'error');
-                    }
-                });
-            }
-        });
+        hapusData(apiBaseUrl + id + '/', name);
     }
 </script>
 {% endblock %}

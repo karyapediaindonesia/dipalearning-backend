@@ -1,11 +1,8 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
-<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
 <style>
     .section-title {
         background-color: #f8f9fa;
@@ -20,68 +17,13 @@
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-        
-        <div class="row page-titles">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
-                <li class="breadcrumb-item active"><a href="javascript:void(0)">Tahun Ajaran & Periode</a></li>
-            </ol>
-        </div>
+{% block master_title %}Tahun Ajaran Induk{% endblock %}
+{% block card_title %}Tahun Ajaran Induk{% endblock %}
+{% block modal_id %}yearModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus"></i> Tambah{% endblock %}
 
-        <div class="row">
-            <div class="col-xl-4">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <h4 class="card-title">Tahun Ajaran Induk</h4>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#yearModal" onclick="resetYearForm()">
-                            <i class="fa fa-plus"></i> Tambah
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-responsive-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Nama</th>
-                                        <th>Rentang</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for y in academic_years %}
-                                    <tr>
-                                        <td><strong>{{ y.name }}</strong></td>
-                                        <td>{{ y.start_year }} - {{ y.end_year }}</td>
-                                        <td>
-                                            <button class="btn btn-primary shadow btn-xs sharp me-1" 
-                                                    data-obj='{"id": {{ y.id }}, "code": "{{ y.code|escapejs }}", "name": "{{ y.name|escapejs }}", "start_year": "{{ y.start_year|default_if_none:'' }}", "end_year": "{{ y.end_year|default_if_none:'' }}", "status": "{{ y.status }}"}'
-                                                    onclick="editYear(this)">
-                                                <i class="fas fa-pencil-alt"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-8">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <h4 class="card-title">Daftar Periode Akademik</h4>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#periodModal" onclick="resetPeriodForm()">
-                            <i class="fa fa-plus"></i> Tambah Periode
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="periodTable" class="display" style="min-width: 845px">
+{% block table_content %}
+<table id="periodTable" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
                                         <th>Kode / TA</th>
@@ -130,15 +72,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
-<!-- Modal Academic Year -->
+{% block modal_content %}
 <div class="modal fade" id="yearModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -182,154 +118,12 @@
             </div>
         </div>
     </div>
-</div>
-
-<!-- Modal Academic Period -->
-<div class="modal fade" id="periodModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="periodModalTitle">Form Periode Akademik</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="periodForm">
-                    <input type="hidden" id="period_id">
-                    
-                    <!-- 1. IDENTITAS -->
-                    <div class="section-title">1. Identitas Periode & Tahun Ajaran</div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Kode Periode <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="p_code" required>
-                        </div>
-                        <div class="col-md-5 mb-3">
-                            <label class="form-label">Nama Periode <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="p_name" required placeholder="Misal: Semester 1">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Tahun Ajaran <span class="text-danger">*</span></label>
-                            <select class="form-control" id="p_academic_year" required>
-                                <option value="">-- Pilih --</option>
-                                {% for y in academic_years %}
-                                <option value="{{ y.id }}">{{ y.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Jenis</label>
-                            <select class="form-control" id="p_type">
-                                <option value="SEMESTER">Semester</option>
-                                <option value="TERM">Term</option>
-                                <option value="INTENSIVE">Intensif / Spesial</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Urutan</label>
-                            <input type="number" class="form-control" id="p_seq" value="1">
-                        </div>
-                    </div>
-
-                    <!-- 2. RENTANG WAKTU -->
-                    <div class="section-title">2. Rentang Waktu Pendaftaran & Belajar</div>
-                    <div class="row mb-3">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Pendaftaran Mulai</label>
-                            <input type="date" class="form-control" id="p_reg_start">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Pendaftaran Selesai</label>
-                            <input type="date" class="form-control" id="p_reg_end">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">KBM Mulai (Belajar) <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="p_learn_start" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">KBM Selesai <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="p_learn_end" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Periode Mulai</label>
-                            <input type="date" class="form-control" id="p_start">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Periode Selesai</label>
-                            <input type="date" class="form-control" id="p_end">
-                        </div>
-                    </div>
-
-                    <!-- 3. CAKUPAN CABANG -->
-                    <div class="section-title">3. Cakupan Cabang</div>
-                    <div class="row mb-3">
-                        <div class="col-md-12 mb-3">
-                            <div class="form-check custom-checkbox mb-3">
-                                <input type="checkbox" class="form-check-input" id="p_is_global" checked onchange="toggleBranchSelect()">
-                                <label class="form-check-label" for="p_is_global">Berlaku untuk SEMUA Cabang</label>
-                            </div>
-                        </div>
-                        <div class="col-md-12" id="branch_selection_div" style="display:none;">
-                            <label class="form-label">Pilih Cabang (Hanya berlaku untuk cabang berikut)</label>
-                            <select class="form-control select2" id="p_branches" multiple style="width: 100%;">
-                                {% for b in branches %}
-                                <option value="{{ b.id }}">{{ b.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- 4. STATUS -->
-                    <div class="section-title">4. Status</div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Status Periode <span class="text-danger">*</span></label>
-                            <select class="form-control" id="p_status" required>
-                                <option value="DRAFT">Draft (Persiapan)</option>
-                                <option value="OPEN">Open (Sedang Aktif)</option>
-                                <option value="LOCKED">Locked (Tidak bisa diubah)</option>
-                                <option value="CLOSED">Closed (Selesai)</option>
-                                <option value="ARCHIVED">Archived (Arsip)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-8 mb-3">
-                            <label class="form-label">Catatan</label>
-                            <input type="text" class="form-control" id="p_notes">
-                        </div>
-                    </div>
-
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="savePeriod()">Simpan Periode</button>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+{% block master_js %}
 <script>
     $(document).ready(function() {
-        $('#periodTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
-        $('.select2').select2({
+$('.select2').select2({
             dropdownParent: $('#periodModal')
         });
     });
@@ -470,30 +264,7 @@
     }
 
     function deletePeriod(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus periode ${name}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                $.ajax({
-                    url: `/api/v1/academics/academic-periods/${id}/`,
-                    type: 'DELETE',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                    success: function() { 
-                        Swal.fire('Terhapus!', 'Periode berhasil dihapus.', 'success').then(() => location.reload()); 
-                    },
-                    error: function() {
-                        Swal.fire('Error!', 'Gagal menghapus periode.', 'error');
-                    }
-                });
-            }
-        });
+        hapusData(`/api/v1/academics/academic-periods/${id}/`, name);
     }
 </script>
 {% endblock %}

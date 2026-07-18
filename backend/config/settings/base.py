@@ -243,4 +243,5 @@ SESSION_COOKIE_AGE = 30 * 60  # 30 minutes in seconds
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 LOGIN_URL = 'dashboard:page_login'
-
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'

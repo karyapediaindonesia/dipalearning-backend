@@ -110,6 +110,9 @@
 						</div>
 						<form method="POST">
 							{% csrf_token %}
+							{% if request.GET.next %}
+							<input type="hidden" name="next" value="{{ request.GET.next }}">
+							{% endif %}
 							{% if messages %}
 								{% for message in messages %}
 									<div class="alert alert-{{ message.tags }}">{{ message }}</div>

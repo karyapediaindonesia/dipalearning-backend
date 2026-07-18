@@ -1,32 +1,13 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
+{% block master_title %}Hari Libur{% endblock %}
+{% block card_title %}Data Master Hari Libur{% endblock %}
+{% block modal_id %}holidayModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus me-2"></i>Tambah Hari Libur{% endblock %}
 
-
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
-{% endblock %}
-
-{% block message %}
-{% include 'dashboard/elements/alert.html' %}
-{% endblock %}
-
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Data Master Hari Libur</h4>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-toggle="modal" data-bs-target="#holidayModal" onclick="resetForm()">
-                    <i class="fa fa-plus me-2"></i>Tambah Hari Libur
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="holidayTable" class="display" style="min-width: 845px">
+{% block table_content %}
+<table id="holidayTable" class="display" style="min-width: 845px">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -65,13 +46,9 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
-<!-- Modal Tambah/Edit -->
+{% block modal_content %}
 <div class="modal fade" id="holidayModal" tabindex="-1" aria-labelledby="holidayModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -147,14 +124,9 @@
         </div>
     </div>
 </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.css' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
+{% block master_js %}
 <script>
     const apiBaseUrl = '/api/v1/branches/holidays/';
     
@@ -180,23 +152,7 @@
     });
 
     $(document).ready(function() {
-        $('#holidayTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
-
-        $('#holidayForm').on('submit', function(e) {
+$('#holidayForm').on('submit', function(e) {
             e.preventDefault();
             
             const id = $('#holiday_id').val();
@@ -265,29 +221,7 @@
     }
 
     function deleteHoliday(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus hari libur "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                $.ajax({
-                    url: apiBaseUrl + id + '/',
-                    type: 'DELETE',
-                    success: function() {
-                        Swal.fire('Terhapus!', 'Hari libur telah dihapus.', 'success').then(() => location.reload());
-                    },
-                    error: function() {
-                        Swal.fire('Error!', 'Terjadi kesalahan saat menghapus data.', 'error');
-                    }
-                });
-            }
-        });
+        hapusData(apiBaseUrl + id + '/', name);
     }
 </script>
 {% endblock %}

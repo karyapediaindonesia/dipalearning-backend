@@ -1,36 +1,17 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
-{% block title %}Master Kursus | DIPA Learning{% endblock %}
 
-
-
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-<div class="row page-titles">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Data Master</a></li>
-        <li class="breadcrumb-item"><a href="javascript:void(0)">Master Kursus</a></li>
-    </ol>
-</div>
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Data Master Kursus</h4>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#courseModal" onclick="resetForm()">
-                    <i class="fa fa-plus me-2"></i>Tambah Kursus
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="courseTable" class="display" style="min-width: 845px">
+{% block master_title %}Kursus{% endblock %}
+{% block card_title %}Data Master Kursus{% endblock %}
+{% block modal_id %}courseModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus me-2"></i>Tambah Kursus{% endblock %}
+
+{% block table_content %}
+<table id="courseTable" class="display" style="min-width: 845px">
                         <thead>
                             <tr>
                                 <th>Kode</th><th>Nama Kursus</th><th>Kategori</th><th>Mode</th><th>Durasi</th><th>Status</th><th>Aksi</th>
@@ -59,12 +40,9 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
+{% block modal_content %}
 <div class="modal fade" id="courseModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -103,29 +81,12 @@
             </div>
         </div>
     </div>
-</div>
-    </div>
-</div>
 {% endblock %}
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+
+{% block master_js %}
 <script>
-    $(document).ready(function() { $('#courseTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        }); });
+    $(document).ready(function() {
+});
     function showErrors(msgs) { $('#errorList').html(msgs.map(m => `<li>${m}</li>`).join('')); $('#errorBox').show(); }
     function resetForm() { $('#errorBox').hide(); $('#course_id').val(''); $('#code').val(''); $('#name').val(''); $('#modalTitle').text('Tambah Kursus'); }
     function editCourse(btn) {
@@ -141,27 +102,7 @@
         fetch(url, { method: method, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
     }
     function deleteCourse(id, name) { 
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus kursus "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                fetch(`/api/v1/academics/courses/${id}/`, {
-                    method: 'DELETE',
-                    credentials: 'same-origin',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
-                }).then(r => {
-                    if (r.ok) Swal.fire('Terhapus!', 'Kursus telah dihapus.', 'success').then(() => location.reload());
-                    else Swal.fire('Error!', 'Gagal menghapus kursus. Status: ' + r.status, 'error');
-                }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error'));
-            }
-        });
+        hapusData(`/api/v1/academics/courses/${id}/`, name);
     }
 </script>
 {% endblock %}

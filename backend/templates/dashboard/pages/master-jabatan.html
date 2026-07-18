@@ -1,36 +1,17 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
-<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-        
-        <div class="row page-titles">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="javascript:void(0)">Master Data</a></li>
-                <li class="breadcrumb-item active"><a href="javascript:void(0)">Master Jabatan</a></li>
-            </ol>
-        </div>
+{% block master_title %}Daftar Jabatan (Job Positions){% endblock %}
+{% block card_title %}Daftar Jabatan (Job Positions){% endblock %}
+{% block modal_id %}positionModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus"></i> Tambah Jabatan{% endblock %}
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <h4 class="card-title">Daftar Jabatan (Job Positions)</h4>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#positionModal" onclick="resetForm()">
-                            <i class="fa fa-plus"></i> Tambah Jabatan
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="positionTable" class="display" style="min-width: 845px">
+{% block table_content %}
+<table id="positionTable" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
                                         <th>Level</th>
@@ -81,15 +62,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
 
-<!-- Modal Position -->
+{% block modal_content %}
 <div class="modal fade" id="positionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -175,31 +150,12 @@
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
+{% block master_js %}
 <script>
     $(document).ready(function() {
-        $('#positionTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
-        $('.select2').select2({
+$('.select2').select2({
             dropdownParent: $('#positionModal')
         });
     });
@@ -268,30 +224,7 @@
     }
 
     function deletePosition(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus jabatan ${name}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                $.ajax({
-                    url: `/api/v1/hr/job-positions/${id}/`,
-                    type: 'DELETE',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                    success: function() { 
-                        Swal.fire('Terhapus!', 'Data berhasil dihapus.', 'success').then(() => location.reload());
-                    },
-                    error: function(xhr) { 
-                        Swal.fire('Error!', 'Gagal menghapus. Mungkin ada karyawan terkait jabatan ini.', 'error'); 
-                    }
-                });
-            }
-        });
+        hapusData(`/api/v1/hr/job-positions/${id}/`, name);
     }
 </script>
 {% endblock %}

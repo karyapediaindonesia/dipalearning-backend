@@ -1,11 +1,8 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
-<link href="{% static 'dashboard/vendor/select2/css/select2.min.css' %}" rel="stylesheet">
 <style>
     .nav-link.tab-error {
         color: #dc3545 !important;
@@ -18,29 +15,13 @@
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-        
-        <div class="row page-titles">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item active"><a href="javascript:void(0)">Kesiswaan</a></li>
-                <li class="breadcrumb-item"><a href="javascript:void(0)">Registrasi Calon Siswa</a></li>
-            </ol>
-        </div>
+{% block master_title %}Data Calon Siswa (Prospects){% endblock %}
+{% block card_title %}Data Calon Siswa (Prospects){% endblock %}
+{% block modal_id %}prospectModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus me-2"></i>Tambah Prospect{% endblock %}
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="card-title">Data Calon Siswa (Prospects)</h4>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#prospectModal" onclick="resetForm()">
-                            <i class="fa fa-plus me-2"></i>Tambah Prospect
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="prospectTable" class="display" style="min-width: 845px">
+{% block table_content %}
+<table id="prospectTable" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
                                         <th>No Prospect</th>
@@ -94,16 +75,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+{% endblock %}
 
-    </div>
-</div>
-
-<!-- Modal Create / Edit -->
+{% block modal_content %}
 <div class="modal fade" id="prospectModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -184,118 +158,10 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Tab 2: Orang Tua / Wali & Alamat -->
-                        <div class="tab-pane fade" id="ortu" role="tabpanel">
-                            <div class="row mb-3">
-                                <div class="col-12">
-                                    <label class="form-label fw-bold">Pendaftar adalah:</label>
-                                    <div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_parent" value="parent" checked onchange="toggleRegistrantType()">
-                                            <label class="form-check-label" for="type_parent">Orang Tua</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_guardian" value="guardian" onchange="toggleRegistrantType()">
-                                            <label class="form-check-label" for="type_guardian">Wali</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row" id="section_parent">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Nama Orang Tua <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="parent_name" placeholder="Contoh: Budi Santoso">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">No WhatsApp <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="parent_whatsapp" placeholder="Contoh: 081234567890">
-                                </div>
-                            </div>
-
-                            <div class="row" id="section_guardian" style="display: none;">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Nama Wali <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="guardian_name" placeholder="Contoh: Siti Aminah">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Hubungan dengan Siswa <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="guardian_relationship" placeholder="Contoh: Paman, Nenek">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">No WhatsApp Wali <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="guardian_phone" placeholder="Contoh: 081234567890">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Pekerjaan</label>
-                                    <input type="text" class="form-control" id="guardian_job" placeholder="Contoh: Wiraswasta">
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Alamat Wali</label>
-                                    <textarea class="form-control" id="guardian_address" rows="2" placeholder="Contoh: Jl. Diponegoro No. 10"></textarea>
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            <h5 class="mb-3">Alamat Calon Siswa</h5>
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Alamat Lengkap</label>
-                                    <textarea class="form-control" id="address" rows="2" placeholder="Contoh: Jl. Merdeka No. 45, RT 02/RW 03"></textarea>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Provinsi</label>
-                                    <select class="form-control" id="province" style="width: 100%;">
-                                        <option value="">Pilih Provinsi</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kota / Kabupaten</label>
-                                    <select class="form-control" id="city" style="width: 100%;" disabled>
-                                        <option value="">Pilih Kota/Kabupaten</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tab 3: Cabang -->
-                        <div class="tab-pane fade" id="cabang" role="tabpanel">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Cabang Tujuan</label>
-                                    <select class="form-control" id="target_branch">
-                                        <option value="">Pilih Cabang</option>
-                                        {% for branch in branches %}
-                                        <option value="{{ branch.id }}">{{ branch.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer d-flex justify-content-between align-items-center">
-                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi</small>
-                <div>
-                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveProspect()">
-                        <i class="fa fa-save me-1"></i> Simpan Data
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
+{% block master_js %}
 <!-- Datatable -->
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/select2/js/select2.full.min.js' %}"></script>
 <script>
     $(document).ready(function() {
         $('#province').select2({
@@ -344,21 +210,7 @@
             }
         });
 
-        $('#prospectTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
+
         
         // Populate options via API initially if needed
     });
@@ -564,44 +416,7 @@
     }
 
     function deleteProspect(id, name) {
-        Swal.fire({
-            title: 'Konfirmasi',
-            text: `Yakin ingin menghapus calon siswa "${name}"?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Ya, hapus!',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.value) {
-                fetch(`/api/v1/students/prospects/${id}/`, {
-                    method: 'DELETE',
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
-                })
-                .then(res => {
-                    if(res.ok) {
-                        Swal.fire('Terhapus!', 'Data calon siswa berhasil dihapus.', 'success').then(() => location.reload());
-                    } else {
-                        res.json().then(json => {
-                            let errMsg = 'Gagal menghapus calon siswa.';
-                            if (typeof json === 'object' && !Array.isArray(json)) {
-                                errMsg = Object.values(json).join('\n');
-                            } else {
-                                errMsg = json.detail || json[0] || errMsg;
-                            }
-                            Swal.fire('Gagal!', errMsg, 'error');
-                        }).catch(() => Swal.fire('Error!', 'Gagal menghapus calon siswa.', 'error'));
-                    }
-                })
-                .catch(err => {
-                    Swal.fire('Error!', 'Terjadi kesalahan sistem.', 'error');
-                });
-            }
-        });
+        hapusData(`/api/v1/students/prospects/${id}/`, name);
     }
 </script>
 {% endblock %}

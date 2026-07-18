@@ -1,36 +1,17 @@
-{% extends 'dashboard/elements/layouts/admin.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
-{% block title %}Master Level | DIPA Learning{% endblock %}
 
-
-
-{% block additional_css %}
-<link href="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.css' %}" rel="stylesheet">
+{% block master_css %}
 <!-- Datatable -->
-<link href="{% static 'dashboard/vendor/datatables/css/jquery.dataTables.min.css' %}" rel="stylesheet">
 {% endblock %}
 
-{% block content %}
-<div class="content-body">
-    <div class="container-fluid">
-<div class="row page-titles">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item active"><a href="javascript:void(0)">Data Master</a></li>
-        <li class="breadcrumb-item"><a href="javascript:void(0)">Master Level</a></li>
-    </ol>
-</div>
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Data Master Level</h4>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#levelModal" onclick="resetForm()">
-                    <i class="fa fa-plus me-2"></i>Tambah Level
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table id="levelTable" class="display" style="min-width: 845px">
+{% block master_title %}Level{% endblock %}
+{% block card_title %}Data Master Level{% endblock %}
+{% block modal_id %}levelModal{% endblock %}
+{% block button_title %}<i class="fa fa-plus me-2"></i>Tambah Level{% endblock %}
+
+{% block table_content %}
+<table id="levelTable" class="display" style="min-width: 845px">
                         <thead>
                             <tr>
                                 <th>Kursus</th><th>Kode</th><th>Nama Level</th><th>Urutan</th><th>Status</th><th>Aksi</th>
@@ -69,11 +50,9 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% endblock %}
+
+{% block modal_content %}
 <div class="modal fade" id="levelModal">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -102,67 +81,16 @@
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary" onclick="saveLevel()">Simpan</button></div>
         </div>
     </div>
-</div>
-    </div>
-</div>
 {% endblock %}
-{% block additional_js %}
-<script src="{% static 'dashboard/vendor/sweetalert2/dist/sweetalert2.min.js' %}"></script>
-<script src="{% static 'dashboard/vendor/datatables/js/jquery.dataTables.min.js' %}"></script>
+
+{% block master_js %}
 <script>
     $(document).ready(function() {
-        $('#levelTable').DataTable({
-            language: {
-                search:       "Cari:",
-                lengthMenu:   "Tampilkan _MENU_ data",
-                info:         "Menampilkan _START_-_END_ dari _TOTAL_ data",
-                infoEmpty:    "Menampilkan 0 dari 0 data",
-                infoFiltered: "(disaring dari _MAX_ total data)",
-                zeroRecords:  "Tidak ada data ditemukan.",
-                emptyTable:   "Tidak ada data tersedia.",
-                paginate: {
-                    previous: '<i class="fa fa-angle-double-left"></i>',
-                    next:     '<i class="fa fa-angle-double-right"></i>'
-                }
-            }
-        });
-
-        // Event delegation — bekerja meskipun DataTables rebuild DOM
+// Event delegation — bekerja meskipun DataTables rebuild DOM
         $(document).on('click', '.btn-delete-level', function() {
             const id   = $(this).data('id');
             const name = $(this).data('name');
-            Swal.fire({
-                title: 'Konfirmasi',
-                text: `Yakin ingin menghapus level "${name}"?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, hapus!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.value) {
-                    fetch(`/api/v1/academics/levels/${id}/`, {
-                        method: 'DELETE',
-                        credentials: 'same-origin',
-                        headers: {'X-CSRFToken': '{{ csrf_token }}'}
-                    }).then(r => {
-                        if (r.ok) {
-                            Swal.fire('Terhapus!', 'Level telah dihapus.', 'success').then(() => location.reload());
-                        } else {
-                            r.json().then(json => {
-                                let errMsg = 'Gagal menghapus level.';
-                                if (typeof json === 'object' && !Array.isArray(json)) {
-                                    errMsg = Object.values(json).join('\n');
-                                } else {
-                                    errMsg = json.detail || json[0] || errMsg;
-                                }
-                                Swal.fire('Gagal!', errMsg, 'error');
-                            }).catch(() => Swal.fire('Error!', 'Gagal menghapus level. Status: ' + r.status, 'error'));
-                        }
-                    }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error'));
-                }
-            });
+            hapusData(`/api/v1/academics/levels/${id}/`, name);
         });
 
         $(document).on('click', '.btn-edit-level', function() {
@@ -198,4 +126,3 @@
     }
 </script>
 {% endblock %}
-
