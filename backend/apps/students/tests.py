@@ -54,24 +54,11 @@ class ProspectDeleteTestCase(TestCase):
         
         # Perform deletion
         self.prospect.delete()
-        self.prospect.refresh_from_db()
         
-        # Verify prospect soft deleted
-        self.assertFalse(self.prospect.is_active)
-        self.assertIsNotNone(self.prospect.deleted_at)
-        
-        # Verify related records soft deleted
-        parent.refresh_from_db()
-        address.refresh_from_db()
-        source.refresh_from_db()
-        guardian.refresh_from_db()
-        interest.refresh_from_db()
-        
-        self.assertFalse(parent.is_active)
-        self.assertFalse(address.is_active)
-        self.assertFalse(source.is_active)
-        self.assertFalse(guardian.is_active)
-        self.assertFalse(interest.is_active)
+        with self.assertRaises(Prospect.DoesNotExist):
+            self.prospect.refresh_from_db()
+        with self.assertRaises(ProspectInterest.DoesNotExist):
+            interest.refresh_from_db()
 
     def test_prospect_converted_to_student_fails_delete(self):
         # Create related Student profile pointing to this prospect

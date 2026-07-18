@@ -111,25 +111,8 @@ class Prospect(SoftDeleteModel):
         # 1. Check if the prospect has already been converted to an active Student profile
         if hasattr(self, 'student_profile') and self.student_profile is not None:
             raise ValidationError("Calon siswa tidak dapat dihapus karena sudah dikonversi menjadi siswa aktif.")
-            
-        # 2. Soft delete related One-to-One records
-        if hasattr(self, 'parent') and self.parent:
-            self.parent.delete()
-        if hasattr(self, 'address') and self.address:
-            self.address.delete()
-        if hasattr(self, 'source') and self.source:
-            self.source.delete()
-        if hasattr(self, 'guardian') and self.guardian:
-            self.guardian.delete()
-            
-        # 3. Soft delete related One-to-Many records
-        self.interests.all().delete()
-        self.status_histories.all().delete()
-        
-        # 4. Soft delete the prospect itself
-        self.is_active = False
-        self.deleted_at = timezone.now()
-        self.save()
+        # HARD DELETE
+        return super().delete(using=using, keep_parents=keep_parents)
 
 
 class ProspectParent(SoftDeleteModel):

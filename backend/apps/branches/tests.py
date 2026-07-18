@@ -18,9 +18,9 @@ class BranchDeleteTestCase(TestCase):
     def test_branch_soft_delete(self):
         # Soft delete branch
         self.branch.delete()
-        self.branch.refresh_from_db()
-        self.assertFalse(self.branch.is_active)
-        self.assertIsNotNone(self.branch.deleted_at)
+        with self.assertRaises(Branch.DoesNotExist):
+            self.branch.refresh_from_db()
+        
         
     def test_branch_cascade_soft_delete(self):
         room = Room.objects.create(
@@ -45,8 +45,8 @@ class BranchDeleteTestCase(TestCase):
         # Soft delete branch
         self.branch.delete()
         
-        # Room and holiday should be soft-deleted too
-        room.refresh_from_db()
-        holiday.refresh_from_db()
-        self.assertFalse(room.is_active)
-        self.assertFalse(holiday.is_active)
+        with self.assertRaises(Room.DoesNotExist):
+            room.refresh_from_db()
+        with self.assertRaises(Holiday.DoesNotExist):
+            holiday.refresh_from_db()
+        

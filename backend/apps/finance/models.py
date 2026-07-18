@@ -37,10 +37,8 @@ class PaymentMethod(SoftDeleteModel):
         if Payment.objects.filter(payment_method=self).exists():
             raise ValidationError("Metode pembayaran tidak dapat dihapus karena pernah digunakan dalam transaksi.")
             
-        # Soft delete the method
-        self.is_active = False
-        self.deleted_at = timezone.now()
-        self.save()
+        # HARD DELETE
+        return super().delete(using=using, keep_parents=keep_parents)
 
 
 class FeeCategory(SoftDeleteModel):
@@ -93,7 +91,5 @@ class FeeCategory(SoftDeleteModel):
         if self.subcategories.filter(is_active=True).exists():
             raise ValidationError("Kategori biaya tidak dapat dihapus karena masih memiliki subkategori aktif.")
             
-        # Soft delete the category
-        self.is_active = False
-        self.deleted_at = timezone.now()
-        self.save()
+        # HARD DELETE
+        return super().delete(using=using, keep_parents=keep_parents)

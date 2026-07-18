@@ -89,24 +89,10 @@ class Branch(SoftDeleteModel):
         from apps.students.models import Enrollment
         if Enrollment.objects.filter(branch=self, is_active=True).exists():
             raise ValidationError("Cabang tidak dapat dihapus karena masih memiliki pendaftaran (enrollment) aktif.")
-            
-        # 3. Soft delete related Room records
-        for room in self.rooms.all():
-            room.delete()
-            
-        # 4. Soft delete related Holiday records
-        for holiday in self.holidays.all():
-            holiday.delete()
-            
-        # 5. Soft delete related EmployeeBranchAssignment records
-        from apps.hr.models import EmployeeBranchAssignment
-        EmployeeBranchAssignment.objects.filter(branch=self, is_active=True).delete()
         
-        # 6. Soft delete the branch itself
-        self.is_active = False
-        self.deleted_at = timezone.now()
-        self.save()
-
+        
+        # HARD DELETE: cascade deletion is handled natively by Django (on_delete=models.CASCADE)
+        return super().delete(using=using, keep_parents=keep_parents)
 
     @property
     def pic_position(self):

@@ -20,8 +20,8 @@ class FinanceDeleteTestCase(TestCase):
 
     def test_payment_method_soft_delete(self):
         self.method.delete()
-        self.method.refresh_from_db()
-        self.assertFalse(self.method.is_active)
+        with self.assertRaises(PaymentMethod.DoesNotExist):
+            self.method.refresh_from_db()
         
     def test_payment_method_with_payment_fails_delete(self):
         # Create a payment using this method
@@ -52,8 +52,8 @@ class FinanceDeleteTestCase(TestCase):
 
     def test_fee_category_soft_delete(self):
         self.category.delete()
-        self.category.refresh_from_db()
-        self.assertFalse(self.category.is_active)
+        with self.assertRaises(FeeCategory.DoesNotExist):
+            self.category.refresh_from_db()
         
     def test_fee_category_with_subcategory_fails_delete(self):
         subcategory = FeeCategory.objects.create(

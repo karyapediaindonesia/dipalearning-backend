@@ -25,8 +25,8 @@ class AuditModel(BaseModel):
 
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
-        count = self.update(is_active=False, deleted_at=timezone.now())
-        return count, {self.model._meta.label: count}
+        # HARD DELETE: permanently remove from database
+        return super().delete()
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
@@ -44,9 +44,8 @@ class SoftDeleteModel(AuditModel):
         abstract = True
 
     def delete(self, using=None, keep_parents=False):
-        self.is_active = False
-        self.deleted_at = timezone.now()
-        self.save()
+        # HARD DELETE: permanently remove from database
+        return super().delete(using=using, keep_parents=keep_parents)
 
 class SystemConfiguration(BaseModel):
     key = models.CharField(max_length=255, unique=True)
