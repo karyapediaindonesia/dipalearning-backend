@@ -25,7 +25,8 @@ class AuditModel(BaseModel):
 
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
-        return self.update(is_active=False, deleted_at=timezone.now())
+        count = self.update(is_active=False, deleted_at=timezone.now())
+        return count, {self.model._meta.label: count}
 
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):

@@ -28,6 +28,20 @@ class PaymentMethod(SoftDeleteModel):
     def __str__(self):
         return f"{self.code} - {self.name}"
 
+    def delete(self, using=None, keep_parents=False):
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        
+        # Check if this method has been used in any Payment transaction
+        from apps.billing.models import Payment
+        if Payment.objects.filter(payment_method=self).exists():
+            raise ValidationError("Metode pembayaran tidak dapat dihapus karena pernah digunakan dalam transaksi.")
+            
+        # Soft delete the method
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save()
+
 
 class FeeCategory(SoftDeleteModel):
     CLASSIFICATION_CHOICES = [
@@ -70,3 +84,16 @@ class FeeCategory(SoftDeleteModel):
 
     def __str__(self):
         return f"{self.code} - {self.name}"
+
+    def delete(self, using=None, keep_parents=False):
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        
+        # Check if there are active subcategories
+        if self.subcategories.filter(is_active=True).exists():
+            raise ValidationError("Kategori biaya tidak dapat dihapus karena masih memiliki subkategori aktif.")
+            
+        # Soft delete the category
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save()

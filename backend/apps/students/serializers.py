@@ -186,7 +186,7 @@ class ProspectOptionsSerializer(serializers.Serializer):
     def get_source(self, obj):
         return [{'value': k, 'label': v} for k, v in SOURCE_CHOICES]
         
-    def get_prospect_statuses(self, obj):
+    def get_prospect_status(self, obj):
         statuses = ProspectStatus.objects.filter(status=True).order_by('sequence')
         return [{'value': s.id, 'label': s.name, 'code': s.code, 'color': s.color} for s in statuses]
 
