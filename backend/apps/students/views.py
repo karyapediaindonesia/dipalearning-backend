@@ -19,6 +19,23 @@ class ProspectViewSet(viewsets.ModelViewSet):
     serializer_class = ProspectSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @transaction.atomic
+    def perform_create(self, serializer):
+        prospect = serializer.save()
+        
+        from apps.billing.models import Invoice, InvoiceItem
+        invoice = Invoice.objects.create(
+            prospect=prospect,
+            total_amount=250000,
+            status='UNPAID',
+            notes='Tagihan Pendaftaran Siswa Baru'
+        )
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            description='Biaya Pendaftaran / Registrasi',
+            amount=250000
+        )
+
     def perform_destroy(self, instance):
         instance.delete()
 
@@ -29,6 +46,33 @@ class ProspectViewSet(viewsets.ModelViewSet):
         """
         serializer = ProspectOptionsSerializer(instance={})
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def convert_to_student(self, request, pk=None):
+        prospect = self.get_object()
+        
+        # Check if already a student
+        if hasattr(prospect, 'student_profile') and prospect.student_profile:
+            return Response({'student_id': prospect.student_profile.id}, status=http_status.HTTP_200_OK)
+            
+        if prospect.status and prospect.status.code != 'REG_PAID':
+            return Response({'detail': 'Prospek belum lunas pendaftaran.'}, status=http_status.HTTP_400_BAD_REQUEST)
+            
+        with transaction.atomic():
+            student = Student.objects.create(
+                prospect=prospect,
+                full_name=prospect.full_name,
+                status='ACTIVE'
+            )
+            
+            lunas_status, _ = ProspectStatus.objects.get_or_create(
+                code='ENROLLED',
+                defaults={'name': 'Telah Mendaftar', 'sequence': 60, 'is_success': True}
+            )
+            prospect.status = lunas_status
+            prospect.save()
+            
+        return Response({'student_id': student.id}, status=http_status.HTTP_201_CREATED)
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all().order_by('-created_at')
@@ -43,6 +87,29 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         enrollment = serializer.save()
+        
+        # Auto generate invoice for the course
+        amount = 500000 # default
+        if enrollment.package and enrollment.package.price:
+            amount = enrollment.package.price
+            
+        from apps.billing.models import Invoice, InvoiceItem
+        invoice = Invoice.objects.create(
+            student=enrollment.student,
+            total_amount=amount,
+            status='UNPAID',
+            notes=f'Tagihan Kursus: {enrollment.course.name} - {enrollment.level.name}'
+        )
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            description=f'Biaya Program {enrollment.course.name}',
+            amount=amount
+        )
+        
+        # Link invoice back to enrollment if necessary, or just keep it in Student
+        enrollment.invoice_id = invoice.invoice_number
+        enrollment.save(update_fields=['invoice_id'])
+        
         # Create initial history
         EnrollmentHistory.objects.create(
             enrollment=enrollment,

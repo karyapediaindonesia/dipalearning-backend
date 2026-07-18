@@ -1,0 +1,102 @@
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
+{% load static %}
+
+{% block master_title %}Validasi Pembayaran (Finance){% endblock %}
+{% block card_title %}Validasi Pembayaran (Finance){% endblock %}
+{% block button_title %}{% endblock %} 
+
+{% block table_content %}
+{% if is_finance %}
+<div class="alert alert-info">
+    <strong>Info!</strong> Berikut adalah daftar pembayaran yang masih <strong>PENDING</strong> dan perlu diverifikasi kebenarannya (cek mutasi rekening).
+</div>
+<table id="validasiTable" class="display" style="min-width: 845px">
+    <thead>
+        <tr>
+            <th>No Referensi</th>
+            <th>Tagihan</th>
+            <th>Pembayar (Prospek/Siswa)</th>
+            <th>Nominal</th>
+            <th>Metode</th>
+            <th>Waktu Submit</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for payment in payments %}
+        <tr>
+            <td><strong>{{ payment.reference_number|default:"-" }}</strong></td>
+            <td>{{ payment.invoice.invoice_number }}</td>
+            <td>
+                {% if payment.invoice.prospect %}
+                    {{ payment.invoice.prospect.full_name }} (Pendaftaran)
+                {% elif payment.invoice.student %}
+                    {{ payment.invoice.student.full_name }} (Siswa)
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td>Rp {{ payment.amount|floatformat:0 }}</td>
+            <td>{{ payment.payment_method }}</td>
+            <td>{{ payment.created_at|date:"d/m/Y H:i" }}</td>
+            <td>
+                <button class="btn btn-success shadow btn-xs sharp me-1" onclick="verifyPayment('{{ payment.id }}')" title="Validasi Lunas">
+                    <i class="fa fa-check"></i>
+                </button>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" class="text-center">Tidak ada pembayaran pending saat ini.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-danger">
+    <strong>Akses Ditolak!</strong> Hanya karyawan dengan hak akses Keuangan (Finance Validator) yang dapat melihat halaman ini.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block modal_content %}
+<!-- We hide the "Tambah" button from master_list_base via CSS/JS or just let it fail silently if clicked since we don't need it -->
+{% endblock %}
+
+{% block master_js %}
+<script>
+    // Sembunyikan tombol tambah bawaan master_list_base karena halaman ini khusus validasi
+    $(document).ready(function() {
+        $('.card-header .btn-primary').hide();
+        
+        // Init datatable manual if not initialized
+        if (!$.fn.dataTable.isDataTable('#validasiTable')) {
+            $('#validasiTable').DataTable();
+        }
+    });
+
+    function verifyPayment(paymentId) {
+        if(confirm('Apakah Anda yakin pembayaran ini sudah sah masuk ke rekening?')) {
+            fetch(`/api/v1/billing/payments/${paymentId}/verify/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(async response => {
+                if(response.ok) {
+                    alert('Validasi berhasil! Status tagihan dan prospek/siswa otomatis diperbarui.');
+                    location.reload();
+                } else {
+                    const json = await response.json().catch(() => null);
+                    alert(`Gagal memvalidasi. Error: ${JSON.stringify(json)}`);
+                }
+            })
+            .catch(err => {
+                alert(`Network error: ${err.message}`);
+            });
+        }
+    }
+</script>
+{% endblock %}

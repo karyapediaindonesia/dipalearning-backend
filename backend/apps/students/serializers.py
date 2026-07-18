@@ -59,7 +59,20 @@ class ProspectSerializer(serializers.ModelSerializer):
     interests = ProspectInterestSerializer(many=True, required=False, allow_null=True)
     
     # Read-only nested fields for display
+    invoice_details = serializers.SerializerMethodField()
     # target_branch_details = BranchSerializer(source='target_branch', read_only=True)
+
+    def get_invoice_details(self, obj):
+        # Ambil invoice pertama yang belum lunas
+        invoice = obj.invoices.filter(status='UNPAID').first()
+        if invoice:
+            return {
+                'id': invoice.id,
+                'invoice_number': invoice.invoice_number,
+                'total_amount': invoice.total_amount,
+                'status': invoice.status
+            }
+        return None
 
     class Meta:
         model = Prospect

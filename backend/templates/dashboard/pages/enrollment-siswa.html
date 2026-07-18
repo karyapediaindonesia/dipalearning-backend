@@ -102,11 +102,11 @@
                     <div class="section-title">1. Data Siswa</div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label text-primary">Pilih Calon Siswa (Sudah Lunas) <span class="text-danger">*</span></label>
-                            <select class="form-control select2" id="prospect_id" required>
-                                <option value="">-- Pilih Prospect --</option>
-                                {% for p in prospects %}
-                                <option value="{{ p.id }}">{{ p.prospect_number }} - {{ p.full_name }}</option>
+                            <label class="form-label text-primary">Pilih Siswa (Sudah Lunas) <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="student_id" required>
+                                <option value="">-- Pilih Siswa --</option>
+                                {% for s in students %}
+                                <option value="{{ s.id }}">{{ s.student_number }} - {{ s.full_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -265,25 +265,22 @@
             dropdownParent: $('#enrollmentModal')
         });
 
-        // Pre-fill prospect if passed in URL
+        // Pre-fill student if passed in URL
         const urlParams = new URLSearchParams(window.location.search);
-        const preselectProspect = urlParams.get('prospect_id');
-        if (preselectProspect) {
+        const preselectStudent = urlParams.get('student_id');
+        if (preselectStudent) {
             $('#enrollmentModal').modal('show');
-            $('#prospect_id').val(preselectProspect).trigger('change');
+            $('#student_id').val(preselectStudent).trigger('change');
         }
 
-        // Prospect Change to show info
-        $('#prospect_id').change(function() {
-            const pid = $(this).val();
-            if(pid) {
-                // Fetch prospect data
-                $.get(`/api/v1/students/prospects/${pid}/`, function(data) {
+        // Student Change to show info
+        $('#student_id').change(function() {
+            const sid = $(this).val();
+            if(sid) {
+                // Fetch student data
+                $.get(`/api/v1/students/students/${sid}/`, function(data) {
                     $('#info_name').text(data.full_name);
-                    let phone = "-";
-                    if(data.guardian) phone = data.guardian.phone;
-                    else if(data.parent) phone = data.parent.whatsapp;
-                    $('#info_phone').text(phone);
+                    $('#info_phone').text(data.student_number);
                     $('#studentInfoBox').show();
                 });
             } else {
@@ -340,64 +337,43 @@
 
     function saveEnrollment() {
         const id = $('#enrollment_id').val();
-        const prospect_id = $('#prospect_id').val();
+        const student_id = $('#student_id').val();
         
         // Validation
-        if(!prospect_id || !$('#course_id').val() || !$('#level_id').val() || !$('#package_id').val() || !$('#branch_id').val() || !$('#start_date').val()) {
+        if(!student_id || !$('#course_id').val() || !$('#level_id').val() || !$('#package_id').val() || !$('#branch_id').val() || !$('#start_date').val()) {
             alert('Lengkapi semua isian wajib (tanda *)');
             return;
         }
 
-        // Convert prospect to student logic should ideally be in backend, but we'll assume the backend
-        // handles it. Actually, our Enrollment model requires `student_id`. We need to ensure Student exists.
-        // We will do a trick: we'll call a custom endpoint or let's create a Student first if not exists.
-        
-        // For simplicity in this simulation, let's create Student first, then Enrollment.
+        // Now create Enrollment
+        const payload = {
+            student: student_id,
+            course: $('#course_id').val(),
+            level: $('#level_id').val(),
+            package: $('#package_id').val(),
+            branch: $('#branch_id').val(),
+            study_class: $('#study_class_id').val() || null,
+            coach: $('#coach_id').val() || null,
+            academic_period: $('#academic_period_id').val() || null,
+            start_date: $('#start_date').val(),
+            end_date: $('#end_date').val() || null,
+            status: $('#status').val(),
+            invoice_id: $('#invoice_id').val(),
+            notes: $('#notes').val()
+        };
+
         $.ajax({
-            url: '/api/v1/students/students/',
+            url: '/api/v1/students/enrollments/',
             type: 'POST',
             contentType: 'application/json',
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
-            data: JSON.stringify({
-                prospect: prospect_id,
-                full_name: $('#info_name').text() || 'Siswa Baru',
-                status: 'ACTIVE'
-            }),
-            success: function(studentData) {
-                // Now create Enrollment
-                const payload = {
-                    student: studentData.id,
-                    course: $('#course_id').val(),
-                    level: $('#level_id').val(),
-                    package: $('#package_id').val(),
-                    branch: $('#branch_id').val(),
-                    study_class: $('#study_class_id').val() || null,
-                    coach: $('#coach_id').val() || null,
-                    academic_period: $('#academic_period_id').val() || null,
-                    start_date: $('#start_date').val(),
-                    end_date: $('#end_date').val() || null,
-                    status: $('#status').val(),
-                    invoice_id: $('#invoice_id').val(),
-                    notes: $('#notes').val()
-                };
-
-                $.ajax({
-                    url: '/api/v1/students/enrollments/',
-                    type: 'POST',
-                    contentType: 'application/json',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                    data: JSON.stringify(payload),
-                    success: function() {
-                        alert('Berhasil menyimpan data Enrollment!');
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        alert('Gagal membuat Enrollment: ' + xhr.responseText);
-                    }
-                });
+            data: JSON.stringify(payload),
+            success: function() {
+                alert('Berhasil menyimpan data Enrollment!');
+                location.reload();
             },
             error: function(xhr) {
-                alert('Gagal membuat profil Siswa: ' + xhr.responseText);
+                alert('Gagal membuat Enrollment: ' + xhr.responseText);
             }
         });
     }

@@ -19,6 +19,7 @@ class JobPosition(SoftDeleteModel):
     
     # Flags untuk logic aplikasi
     is_teaching_position = models.BooleanField(default=False, help_text="Centang jika jabatan ini mengajar (Coach)")
+    is_finance_validator = models.BooleanField(default=False, help_text="Bisa memvalidasi pembayaran")
     requires_schedule = models.BooleanField(default=False)
     requires_attendance = models.BooleanField(default=False)
     requires_payroll = models.BooleanField(default=True)

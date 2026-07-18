@@ -61,10 +61,18 @@
                                                         onclick="editProspect(this)" title="Edit">
                                                     <i class="fas fa-pencil-alt"></i>
                                                 </button>
-                                                {% if prospect.status == 'REGISTERED' or prospect.status == 'ENROLLED' %}
-                                                <a href="{% url 'dashboard:enrollment_siswa' %}?prospect_id={{ prospect.id }}" class="btn btn-success shadow btn-xs sharp me-1" title="Enroll Siswa (Lunas)">
+                                                {% if prospect.status.code == 'REG_PAID' or prospect.status.code == 'ENROLLED' %}
+                                                <button class="btn btn-success shadow btn-xs sharp me-1" onclick="convertToStudent('{{ prospect.id }}')" title="Konversi & Enroll Siswa">
                                                     <i class="fas fa-graduation-cap"></i>
-                                                </a>
+                                                </button>
+                                                {% else %}
+                                                    {% for inv in prospect.invoices.all %}
+                                                        {% if inv.status == 'UNPAID' %}
+                                                        <button class="btn btn-warning shadow btn-xs sharp me-1" onclick="openPaymentModal('{{ inv.id }}', '{{ inv.invoice_number }}', '{{ inv.total_amount }}')" title="Bayar Registrasi">
+                                                            <i class="fas fa-money-bill-wave"></i>
+                                                        </button>
+                                                        {% endif %}
+                                                    {% endfor %}
                                                 {% endif %}
                                                 <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteProspect('{{ prospect.id }}', '{{ prospect.full_name|escapejs }}')" title="Hapus">
                                                     <i class="fa fa-trash"></i>
@@ -158,6 +166,156 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tab 2: Orang Tua / Wali & Alamat -->
+                        <div class="tab-pane fade" id="ortu" role="tabpanel">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Pendaftar adalah:</label>
+                                    <div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_parent" value="parent" checked onchange="toggleRegistrantType()">
+                                            <label class="form-check-label" for="type_parent">Orang Tua</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_guardian" value="guardian" onchange="toggleRegistrantType()">
+                                            <label class="form-check-label" for="type_guardian">Wali</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row" id="section_parent">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Orang Tua <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="parent_name" placeholder="Contoh: Budi Santoso">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">No WhatsApp <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="parent_whatsapp" placeholder="Contoh: 081234567890">
+                                </div>
+                            </div>
+
+                            <div class="row" id="section_guardian" style="display: none;">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nama Wali <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="guardian_name" placeholder="Contoh: Siti Aminah">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hubungan dengan Siswa <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="guardian_relationship" placeholder="Contoh: Paman, Nenek">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">No WhatsApp Wali <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="guardian_phone" placeholder="Contoh: 081234567890">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Pekerjaan</label>
+                                    <input type="text" class="form-control" id="guardian_job" placeholder="Contoh: Wiraswasta">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Wali</label>
+                                    <textarea class="form-control" id="guardian_address" rows="2" placeholder="Contoh: Jl. Diponegoro No. 10"></textarea>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <h5 class="mb-3">Alamat Calon Siswa</h5>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Lengkap</label>
+                                    <textarea class="form-control" id="address" rows="2" placeholder="Contoh: Jl. Merdeka No. 45, RT 02/RW 03"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Provinsi</label>
+                                    <select class="form-control" id="province" style="width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kota / Kabupaten</label>
+                                    <select class="form-control" id="city" style="width: 100%;" disabled>
+                                        <option value="">Pilih Kota/Kabupaten</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Cabang -->
+                        <div class="tab-pane fade" id="cabang" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Cabang Tujuan</label>
+                                    <select class="form-control" id="target_branch">
+                                        <option value="">Pilih Cabang</option>
+                                        {% for branch in branches %}
+                                        <option value="{{ branch.id }}">{{ branch.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between align-items-center">
+                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi</small>
+                <div>
+                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveProspect()">
+                        <i class="fa fa-save me-1"></i> Simpan Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pembayaran Manual -->
+<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pembayaran Manual</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="pay_invoice_id">
+                    <div class="mb-3">
+                        <label class="form-label">Nomor Tagihan</label>
+                        <input type="text" class="form-control bg-light" id="pay_invoice_number" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Total Tagihan (Rp)</label>
+                        <input type="text" class="form-control bg-light" id="pay_total_amount" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nominal Bayar (Rp) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="pay_amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
+                        <select class="form-control" id="pay_method" required>
+                            <option value="">Pilih Metode</option>
+                            <option value="CASH">Tunai (Cash)</option>
+                            <option value="TRANSFER">Transfer Bank</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nomor Referensi (Opsional)</label>
+                        <input type="text" class="form-control" id="pay_reference">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSubmitPayment" onclick="submitPayment()"><i class="fa fa-check me-1"></i> Konfirmasi Pembayaran</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block master_js %}
@@ -417,6 +575,83 @@
 
     function deleteProspect(id, name) {
         hapusData(`/api/v1/students/prospects/${id}/`, name);
+    }
+
+    function openPaymentModal(invoiceId, invoiceNumber, totalAmount) {
+        $('#pay_invoice_id').val(invoiceId);
+        $('#pay_invoice_number').val(invoiceNumber);
+        $('#pay_total_amount').val(parseFloat(totalAmount).toLocaleString('id-ID'));
+        $('#pay_amount').val(totalAmount);
+        $('#pay_method').val('');
+        $('#pay_reference').val('');
+        $('#paymentModal').modal('show');
+    }
+
+    function submitPayment() {
+        const invoiceId = $('#pay_invoice_id').val();
+        const amount = $('#pay_amount').val();
+        const method = $('#pay_method').val();
+        const reference = $('#pay_reference').val();
+
+        if(!amount || !method) {
+            alert('Nominal dan Metode Pembayaran wajib diisi!');
+            return;
+        }
+
+        const data = {
+            invoice: invoiceId,
+            amount: parseFloat(amount),
+            payment_method: method,
+            reference_number: reference,
+            status: 'PENDING'
+        };
+
+        $('#btnSubmitPayment').prop('disabled', true).text('Memproses...');
+
+        fetch('/api/v1/billing/payments/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            if(response.ok) {
+                alert('Pembayaran berhasil disubmit dan menunggu verifikasi.');
+                location.reload();
+            } else {
+                const json = await response.json().catch(() => null);
+                alert(`Gagal memproses pembayaran. Error: ${JSON.stringify(json)}`);
+                $('#btnSubmitPayment').prop('disabled', false).html('<i class="fa fa-check me-1"></i> Konfirmasi Pembayaran');
+            }
+        })
+        .catch(err => {
+            alert(`Network error: ${err.message}`);
+            $('#btnSubmitPayment').prop('disabled', false).html('<i class="fa fa-check me-1"></i> Konfirmasi Pembayaran');
+        });
+    }
+    function convertToStudent(prospectId) {
+        if(confirm('Jadikan siswa dan lanjutkan ke pendaftaran kelas (Enrollment)?')) {
+            fetch(`/api/v1/students/prospects/${prospectId}/convert_to_student/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(async response => {
+                const data = await response.json();
+                if(response.ok) {
+                    window.location.href = `/enrollment-siswa/?student_id=${data.student_id}`;
+                } else {
+                    alert(`Gagal: ${data.detail || JSON.stringify(data)}`);
+                }
+            })
+            .catch(err => {
+                alert(`Network error: ${err.message}`);
+            });
+        }
     }
 </script>
 {% endblock %}

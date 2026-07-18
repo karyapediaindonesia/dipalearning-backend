@@ -698,7 +698,7 @@ def master_karyawan(request):
 
 @login_required
 def registrasi_siswa(request):
-    prospects = Prospect.objects.all().order_by('-created_at')
+    prospects = Prospect.objects.prefetch_related('invoices').all().order_by('-created_at')
     branches = Branch.objects.filter(is_active=True)
     return render(request, 'dashboard/pages/registrasi-siswa.html', {
         'prospects': prospects,
@@ -708,8 +708,8 @@ def registrasi_siswa(request):
 
 @login_required
 def enrollment_siswa(request):
-    prospects = Prospect.objects.filter(status__code='REGISTERED')
-    enrollments = Enrollment.objects.all().order_by('-created_at')
+    students = Student.objects.all().order_by('-created_at')
+    enrollments = Enrollment.objects.prefetch_related('student__invoices').all().order_by('-created_at')
     branches = Branch.objects.filter(is_active=True)
     courses = Course.objects.filter(is_active=True)
     packages = Package.objects.filter(status='ACTIVE')
@@ -717,7 +717,7 @@ def enrollment_siswa(request):
     coaches = Employee.objects.filter(job_position__name__icontains='Coach', status='ACTIVE')
     
     return render(request, 'dashboard/pages/enrollment-siswa.html', {
-        'prospects': prospects,
+        'students': students,
         'enrollments': enrollments,
         'branches': branches,
         'courses': courses,
@@ -728,6 +728,27 @@ def enrollment_siswa(request):
     })
 
 
+
+@login_required
+def validasi_pembayaran(request):
+    from apps.billing.models import Payment
+    # Hanya tagihan yang masih PENDING
+    payments = Payment.objects.filter(status='PENDING').select_related('invoice').order_by('-created_at')
+    
+    # Cek apakah user punya hak akses (finance validator)
+    is_finance = False
+    if hasattr(request.user, 'employee_profile') and request.user.employee_profile and request.user.employee_profile.job_position:
+        is_finance = request.user.employee_profile.job_position.is_finance_validator
+        
+    # Sementara untuk demo, izinkan admin atau semua
+    if request.user.is_superuser:
+        is_finance = True
+        
+    return render(request, 'dashboard/pages/validasi-pembayaran.html', {
+        'payments': payments,
+        'is_finance': is_finance,
+        'page_title': 'Validasi Pembayaran'
+    })
 
 @login_required
 def master_tahun_ajaran(request):

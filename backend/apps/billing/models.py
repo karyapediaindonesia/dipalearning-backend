@@ -11,7 +11,8 @@ class Invoice(SoftDeleteModel):
     ]
     
     invoice_number = models.CharField(max_length=50, unique=True, verbose_name='Nomor Tagihan')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices')
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='invoices', null=True, blank=True)
+    prospect = models.ForeignKey('students.Prospect', on_delete=models.CASCADE, related_name='invoices', null=True, blank=True)
     date_issued = models.DateField(auto_now_add=True, verbose_name='Tanggal Terbit')
     due_date = models.DateField(verbose_name='Jatuh Tempo', null=True, blank=True)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)

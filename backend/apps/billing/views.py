@@ -31,33 +31,55 @@ class PaymentViewSet(viewsets.ModelViewSet):
         invoice.paid_amount += payment.amount
         if invoice.paid_amount >= invoice.total_amount:
             invoice.status = 'PAID'
+            
+            # Jika ini tagihan prospek, update status prospek
+            if invoice.prospect:
+                from apps.students.models import ProspectStatus
+                # Cari status lunas atau buat jika belum ada
+                lunas_status, _ = ProspectStatus.objects.get_or_create(
+                    code='REG_PAID',
+                    defaults={'name': 'Lunas Pendaftaran', 'sequence': 50, 'is_success': True}
+                )
+                invoice.prospect.status = lunas_status
+                invoice.prospect.save()
+                
+            # Jika ini tagihan enrollment, ubah status enrollment
+            elif invoice.student:
+                # We can update enrollment status if there's a link, but currently enrollment points to invoice_id as char, or not at all clearly in DB.
+                # Actually in Enrollment: invoice_id = models.CharField(). We can search for it.
+                from apps.students.models import Enrollment
+                enrollments = Enrollment.objects.filter(invoice_id=invoice.invoice_number)
+                for enr in enrollments:
+                    enr.status = 'ACTIVE'
+                    enr.save()
+                    
         else:
             invoice.status = 'PARTIAL'
         invoice.save()
 
-        # Activate Quota automatically based on InvoiceItems
-        for item in invoice.items.all():
-            if item.package:
-                quota, created = StudentQuota.objects.get_or_create(
-                    student=invoice.student,
-                    package=item.package,
-                    defaults={'total_quota': 0, 'balance': 0, 'used_quota': 0}
-                )
-                
-                added_meetings = item.package.meetings_quota
-                quota.total_quota += added_meetings
-                quota.balance += added_meetings
-                quota.status = 'ACTIVE'
-                # Set validity based on package.validity_days if needed
-                if item.package.validity_days:
-                    quota.valid_until = timezone.now().date() + timezone.timedelta(days=item.package.validity_days)
-                quota.save()
+        # Activate Quota automatically based on InvoiceItems (hanya jika ada student)
+        if invoice.student:
+            for item in invoice.items.all():
+                if item.package:
+                    quota, created = StudentQuota.objects.get_or_create(
+                        student=invoice.student,
+                        package=item.package,
+                        defaults={'total_quota': 0, 'balance': 0, 'used_quota': 0}
+                    )
+                    
+                    added_meetings = item.package.meetings_quota
+                    quota.total_quota += added_meetings
+                    quota.balance += added_meetings
+                    quota.status = 'ACTIVE'
+                    if item.package.validity_days:
+                        quota.valid_until = timezone.now().date() + timezone.timedelta(days=item.package.validity_days)
+                    quota.save()
 
-                QuotaTransaction.objects.create(
-                    quota=quota,
-                    transaction_type='ADD',
-                    amount=added_meetings,
-                    reference=f"PAY-{payment.payment_number}"
-                )
+                    QuotaTransaction.objects.create(
+                        quota=quota,
+                        transaction_type='ADD',
+                        amount=added_meetings,
+                        reference=f"PAY-{payment.payment_number}"
+                    )
 
-        return Response({'detail': 'Payment verified and quota activated.'})
+        return Response({'detail': 'Payment verified successfully.'})

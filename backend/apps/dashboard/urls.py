@@ -29,6 +29,7 @@ urlpatterns = [
     path('master-karyawan/', views.master_karyawan, name='master_karyawan'),
     path('master-tahun-ajaran/', views.master_tahun_ajaran, name='master_tahun_ajaran'),
     path('billing/', views.billing_index, name='billing_index'),
+    path('validasi-pembayaran/', views.validasi_pembayaran, name='validasi_pembayaran'),
     path('404/', views.page_error_404, name='page_error_404'),
 ]
 
