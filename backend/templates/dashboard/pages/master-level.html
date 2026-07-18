@@ -141,7 +141,7 @@
                 confirmButtonText: 'Ya, hapus!',
                 cancelButtonText: 'Batal'
             }).then((result) => {
-                if (result.isConfirmed) {
+                if (result.value) {
                     fetch(`/api/v1/academics/levels/${id}/`, {
                         method: 'DELETE',
                         credentials: 'same-origin',

@@ -219,7 +219,7 @@
             confirmButtonText: 'Ya, hapus!',
             cancelButtonText: 'Batal'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 $.ajax({
                     url: apiBaseUrl + id + '/', type: 'DELETE',
                     success: function() { Swal.fire('Terhapus!', 'Metode pembayaran telah dihapus.', 'success').then(() => location.reload()); },

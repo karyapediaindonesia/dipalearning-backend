@@ -574,7 +574,7 @@
             confirmButtonText: 'Ya, hapus!',
             cancelButtonText: 'Batal'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 fetch(`/api/v1/students/prospects/${id}/`, {
                     method: 'DELETE',
                     credentials: 'same-origin',

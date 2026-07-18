@@ -480,7 +480,7 @@
             confirmButtonText: 'Ya, hapus!',
             cancelButtonText: 'Batal'
         }).then((result) => {
-            if (result.isConfirmed) {
+            if (result.value) {
                 $.ajax({
                     url: `/api/v1/academics/academic-periods/${id}/`,
                     type: 'DELETE',
