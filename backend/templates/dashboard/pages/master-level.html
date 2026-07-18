@@ -147,8 +147,19 @@
                         credentials: 'same-origin',
                         headers: {'X-CSRFToken': '{{ csrf_token }}'}
                     }).then(r => {
-                        if (r.ok) Swal.fire('Terhapus!', 'Level telah dihapus.', 'success').then(() => location.reload());
-                        else r.text().then(t => Swal.fire('Error!', 'Gagal menghapus level. Status: ' + r.status, 'error'));
+                        if (r.ok) {
+                            Swal.fire('Terhapus!', 'Level telah dihapus.', 'success').then(() => location.reload());
+                        } else {
+                            r.json().then(json => {
+                                let errMsg = 'Gagal menghapus level.';
+                                if (typeof json === 'object' && !Array.isArray(json)) {
+                                    errMsg = Object.values(json).join('\n');
+                                } else {
+                                    errMsg = json.detail || json[0] || errMsg;
+                                }
+                                Swal.fire('Gagal!', errMsg, 'error');
+                            }).catch(() => Swal.fire('Error!', 'Gagal menghapus level. Status: ' + r.status, 'error'));
+                        }
                     }).catch(() => Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error'));
                 }
             });

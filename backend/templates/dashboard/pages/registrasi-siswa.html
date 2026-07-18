@@ -586,7 +586,15 @@
                     if(res.ok) {
                         Swal.fire('Terhapus!', 'Data calon siswa berhasil dihapus.', 'success').then(() => location.reload());
                     } else {
-                        Swal.fire('Error!', 'Gagal menghapus calon siswa.', 'error');
+                        res.json().then(json => {
+                            let errMsg = 'Gagal menghapus calon siswa.';
+                            if (typeof json === 'object' && !Array.isArray(json)) {
+                                errMsg = Object.values(json).join('\n');
+                            } else {
+                                errMsg = json.detail || json[0] || errMsg;
+                            }
+                            Swal.fire('Gagal!', errMsg, 'error');
+                        }).catch(() => Swal.fire('Error!', 'Gagal menghapus calon siswa.', 'error'));
                     }
                 })
                 .catch(err => {
