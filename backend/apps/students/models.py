@@ -104,6 +104,34 @@ class Prospect(SoftDeleteModel):
             self.prospect_number = f"PRS-2026-{count:05d}"
         super().save(*args, **kwargs)
 
+    def delete(self, using=None, keep_parents=False):
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        
+        # 1. Check if the prospect has already been converted to an active Student profile
+        if hasattr(self, 'student_profile') and self.student_profile is not None:
+            raise ValidationError("Calon siswa tidak dapat dihapus karena sudah dikonversi menjadi siswa aktif.")
+            
+        # 2. Soft delete related One-to-One records
+        if hasattr(self, 'parent') and self.parent:
+            self.parent.delete()
+        if hasattr(self, 'address') and self.address:
+            self.address.delete()
+        if hasattr(self, 'source') and self.source:
+            self.source.delete()
+        if hasattr(self, 'guardian') and self.guardian:
+            self.guardian.delete()
+            
+        # 3. Soft delete related One-to-Many records
+        self.interests.all().delete()
+        self.status_histories.all().delete()
+        
+        # 4. Soft delete the prospect itself
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save()
+
+
 class ProspectParent(SoftDeleteModel):
     prospect = models.OneToOneField(Prospect, on_delete=models.CASCADE, related_name='parent')
     relation = models.CharField(max_length=20, choices=RELATION_CHOICES, verbose_name='Hubungan dengan Siswa')

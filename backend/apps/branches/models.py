@@ -77,6 +77,37 @@ class Branch(SoftDeleteModel):
     def __str__(self):
         return f"{self.code} - {self.name}"
 
+    def delete(self, using=None, keep_parents=False):
+        from django.core.exceptions import ValidationError
+        from django.utils import timezone
+        
+        # 1. Check for active classes referencing this branch
+        if self.classes.filter(is_active=True).exists():
+            raise ValidationError("Cabang tidak dapat dihapus karena masih memiliki kelas aktif.")
+            
+        # 2. Check for active enrollments referencing this branch
+        from apps.students.models import Enrollment
+        if Enrollment.objects.filter(branch=self, is_active=True).exists():
+            raise ValidationError("Cabang tidak dapat dihapus karena masih memiliki pendaftaran (enrollment) aktif.")
+            
+        # 3. Soft delete related Room records
+        for room in self.rooms.all():
+            room.delete()
+            
+        # 4. Soft delete related Holiday records
+        for holiday in self.holidays.all():
+            holiday.delete()
+            
+        # 5. Soft delete related EmployeeBranchAssignment records
+        from apps.hr.models import EmployeeBranchAssignment
+        EmployeeBranchAssignment.objects.filter(branch=self, is_active=True).delete()
+        
+        # 6. Soft delete the branch itself
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        self.save()
+
+
     @property
     def pic_position(self):
         """Jabatan Penanggung Jawab (Read-only, Otomatis)"""

@@ -23,9 +23,14 @@ class AuditModel(BaseModel):
     class Meta:
         abstract = True
 
+class SoftDeleteQuerySet(models.QuerySet):
+    def delete(self):
+        return self.update(is_active=False, deleted_at=timezone.now())
+
 class SoftDeleteManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+        return SoftDeleteQuerySet(self.model, using=self._db).filter(is_active=True)
+
 
 class SoftDeleteModel(AuditModel):
     is_active = models.BooleanField(default=True)

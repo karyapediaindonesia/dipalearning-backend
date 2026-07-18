@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { getProspects, deleteProspect } from '@/services/prospects';
 import styles from './prospects.module.css';
 import ProspectFormModal from '@/components/ProspectFormModal/ProspectFormModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal/DeleteConfirmModal';
 
 export default function ProspectsPage() {
     const [prospects, setProspects] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProspect, setEditingProspect] = useState<any>(null);
+    const [deletingProspect, setDeletingProspect] = useState<any>(null);
 
     const fetchProspects = async () => {
         setLoading(true);
@@ -27,14 +29,11 @@ export default function ProspectsPage() {
         fetchProspects();
     }, []);
 
-    const handleDelete = async (id: string) => {
-        if (confirm('Apakah Anda yakin ingin menghapus calon siswa ini?')) {
-            try {
-                await deleteProspect(id);
-                fetchProspects();
-            } catch (error) {
-                alert('Gagal menghapus calon siswa.');
-            }
+    const handleDelete = async () => {
+        if (deletingProspect) {
+            await deleteProspect(deletingProspect.id);
+            setDeletingProspect(null);
+            fetchProspects();
         }
     };
 
@@ -110,7 +109,7 @@ export default function ProspectsPage() {
                                             <button className={styles.editBtn} onClick={() => handleEdit(prospect)} title="Edit">
                                                 ✏️
                                             </button>
-                                            <button className={styles.deleteBtn} onClick={() => handleDelete(prospect.id)} title="Hapus">
+                                            <button className={styles.deleteBtn} onClick={() => setDeletingProspect(prospect)} title="Hapus">
                                                 🗑️
                                             </button>
                                         </div>
@@ -130,6 +129,20 @@ export default function ProspectsPage() {
                         setIsModalOpen(false);
                         fetchProspects();
                     }}
+                />
+            )}
+
+            {deletingProspect && (
+                <DeleteConfirmModal
+                    title="Hapus Calon Siswa"
+                    message={
+                        <span>
+                            Apakah Anda yakin ingin menghapus calon siswa <strong>{deletingProspect.full_name}</strong>?
+                        </span>
+                    }
+                    itemName={deletingProspect.full_name}
+                    onConfirm={handleDelete}
+                    onClose={() => setDeletingProspect(null)}
                 />
             )}
         </div>

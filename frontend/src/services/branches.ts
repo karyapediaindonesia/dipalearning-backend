@@ -41,5 +41,17 @@ export const deleteBranch = async (id: string) => {
         method: 'DELETE',
         headers: getHeaders()
     });
-    if (!response.ok) throw new Error('Failed to delete branch');
+    if (!response.ok) {
+        try {
+            const data = await response.json();
+            if (data?.error?.message) {
+                throw new Error(data.error.message);
+            }
+        } catch (e: any) {
+            if (e.message && e.message !== 'Failed to parse JSON') {
+                throw e;
+            }
+        }
+        throw new Error('Gagal menghapus cabang.');
+    }
 };

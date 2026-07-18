@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { getBranches, deleteBranch } from '@/services/branches';
 import styles from './branches.module.css';
 import BranchFormModal from '@/components/BranchFormModal/BranchFormModal';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal/DeleteConfirmModal';
 
 export default function BranchesPage() {
     const [branches, setBranches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBranch, setEditingBranch] = useState<any>(null);
+    const [deletingBranch, setDeletingBranch] = useState<any>(null);
 
     const fetchBranches = async () => {
         setLoading(true);
@@ -27,14 +29,11 @@ export default function BranchesPage() {
         fetchBranches();
     }, []);
 
-    const handleDelete = async (id: string) => {
-        if (confirm('Apakah Anda yakin ingin menghapus cabang ini?')) {
-            try {
-                await deleteBranch(id);
-                fetchBranches();
-            } catch (error) {
-                alert('Gagal menghapus cabang.');
-            }
+    const handleDelete = async () => {
+        if (deletingBranch) {
+            await deleteBranch(deletingBranch.id);
+            setDeletingBranch(null);
+            fetchBranches();
         }
     };
 
@@ -104,9 +103,9 @@ export default function BranchesPage() {
                                             <button className={styles.editBtn} onClick={() => handleEdit(branch)} title="Edit">
                                                 ✏️
                                             </button>
-                                            <button className={styles.deleteBtn} onClick={() => handleDelete(branch.id)} title="Hapus">
-                                                🗑️
-                                            </button>
+                                             <button className={styles.deleteBtn} onClick={() => setDeletingBranch(branch)} title="Hapus">
+                                                 🗑️
+                                             </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -124,6 +123,22 @@ export default function BranchesPage() {
                         setIsModalOpen(false);
                         fetchBranches();
                     }}
+                />
+            )}
+
+            {deletingBranch && (
+                <DeleteConfirmModal
+                    title="Hapus Cabang"
+                    message={
+                        <span>
+                            Apakah Anda yakin ingin menghapus cabang <strong>{deletingBranch.name}</strong>?
+                            <br />
+                            Tindakan ini akan menonaktifkan cabang dan semua ruangan serta liburan terkait.
+                        </span>
+                    }
+                    itemName={deletingBranch.name}
+                    onConfirm={handleDelete}
+                    onClose={() => setDeletingBranch(null)}
                 />
             )}
         </div>
