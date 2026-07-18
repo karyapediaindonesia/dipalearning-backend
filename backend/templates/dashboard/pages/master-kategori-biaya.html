@@ -238,7 +238,18 @@
             if (result.isConfirmed) {
                 $.ajax({
                     url: apiBaseUrl + id + '/', type: 'DELETE',
-                    success: function() { Swal.fire('Terhapus!', 'Kategori biaya telah dihapus.', 'success').then(() => location.reload()); }
+                    success: function() { Swal.fire('Terhapus!', 'Kategori biaya telah dihapus.', 'success').then(() => location.reload()); },
+                    error: function(xhr) {
+                        let errMsg = 'Terjadi kesalahan saat menghapus data.';
+                        if(xhr.responseJSON) {
+                            if (typeof xhr.responseJSON === 'object' && !Array.isArray(xhr.responseJSON)) {
+                                errMsg = Object.values(xhr.responseJSON).join('\n');
+                            } else {
+                                errMsg = xhr.responseJSON.detail || xhr.responseJSON[0] || errMsg;
+                            }
+                        }
+                        Swal.fire('Gagal!', errMsg, 'error');
+                    }
                 });
             }
         });
