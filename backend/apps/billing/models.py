@@ -24,7 +24,8 @@ class Invoice(SoftDeleteModel):
         db_table = 'invoices'
 
     def __str__(self):
-        return f"{self.invoice_number} - {self.student.full_name}"
+        owner = self.student.full_name if self.student else (self.prospect.full_name if self.prospect else "Unknown")
+        return f"{self.invoice_number} - {owner}"
 
     def save(self, *args, **kwargs):
         if not self.invoice_number:

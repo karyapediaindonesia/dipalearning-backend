@@ -113,6 +113,7 @@ class Package(SoftDeleteModel):
       -> `Enrollment` yang tadinya menggunakan paket ini HANYA akan menjadi NULL (SET_NULL). Data siswa/pendaftaran AMAN.
       -> Tagihan (`InvoiceItem`) akan SET_NULL.
     """
+    levels = models.ManyToManyField('Level', related_name='packages', blank=True, verbose_name='Level yang Berlaku')
     name = models.CharField(max_length=100, verbose_name='Nama Paket')
     price = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='Harga Paket')
     meetings_quota = models.PositiveIntegerField(verbose_name='Kuota Pertemuan')

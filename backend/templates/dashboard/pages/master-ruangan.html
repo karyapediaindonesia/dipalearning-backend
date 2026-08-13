@@ -71,11 +71,11 @@
                 <h5 class="modal-title" id="modalTitle">Tambah Master Ruangan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="errorBox" class="alert alert-danger" style="display: none;">
-                    <ul id="errorList" class="mb-0"></ul>
-                </div>
-                <form id="roomForm">
+            <form id="roomForm">
+                <div class="modal-body">
+                    <div id="errorBox" class="alert alert-danger" style="display: none;">
+                        <ul id="errorList" class="mb-0"></ul>
+                    </div>
                     <input type="hidden" id="room_id">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -133,18 +133,15 @@
                             <textarea class="form-control" id="notes" rows="2" placeholder="Contoh: Ruangan dilengkapi dengan proyektor dan AC."></textarea>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer d-flex justify-content-between align-items-center">
-                <small class="text-muted"><span class="text-danger">*</span> = wajib diisi</small>
-                <div>
-                    <button type="button" class="btn btn-danger light me-2" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="btnSimpan" onclick="saveRoom()">
-                        <i class="fa fa-save me-1"></i> Simpan Data
-                    </button>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block master_js %}
@@ -240,7 +237,9 @@
         $('#viewRoomModal').modal('show');
     }
 
-    function saveRoom() {
+    $(document).ready(function() {
+        $('#roomForm').on('submit', function(e) {
+            e.preventDefault();
         clearErrors();
         const clientErrors = validateForm();
         if (clientErrors.length > 0) {
@@ -291,7 +290,7 @@
                     serverErrors.push(`Error: ${response.status}`);
                 }
                 showErrors(serverErrors);
-                $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
+                $('#btnSave').prop('disabled', false).html('Simpan');
             }
         })
         .catch(err => {

@@ -6,46 +6,35 @@
 {% block modal_id %}holidayModal{% endblock %}
 {% block button_title %}Tambah Hari Libur{% endblock %}
 
+{% block add_button %}
+<div>
+    <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#syncModal">
+        <i class="fa fa-sync me-2"></i>Sinkronisasi API
+    </button>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#holidayModal" onclick="resetForm()">
+        <i class="fa fa-plus me-2"></i>Tambah Hari Libur
+    </button>
+</div>
+{% endblock %}
+
+{% block master_css %}
+<link href="{% static 'dashboard/vendor/fullcalendar/css/main.min.css' %}" rel="stylesheet">
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    #calendar {
+        min-height: 600px;
+    }
+    .fc-daygrid-event {
+        white-space: normal !important;
+        align-items: normal !important;
+    }
+</style>
+{% endblock %}
+
 {% block table_content %}
-<table id="holidayTable" class="display" style="min-width: 845px">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Cabang</th>
-                                <th>Nama Libur</th>
-                                <th>Tanggal</th>
-                                <th>Jenis</th>
-                                <th>Dampak</th>
-                                <th>Status</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for holiday in holidays %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ holiday.branch.name }}</td>
-                                <td>{{ holiday.name }}</td>
-                                <td>{{ holiday.date_start|date:"d/m/Y" }} - {{ holiday.date_end|date:"d/m/Y" }}</td>
-                                <td>{{ holiday.get_holiday_type_display }}</td>
-                                <td>{{ holiday.get_operational_impact_display }}</td>
-                                <td>
-                                    {% if holiday.status == 'ACTIVE' %}
-                                    <span class="badge light badge-success">Aktif</span>
-                                    {% else %}
-                                    <span class="badge light badge-danger">Nonaktif</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex">
-                                        <a href="javascript:void(0)" class="btn btn-primary shadow btn-xs sharp me-1" onclick="editHoliday('{{ holiday.id }}')" title="Edit"><i class="fas fa-pencil-alt"></i></a>
-                                        <a href="javascript:void(0)" class="btn btn-danger shadow btn-xs sharp" onclick="deleteHoliday('{{ holiday.id }}', '{{ holiday.name|escapejs }}')" title="Hapus"><i class="fa fa-trash"></i></a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+<div id="calendar" class="app-fullcalendar"></div>
 {% endblock %}
 
 {% block modal_content %}
@@ -56,8 +45,9 @@
                 <h5 class="modal-title" id="holidayModalLabel">Form Hari Libur</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="holidayForm">
-                <div class="modal-body">
+            
+                <form id="holidayForm">
+            <div class="modal-body">
                     <input type="hidden" id="holiday_id" name="id">
                     
                     <div class="row">
@@ -117,16 +107,51 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
-                </div>
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
+            </div>
             </form>
+            
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="syncModal" tabindex="-1" aria-labelledby="syncModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="syncModalLabel">Sinkronisasi Libur Nasional</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="syncForm">
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    Sistem akan mengambil data libur nasional tahun berjalan dari API Nager.Date dan menyimpannya ke cabang yang Anda pilih.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Terapkan ke Cabang <span class="text-danger">*</span></label>
+                    <select class="default-select form-control wide" id="sync_branch" required>
+                        <option value="all">Semua Cabang (Aktif)</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}">{{ branch.code }} - {{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSync">Mulai Sinkronisasi</button>
+            </div>
+            </form>
+            
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block master_js %}
+<script src="{% static 'dashboard/vendor/fullcalendar/js/main.min.js' %}"></script>
 <script>
     const apiBaseUrl = '/api/v1/branches/holidays/';
     
@@ -152,7 +177,69 @@
     });
 
     $(document).ready(function() {
-$('#holidayForm').on('submit', function(e) {
+        var calendarEl = document.getElementById('calendar');
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            locale: 'id',
+            buttonText: {
+                today: 'Hari ini',
+                month: 'Bulan',
+                week: 'Minggu',
+                day: 'Hari',
+                list: 'Agenda'
+            },
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            initialView: 'dayGridMonth',
+            selectable: true,
+            selectMirror: true,
+            select: function(arg) {
+                resetForm();
+                $('#date_start').val(arg.startStr);
+                
+                var end = new Date(arg.end);
+                end.setDate(end.getDate() - 1);
+                var endStr = end.toISOString().split('T')[0];
+                $('#date_end').val(endStr);
+                
+                $('#holidayModal').modal('show');
+                calendar.unselect();
+            },
+            eventClick: function(arg) {
+                editHoliday(arg.event.id);
+            },
+            events: (function() {
+                var evs = [];
+                {% for holiday in holidays %}
+                var startStr = '{{ holiday.date_start|date:"Y-m-d" }}';
+                if (startStr) {
+                    var endStr = '{{ holiday.date_end|date:"Y-m-d" }}';
+                    if (!endStr) endStr = startStr;
+                    
+                    var d = new Date(endStr);
+                    if (!isNaN(d.getTime())) {
+                        d.setDate(d.getDate() + 1); // FullCalendar end is exclusive
+                        endStr = d.toISOString().split('T')[0];
+                    }
+                    
+                    evs.push({
+                        id: '{{ holiday.id }}',
+                        title: '{{ holiday.name|escapejs }}' + ('{{ holiday.branch.name|escapejs }}' ? ' ({{ holiday.branch.name|escapejs }})' : ''),
+                        start: startStr,
+                        end: endStr,
+                        allDay: true,
+                        className: '{% if holiday.status == "ACTIVE" %}bg-primary border-primary text-white{% else %}bg-danger border-danger text-white{% endif %}'
+                    });
+                }
+                {% endfor %}
+                return evs;
+            })()
+        });
+        calendar.render();
+
+        $('#holidayForm').on('submit', function(e) {
             e.preventDefault();
             
             const id = $('#holiday_id').val();
@@ -188,6 +275,38 @@ $('#holidayForm').on('submit', function(e) {
                     let errMsg = 'Terjadi kesalahan.';
                     if(xhr.responseJSON) {
                         errMsg = Object.values(xhr.responseJSON).join('\n');
+                    }
+                    Swal.fire('Error!', errMsg, 'error');
+                }
+            });
+        });
+
+        // Set default year for sync modal
+        $('#syncForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const branchId = $('#sync_branch').val();
+            
+            $('#btnSync').prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-2"></i>Memproses...');
+            
+            $.ajax({
+                url: apiBaseUrl + 'sync_national_holidays/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    branch_id: branchId
+                }),
+                success: function(response) {
+                    $('#syncModal').modal('hide');
+                    Swal.fire('Berhasil!', response.detail, 'success').then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    $('#btnSync').prop('disabled', false).html('Mulai Sinkronisasi');
+                    let errMsg = 'Terjadi kesalahan.';
+                    if(xhr.responseJSON && xhr.responseJSON.detail) {
+                        errMsg = xhr.responseJSON.detail;
                     }
                     Swal.fire('Error!', errMsg, 'error');
                 }

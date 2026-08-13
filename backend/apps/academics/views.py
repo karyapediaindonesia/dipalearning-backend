@@ -1,4 +1,6 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from .models import Course, Level, Package, AcademicYear, AcademicPeriod, StudyClass
 from .serializers import (
     CourseSerializer, LevelSerializer, PackageSerializer, 
@@ -23,6 +25,18 @@ class LevelViewSet(viewsets.ModelViewSet):
     serializer_class = LevelSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @action(detail=False, methods=['post'])
+    def reorder(self, request):
+        order_list = request.data.get('order', [])
+        for idx, obj_id in enumerate(order_list):
+            Level.objects.filter(id=obj_id).update(order=idx + 1)
+        return Response({'status': 'success'})
+
+    def perform_create(self, serializer):
+        max_order = Level.objects.all().order_by('-order').first()
+        next_order = (max_order.order + 1) if max_order else 1
+        serializer.save(order=next_order)
+
 class PackageViewSet(viewsets.ModelViewSet):
     queryset = Package.objects.all().order_by('name')
     serializer_class = PackageSerializer
@@ -37,6 +51,18 @@ class AcademicPeriodViewSet(viewsets.ModelViewSet):
     queryset = AcademicPeriod.objects.all().order_by('-start_date')
     serializer_class = AcademicPeriodSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    def reorder(self, request):
+        order_list = request.data.get('order', [])
+        for idx, obj_id in enumerate(order_list):
+            AcademicPeriod.objects.filter(id=obj_id).update(sequence=idx + 1)
+        return Response({'status': 'success'})
+
+    def perform_create(self, serializer):
+        max_seq = AcademicPeriod.objects.all().order_by('-sequence').first()
+        next_seq = (max_seq.sequence + 1) if max_seq else 1
+        serializer.save(sequence=next_seq)
 
 class StudyClassViewSet(viewsets.ModelViewSet):
     queryset = StudyClass.objects.all().order_by('name')

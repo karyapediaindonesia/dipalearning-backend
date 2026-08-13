@@ -26,6 +26,7 @@
 <table id="periodTable" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
+                                        <th style="width:50px"></th>
                                         <th>Kode / TA</th>
                                         <th>Nama Periode</th>
                                         <th>Tgl Belajar</th>
@@ -36,7 +37,8 @@
                                 </thead>
                                 <tbody>
                                     {% for p in academic_periods %}
-                                    <tr>
+                                    <tr data-id="{{ p.id }}">
+                                        <td class="drag-handle text-center" style="cursor: grab;"><i class="fa fa-grip-vertical text-muted"></i></td>
                                         <td><strong>{{ p.code }}</strong><br><small>{{ p.academic_year.name }}</small></td>
                                         <td>{{ p.name }}<br><small class="text-muted">{{ p.get_period_type_display }} (Seq: {{ p.sequence }})</small></td>
                                         <td>{{ p.learning_start|date:"d M Y" }}<br>s.d<br>{{ p.learning_end|date:"d M Y" }}</td>
@@ -82,8 +84,9 @@
                 <h5 class="modal-title">Form Tahun Ajaran</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="yearForm">
             <div class="modal-body">
-                <form id="yearForm">
+                
                     <input type="hidden" id="year_id">
                     <div class="mb-3">
                         <label class="form-label">Kode <span class="text-danger">*</span></label>
@@ -110,17 +113,51 @@
                             <option value="INACTIVE">Nonaktif</option>
                         </select>
                     </div>
-                </form>
+                
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveYear()">Simpan</button>
+                <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
             </div>
+            </form>
         </div>
+    </div>
     </div>
 {% endblock %}
 
 {% block master_js %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var el = document.querySelector('#periodTable tbody');
+            if (el) {
+                var sortable = Sortable.create(el, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    onEnd: function (evt) {
+                        var order = [];
+                        $('#periodTable tbody tr').each(function() {
+                            order.push($(this).data('id'));
+                        });
+                        
+                        fetch('/api/v1/academics/academic-periods/reorder/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({order: order})
+                        }).then(r => {
+                            if(!r.ok) {
+                                Swal.fire('Error', 'Gagal menyimpan urutan', 'error');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+
 <script>
     $(document).ready(function() {
 $('.select2').select2({
@@ -145,7 +182,9 @@ $('.select2').select2({
         $('#yearModal').modal('show');
     }
 
-    function saveYear() {
+    $(document).ready(function() {
+    $('#yearForm').on('submit', function(e) {
+        e.preventDefault();
         const id = $('#year_id').val();
         const payload = {
             code: $('#year_code').val(),
@@ -162,10 +201,11 @@ $('.select2').select2({
             url: url, type: method, contentType: 'application/json',
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
             data: JSON.stringify(payload),
-            success: function() { location.reload(); },
+            success: function() { Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload()); },
             error: function(xhr) { alert('Error: ' + xhr.responseText); }
         });
-    }
+        });
+});
 
     // --- PERIODE AKADEMIK ---
     function toggleBranchSelect() {
@@ -195,7 +235,7 @@ $('.select2').select2({
             $('#p_name').val(data.name);
             $('#p_academic_year').val(data.academic_year);
             $('#p_type').val(data.period_type);
-            $('#p_seq').val(data.sequence);
+            
             $('#p_reg_start').val(data.registration_start);
             $('#p_reg_end').val(data.registration_end);
             $('#p_learn_start').val(data.learning_start);
@@ -238,7 +278,6 @@ $('.select2').select2({
             name: $('#p_name').val(),
             academic_year: $('#p_academic_year').val(),
             period_type: $('#p_type').val(),
-            sequence: $('#p_seq').val(),
             registration_start: $('#p_reg_start').val() || null,
             registration_end: $('#p_reg_end').val() || null,
             learning_start: $('#p_learn_start').val() || null,
@@ -258,7 +297,7 @@ $('.select2').select2({
             url: url, type: method, contentType: 'application/json',
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
             data: JSON.stringify(payload),
-            success: function() { location.reload(); },
+            success: function() { Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload()); },
             error: function(xhr) { alert('Error: ' + xhr.responseText); }
         });
     }

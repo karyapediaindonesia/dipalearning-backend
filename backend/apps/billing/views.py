@@ -35,12 +35,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
             # Jika ini tagihan prospek, update status prospek
             if invoice.prospect:
                 from apps.students.models import ProspectStatus
-                # Cari status lunas atau buat jika belum ada
-                lunas_status, _ = ProspectStatus.objects.get_or_create(
-                    code='REG_PAID',
-                    defaults={'name': 'Lunas Pendaftaran', 'sequence': 50, 'is_success': True}
+                # Cari status CONVERTED atau buat jika belum ada
+                converted_status, _ = ProspectStatus.objects.get_or_create(
+                    code='CONVERTED',
+                    defaults={'name': 'Berhasil Menjadi Siswa', 'sequence': 50, 'is_success': True, 'color': 'success'}
                 )
-                invoice.prospect.status = lunas_status
+                invoice.prospect.status = converted_status
                 invoice.prospect.save()
                 
             # Jika ini tagihan enrollment, ubah status enrollment

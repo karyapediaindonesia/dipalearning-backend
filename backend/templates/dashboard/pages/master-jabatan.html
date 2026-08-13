@@ -72,8 +72,9 @@
                 <h5 class="modal-title" id="modalTitle">Form Jabatan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="positionForm">
             <div class="modal-body">
-                <form id="positionForm">
+                
                     <input type="hidden" id="pos_id">
                     
                     <div class="row">
@@ -142,13 +143,15 @@
                             </select>
                         </div>
                     </div>
-                </form>
+                
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="savePosition()">Simpan</button>
+                <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
             </div>
+            </form>
         </div>
+    </div>
     </div>
 {% endblock %}
 
@@ -195,7 +198,9 @@ $('.select2').select2({
         });
     }
 
-    function savePosition() {
+    $(document).ready(function() {
+    $('#positionForm').on('submit', function(e) {
+        e.preventDefault();
         const id = $('#pos_id').val();
         
         const payload = {
@@ -218,10 +223,11 @@ $('.select2').select2({
             url: url, type: method, contentType: 'application/json',
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
             data: JSON.stringify(payload),
-            success: function() { location.reload(); },
+            success: function() { Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload()); },
             error: function(xhr) { alert('Error: ' + xhr.responseText); }
         });
-    }
+        });
+});
 
     function deletePosition(id, name) {
         hapusData(`/api/v1/hr/job-positions/${id}/`, name);

@@ -95,7 +95,8 @@
                 <h5 class="modal-title" id="modalTitle">Tambah Master Cabang</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <form id="branchForm">
+                <div class="modal-body">
                 <!-- Kotak pesan error -->
                 <div id="errorBox" class="alert alert-danger alert-dismissible">
                     <button type="button" class="btn-close" onclick="$('#errorBox').hide()"></button>
@@ -103,7 +104,7 @@
                     <ul id="errorList" class="mb-0 mt-2"></ul>
                 </div>
 
-                <form id="branchForm">
+                
                     <!-- Nav tabs -->
                     <ul class="nav nav-tabs" role="tablist">
                         <li class="nav-item">
@@ -155,6 +156,107 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Tab 2: Alamat -->
+                        <div class="tab-pane fade" id="alamat" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Lengkap <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="address" rows="2" placeholder="Contoh: Jl. Merdeka No. 45"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Provinsi <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="province" style="width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kota / Kabupaten <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="city" style="width: 100%;" disabled>
+                                        <option value="">Pilih Kota/Kabupaten</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kecamatan</label>
+                                    <input type="text" class="form-control" id="district" placeholder="Contoh: Klojen">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kode Pos</label>
+                                    <input type="text" class="form-control" id="postal_code" placeholder="Contoh: 65111">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Lokasi Peta (Latitude, Longitude)</label>
+                                    <input type="text" class="form-control" id="map_location" placeholder="Contoh: -7.9797, 112.6304">
+                                    <small class="text-muted">Atau geser marker pada peta di bawah ini.</small>
+                                    <div id="branchMap" style="height: 300px; width: 100%; margin-top: 10px; border-radius: 8px; z-index: 1;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 3: Kontak -->
+                        <div class="tab-pane fade" id="kontak" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nomor WhatsApp</label>
+                                    <input type="text" class="form-control" id="whatsapp_number" placeholder="Contoh: 08123456789">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email Cabang</label>
+                                    <input type="email" class="form-control" id="email" placeholder="Contoh: cabang@dipalearning.com">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Penanggung Jawab (PIC) <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="person_in_charge" style="width: 100%;">
+                                        <option value="">Pilih PIC</option>
+                                        {% for emp in employees %}
+                                        <option value="{{ emp.id }}" data-position="{{ emp.position.name }}" data-email="{{ emp.user.email }}">{{ emp.first_name }} {{ emp.last_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Jabatan PIC</label>
+                                    <input type="text" class="form-control bg-light" id="pic_position" readonly>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kontak PIC</label>
+                                    <input type="text" class="form-control bg-light" id="pic_contact" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 4: Administrasi -->
+                        <div class="tab-pane fade" id="administrasi" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Tanggal Operasional</label>
+                                    <input type="date" class="form-control" id="operational_date">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Status Cabang <span class="text-danger">*</span></label>
+                                    <select class="default-select form-control wide" id="status">
+                                        <option value="ACTIVE" selected>Aktif</option>
+                                        <option value="INACTIVE">Nonaktif</option>
+                                        <option value="CLOSED">Tutup</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Catatan Tambahan</label>
+                                    <textarea class="form-control" id="notes" rows="3" placeholder="Contoh: Cabang baru buka..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- Akhir dari tab-content -->
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
+                </div>
+            </form>
+            </div>
+            </div>
+            </div>
+            </div>
 {% endblock %}
 
 {% block master_js %}
@@ -453,7 +555,9 @@
         $('#viewBranchModal').modal('show');
     }
 
-    function saveBranch() {
+    $(document).ready(function() {
+    $('#branchForm').on('submit', function(e) {
+        e.preventDefault();
         clearErrors();
 
         // Validasi sisi klien terlebih dahulu
@@ -494,7 +598,6 @@
 
         fetch(url, {
             method: method,
-            credentials: 'same-origin',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': '{{ csrf_token }}'
@@ -506,7 +609,7 @@
 
             if (response.ok) {
                 // Sukses → reload halaman
-                location.reload();
+                Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload());
             } else {
                 // Gagal → tampilkan error dari server secara detail
                 const serverErrors = [];
@@ -543,7 +646,8 @@
             showErrors([`Gagal terhubung ke server: <strong>${err.message}</strong>. Periksa koneksi Anda.`]);
             $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
         });
-    }
+    }); // End submit handler
+    }); // End document.ready
 
     // Peta nama field teknis → label yang ramah pengguna
     const fieldLabelMap = {

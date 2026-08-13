@@ -50,9 +50,10 @@
                 <h5 class="modal-title" id="modalTitle">Tambah Master Kursus</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="courseForm">
             <div class="modal-body">
                 <div id="errorBox" class="alert alert-danger" style="display: none;"><ul id="errorList" class="mb-0"></ul></div>
-                <form id="courseForm">
+                
                     <input type="hidden" id="course_id">
                     <div class="row">
                         <div class="col-md-6 mb-3"><label class="form-label">Kode Kursus <span class="text-danger">*</span></label><input type="text" class="form-control" id="code" placeholder="Contoh: KRS-ENG-01"></div>
@@ -73,13 +74,15 @@
                         <div class="col-md-6 mb-3"><label class="form-label">Durasi (menit) <span class="text-danger">*</span></label><input type="number" class="form-control" id="default_duration" value="60" placeholder="Contoh: 60"></div>
                         <div class="col-md-6 mb-3"><label class="form-label">Status <span class="text-danger">*</span></label><select class="form-control" id="status"><option value="ACTIVE">Aktif</option><option value="INACTIVE">Nonaktif</option></select></div>
                     </div>
-                </form>
+                
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveCourse()">Simpan</button>
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
             </div>
+            </form>
         </div>
+    </div>
     </div>
 {% endblock %}
 
@@ -95,12 +98,15 @@
         $('#learning_type').val(d.learning_type); $('#learning_mode').val(d.learning_mode); $('#default_duration').val(d.default_duration);
         $('#status').val(d.status); $('#modalTitle').text('Edit Kursus'); $('#courseModal').modal('show');
     }
-    function saveCourse() {
+    $(document).ready(function() {
+    $('#courseForm').on('submit', function(e) {
+        e.preventDefault();
         const id = $('#course_id').val();
         const data = { code: $('#code').val(), name: $('#name').val(), category: $('#category').val(), learning_type: $('#learning_type').val(), learning_mode: $('#learning_mode').val(), default_duration: parseInt($('#default_duration').val()), status: $('#status').val() };
         const method = id ? 'PUT' : 'POST'; const url = id ? `/api/v1/academics/courses/${id}/` : '/api/v1/academics/courses/';
         fetch(url, { method: method, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) }).then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
-    }
+        });
+});
     function deleteCourse(id, name) { 
         hapusData(`/api/v1/academics/courses/${id}/`, name);
     }

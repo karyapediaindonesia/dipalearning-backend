@@ -20,6 +20,7 @@ class ProspectAddressSerializer(serializers.ModelSerializer):
         exclude = ('prospect', 'is_active', 'deleted_at', 'created_by', 'updated_by')
 
 class ProspectStatusSerializer(serializers.ModelSerializer):
+    sequence = serializers.IntegerField(required=False)
     class Meta:
         model = ProspectStatus
         fields = '__all__'

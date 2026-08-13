@@ -14,7 +14,7 @@
 <table id="statusTable" class="display" style="min-width: 845px">
                                 <thead>
                                     <tr>
-                                        <th style="width:50px">Urutan</th>
+                                        <th style="width:50px"></th>
                                         <th>Kode</th>
                                         <th>Nama Status</th>
                                         <th>Probabilitas</th>
@@ -25,8 +25,8 @@
                                 </thead>
                                 <tbody>
                                     {% for s in statuses %}
-                                    <tr>
-                                        <td class="text-center">{{ s.sequence }}</td>
+                                    <tr data-id="{{ s.id }}">
+                                        <td class="drag-handle text-center" style="cursor: grab;"><i class="fa fa-grip-vertical text-muted"></i></td>
                                         <td><strong>{{ s.code }}</strong></td>
                                         <td>{{ s.name }}</td>
                                         <td>
@@ -52,7 +52,7 @@
                                         <td>
                                             <div class="d-flex">
                                                 <button class="btn btn-primary shadow btn-xs sharp me-1" 
-                                                        data-obj='{"id":"{{ s.id }}", "sequence":{{ s.sequence|default:1 }}, "code":"{{ s.code|escapejs }}", "name":"{{ s.name|escapejs }}", "probability":{{ s.probability|default:0 }}, "color":"{{ s.color|escapejs }}", "description":"{{ s.description|escapejs }}", "is_initial":{% if s.is_initial %}true{% else %}false{% endif %}, "is_success":{% if s.is_success %}true{% else %}false{% endif %}, "is_failed":{% if s.is_failed %}true{% else %}false{% endif %}, "allow_conversion":{% if s.allow_conversion %}true{% else %}false{% endif %}, "requires_followup":{% if s.requires_followup %}true{% else %}false{% endif %}, "status":{% if s.status %}true{% else %}false{% endif %}}'
+                                                        data-obj='{"id":"{{ s.id }}", "code":"{{ s.code|escapejs }}", "name":"{{ s.name|escapejs }}", "probability":{{ s.probability|default:0 }}, "color":"{{ s.color|escapejs }}", "description":"{{ s.description|escapejs }}", "is_initial":{% if s.is_initial %}true{% else %}false{% endif %}, "is_success":{% if s.is_success %}true{% else %}false{% endif %}, "is_failed":{% if s.is_failed %}true{% else %}false{% endif %}, "allow_conversion":{% if s.allow_conversion %}true{% else %}false{% endif %}, "requires_followup":{% if s.requires_followup %}true{% else %}false{% endif %}, "status":{% if s.status %}true{% else %}false{% endif %}}'
                                                         onclick="editStatus(this)" title="Edit">
                                                     <i class="fas fa-pencil-alt"></i>
                                                 </button>
@@ -75,20 +75,18 @@
                 <h5 class="modal-title" id="modalTitle">Form Status Prospek</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="statusForm">
             <div class="modal-body">
-                <form id="statusForm">
+                
                     <input type="hidden" id="status_id">
                     
                     <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Urutan <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="st_sequence" required value="1">
-                        </div>
-                        <div class="col-md-4 mb-3">
+                        
+                        <div class="col-md-5 mb-3">
                             <label class="form-label">Kode <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="st_code" required placeholder="Ex: NEW">
                         </div>
-                        <div class="col-md-5 mb-3">
+                        <div class="col-md-7 mb-3">
                             <label class="form-label">Nama Status <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="st_name" required placeholder="Ex: Prospek Baru">
                         </div>
@@ -157,9 +155,45 @@
                             </div>
                         </div>
                     </div>
+    </div>
+    </div>
+    </div>
+    </div>
 {% endblock %}
 
 {% block master_js %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var el = document.querySelector('#statusTable tbody');
+            if (el) {
+                var sortable = Sortable.create(el, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    onEnd: function (evt) {
+                        var order = [];
+                        $('#statusTable tbody tr').each(function() {
+                            order.push($(this).data('id'));
+                        });
+                        
+                        fetch('/api/v1/students/prospect-statuses/reorder/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({order: order})
+                        }).then(r => {
+                            if(!r.ok) {
+                                Swal.fire('Error', 'Gagal menyimpan urutan', 'error');
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+
 <script>
     $(document).ready(function() {
 });
@@ -167,7 +201,7 @@
     function resetForm() {
         $('#statusForm')[0].reset();
         $('#status_id').val('');
-        $('#st_sequence').val($('#statusTable tbody tr').length + 1);
+        
         $('#modalTitle').text('Tambah Status Prospek');
     }
 
@@ -175,7 +209,7 @@
         const data = $(btn).data('obj');
         resetForm();
         $('#status_id').val(data.id);
-        $('#st_sequence').val(data.sequence);
+        
         $('#st_code').val(data.code);
         $('#st_name').val(data.name);
         $('#st_probability').val(data.probability);
@@ -193,11 +227,12 @@
         $('#statusModal').modal('show');
     }
 
-    function saveStatus() {
+    $(document).ready(function() {
+    $('#statusForm').on('submit', function(e) {
+        e.preventDefault();
         const id = $('#status_id').val();
         
         const payload = {
-            sequence: parseInt($('#st_sequence').val()),
             code: $('#st_code').val(),
             name: $('#st_name').val(),
             probability: parseInt($('#st_probability').val()),
@@ -218,10 +253,11 @@
             url: url, type: method, contentType: 'application/json',
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
             data: JSON.stringify(payload),
-            success: function() { location.reload(); },
+            success: function() { Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload()); },
             error: function(xhr) { alert('Error: ' + xhr.responseText); }
         });
-    }
+        });
+});
 
     function deleteStatus(id, name) {
         hapusData(`/api/v1/students/prospect-statuses/${id}/`, name);

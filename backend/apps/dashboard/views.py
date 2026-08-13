@@ -700,9 +700,24 @@ def master_karyawan(request):
 def registrasi_siswa(request):
     prospects = Prospect.objects.prefetch_related('invoices').all().order_by('-created_at')
     branches = Branch.objects.filter(is_active=True)
+    statuses = ProspectStatus.objects.filter(status=True).order_by('sequence')
+    
+    from apps.finance.models import PaymentMethod
+    payment_methods = PaymentMethod.objects.filter(status='ACTIVE')
+    
+    from apps.academics.models import Course, Level, Package
+    courses = Course.objects.filter(status='ACTIVE')
+    levels = Level.objects.filter(status='ACTIVE')
+    packages = Package.objects.filter(status='ACTIVE')
+    
     return render(request, 'dashboard/pages/registrasi-siswa.html', {
         'prospects': prospects,
         'branches': branches,
+        'statuses': statuses,
+        'payment_methods': payment_methods,
+        'courses': courses,
+        'levels': levels,
+        'packages': packages,
         'page_title': 'Registrasi Calon Siswa'
     })
 
@@ -760,4 +775,15 @@ def master_tahun_ajaran(request):
         'academic_periods': academic_periods,
         'branches': branches,
         'page_title': 'Master Tahun Ajaran / Periode'
+    })
+
+@login_required
+def master_paket_edukasi(request):
+    from apps.academics.models import Package, Level
+    packages = Package.objects.prefetch_related('levels__course').all().order_by('-created_at')
+    levels = Level.objects.select_related('course').all().order_by('course__name', 'order')
+    return render(request, 'dashboard/pages/master-paket-edukasi.html', {
+        'packages': packages,
+        'levels': levels,
+        'page_title': 'Master Paket Edukasi'
     })

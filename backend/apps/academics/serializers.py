@@ -5,6 +5,7 @@ from .models import Course, Level, Package, AcademicYear, AcademicPeriod, Branch
 class LevelSerializer(serializers.ModelSerializer):
     course_name = serializers.CharField(source='course.name', read_only=True)
     prerequisite_name = serializers.CharField(source='prerequisite.name', read_only=True)
+    order = serializers.IntegerField(required=False)
     
     class Meta:
         model = Level
@@ -39,6 +40,7 @@ class BranchAcademicPeriodSerializer(serializers.ModelSerializer):
 
 class AcademicPeriodSerializer(serializers.ModelSerializer):
     branch_assignments = BranchAcademicPeriodSerializer(many=True, required=False)
+    sequence = serializers.IntegerField(required=False)
 
     class Meta:
         model = AcademicPeriod

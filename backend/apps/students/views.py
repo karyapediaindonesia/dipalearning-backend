@@ -14,6 +14,18 @@ class ProspectStatusViewSet(viewsets.ModelViewSet):
     serializer_class = ProspectStatusSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @action(detail=False, methods=['post'])
+    def reorder(self, request):
+        order_list = request.data.get('order', [])
+        for idx, obj_id in enumerate(order_list):
+            ProspectStatus.objects.filter(id=obj_id).update(sequence=idx + 1)
+        return Response({'status': 'success'})
+
+    def perform_create(self, serializer):
+        max_seq = ProspectStatus.objects.all().order_by('-sequence').first()
+        next_seq = (max_seq.sequence + 1) if max_seq else 1
+        serializer.save(sequence=next_seq)
+
 class ProspectViewSet(viewsets.ModelViewSet):
     queryset = Prospect.objects.filter(is_active=True).order_by('-created_at')
     serializer_class = ProspectSerializer
@@ -22,19 +34,73 @@ class ProspectViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def perform_create(self, serializer):
         prospect = serializer.save()
+        # No more auto-invoice here. Invoice is generated via 'pilih_paket' action.
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def pilih_paket(self, request, pk=None):
+        prospect = self.get_object()
         
+        # Cek apakah sudah ada tagihan unpaid
+        if prospect.invoices.filter(status='UNPAID').exists():
+            return Response({'detail': 'Prospek ini sudah memiliki tagihan yang belum lunas.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        course_id = request.data.get('course')
+        level_id = request.data.get('level')
+        package_id = request.data.get('package')
+        target_start_date = request.data.get('target_start_date')
+        
+        if not all([course_id, level_id, package_id, target_start_date]):
+            return Response({'detail': 'Semua field (Kursus, Level, Paket, Tanggal Mulai) wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from apps.academics.models import Course, Level, Package
+        try:
+            course = Course.objects.get(id=course_id)
+            level = Level.objects.get(id=level_id)
+            package = Package.objects.get(id=package_id)
+        except (Course.DoesNotExist, Level.DoesNotExist, Package.DoesNotExist):
+            return Response({'detail': 'Data referensi akademik tidak valid.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # 1. Simpan minat prospek
+        from apps.students.models import ProspectInterest
+        ProspectInterest.objects.update_or_create(
+            prospect=prospect,
+            defaults={
+                'course': course,
+                'level_estimation': str(level.id),
+                'package_interest': str(package.id),
+                'target_start_date': target_start_date,
+                'interest_notes': f"Memilih {package.name} untuk {course.name} Level {level.name}"
+            }
+        )
+        
+        # 2. Generate Tagihan Resmi
         from apps.billing.models import Invoice, InvoiceItem
+        registration_fee = 250000
+        package_price = package.price
+        total_amount = registration_fee + package_price
+        
         invoice = Invoice.objects.create(
             prospect=prospect,
-            total_amount=250000,
+            total_amount=total_amount,
             status='UNPAID',
-            notes='Tagihan Pendaftaran Siswa Baru'
+            notes=f'Pendaftaran dan Pembelian Paket: {package.name} - {course.name}'
         )
+        
         InvoiceItem.objects.create(
             invoice=invoice,
             description='Biaya Pendaftaran / Registrasi',
-            amount=250000
+            amount=registration_fee
         )
+        
+        InvoiceItem.objects.create(
+            invoice=invoice,
+            description=f'Paket Belajar: {package.name} ({course.name} Level {level.name})',
+            amount=package_price,
+            package=package
+        )
+        
+        return Response({'detail': 'Paket berhasil dipilih dan tagihan telah diterbitkan.'})
 
     def perform_destroy(self, instance):
         instance.delete()

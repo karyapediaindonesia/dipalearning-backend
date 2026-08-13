@@ -17,6 +17,79 @@
         display: none;
         margin-bottom: 15px;
     }
+    /* Responsive Table Card View */
+    @media (max-width: 767.98px) {
+        .table-responsive {
+            overflow: visible !important;
+        }
+        table.dataTable, table.dataTable tbody, table.dataTable tr, table.dataTable td {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+        table.dataTable thead, table.dataTable tfoot {
+            display: none !important;
+        }
+        table.dataTable tbody tr {
+            margin-bottom: 15px;
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        table.dataTable tbody td {
+            display: block !important;
+            position: relative !important;
+            padding: 12px 15px 12px 40% !important; /* Left padding for label */
+            text-align: right !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+            min-height: 45px !important;
+            color: #212529 !important;
+            font-size: 0.9rem !important;
+            white-space: normal !important;
+            word-break: break-word !important;
+        }
+        table.dataTable tbody td:last-child {
+            border-bottom: none !important;
+        }
+        table.dataTable tbody td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 35%; /* Label width */
+            font-weight: 700;
+            text-align: left;
+            color: #555;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        /* Fix action buttons in card view */
+        table.dataTable tbody td .d-flex {
+            justify-content: flex-end;
+        }
+        /* Fix dataTables wrapper elements on mobile */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            text-align: left !important;
+            margin-bottom: 15px;
+        }
+        .dataTables_wrapper .dataTables_filter input {
+            width: 100%;
+            margin-left: 0;
+            margin-top: 5px;
+            box-sizing: border-box;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    }
 </style>
 {% block master_css %}{% endblock %}
 {% endblock %}
@@ -84,6 +157,29 @@
                 search: "Cari:",
                 lengthMenu: "Tampilkan _MENU_ data"
             }
+        });
+
+        // Setup table for responsive card view
+        function setupResponsiveCards() {
+            $('table.display').each(function() {
+                var $table = $(this);
+                var headers = [];
+                $table.find('thead th').each(function() {
+                    headers.push($(this).text().trim());
+                });
+                $table.find('tbody tr').each(function() {
+                    $(this).find('td').each(function(index) {
+                        if (headers[index]) {
+                            $(this).attr('data-label', headers[index]);
+                        }
+                    });
+                });
+            });
+        }
+        
+        setupResponsiveCards();
+        table.on('draw.dt', function() {
+            setupResponsiveCards();
         });
     });
 </script>

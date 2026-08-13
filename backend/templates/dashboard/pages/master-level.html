@@ -14,13 +14,13 @@
 <table id="levelTable" class="display" style="min-width: 845px">
                         <thead>
                             <tr>
-                                <th>Kursus</th><th>Kode</th><th>Nama Level</th><th>Urutan</th><th>Status</th><th>Aksi</th>
+                                <th></th><th>Kursus</th><th>Kode</th><th>Nama Level</th><th>Status</th><th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for level in levels %}
-                            <tr>
-                                <td>{{ level.course.name }}</td><td><strong>{{ level.code }}</strong></td><td>{{ level.name }}</td><td>{{ level.order }}</td>
+                            <tr data-id="{{ level.id }}">
+                                <td class="drag-handle text-center" style="cursor: grab;"><i class="fa fa-grip-vertical text-muted"></i></td><td>{{ level.course.name }}</td><td><strong>{{ level.code }}</strong></td><td>{{ level.name }}</td>
                                 <td>{% if level.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>{% else %}<span class="badge light badge-warning">Nonaktif</span>{% endif %}</td>
                                 <td>
                                     <div class="d-flex">
@@ -29,8 +29,7 @@
                                                 data-course="{{ level.course_id }}"
                                                 data-code="{{ level.code|escapejs }}"
                                                 data-name="{{ level.name|escapejs }}"
-                                                data-order="{{ level.order }}"
-                                                data-prerequisite="{{ level.prerequisite_id|default:'' }}"
+                                                                                                data-prerequisite="{{ level.prerequisite_id|default:'' }}"
                                                 data-use-course-duration="{{ level.use_course_duration|yesno:'true,false' }}"
                                                 data-custom-duration="{{ level.custom_duration|default:'' }}"
                                                 data-estimated-sessions="{{ level.estimated_sessions }}"
@@ -60,9 +59,10 @@
                 <h5 class="modal-title" id="modalTitle">Tambah Master Level</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="levelForm">
             <div class="modal-body">
                 <div id="errorBox" class="alert alert-danger" style="display: none;"><ul id="errorList" class="mb-0"></ul></div>
-                <form id="levelForm">
+                
                     <input type="hidden" id="level_id">
                     <div class="row">
                         <div class="col-md-6 mb-3"><label class="form-label">Kursus <span class="text-danger">*</span></label>
@@ -70,20 +70,55 @@
                         </div>
                         <div class="col-md-6 mb-3"><label class="form-label">Kode Level <span class="text-danger">*</span></label><input type="text" class="form-control" id="code" placeholder="Contoh: LVL-BEG"></div>
                         <div class="col-md-6 mb-3"><label class="form-label">Nama Level <span class="text-danger">*</span></label><input type="text" class="form-control" id="name" placeholder="Contoh: Beginner"></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Urutan <span class="text-danger">*</span></label><input type="number" class="form-control" id="order" value="1" placeholder="Contoh: 1"></div>
+                        
                         <div class="col-md-6 mb-3"><label class="form-label">Gunakan Durasi Kursus</label><select class="form-control" id="use_course_duration"><option value="true">Ya</option><option value="false">Tidak (Custom)</option></select></div>
                         <div class="col-md-6 mb-3"><label class="form-label">Durasi Khusus (menit)</label><input type="number" class="form-control" id="custom_duration" placeholder="Contoh: 90"></div>
                         <div class="col-md-6 mb-3"><label class="form-label">Estimasi Pertemuan <span class="text-danger">*</span></label><input type="number" class="form-control" id="estimated_sessions" value="10" placeholder="Contoh: 10"></div>
                         <div class="col-md-6 mb-3"><label class="form-label">Status <span class="text-danger">*</span></label><select class="form-control" id="status"><option value="ACTIVE">Aktif</option><option value="INACTIVE">Nonaktif</option></select></div>
                     </div>
-                </form>
+                
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary" onclick="saveLevel()">Simpan</button></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary" id="btnSave">Simpan</button>
+            </div>
+            </form>
         </div>
+    </div>
     </div>
 {% endblock %}
 
 {% block master_js %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var el = document.querySelector('#levelTable tbody');
+            var sortable = Sortable.create(el, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function (evt) {
+                    var order = [];
+                    $('#levelTable tbody tr').each(function() {
+                        order.push($(this).data('id'));
+                    });
+                    
+                    fetch('/api/v1/academics/levels/reorder/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({order: order})
+                    }).then(r => {
+                        if(!r.ok) {
+                            Swal.fire('Error', 'Gagal menyimpan urutan', 'error');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+
 <script>
     $(document).ready(function() {
 // Event delegation — bekerja meskipun DataTables rebuild DOM
@@ -96,7 +131,7 @@
         $(document).on('click', '.btn-edit-level', function() {
             const d = $(this).data(); resetForm();
             $('#level_id').val(d.id); $('#course').val(d.course); $('#code').val(d.code);
-            $('#name').val(d.name); $('#order').val(d.order);
+            $('#name').val(d.name);
             $('#use_course_duration').val(d.useCourseDuration === true || d.useCourseDuration === 'true' ? 'true' : 'false');
             $('#custom_duration').val(d.customDuration);
             $('#estimated_sessions').val(d.estimatedSessions);
@@ -109,11 +144,12 @@
     function showErrors(msgs) { $('#errorList').html(msgs.map(m => `<li>${m}</li>`).join('')); $('#errorBox').show(); }
     function resetForm() { $('#errorBox').hide(); $('#level_id').val(''); $('#course').val(''); $('#code').val(''); $('#name').val(''); $('#modalTitle').text('Tambah Level'); }
 
-    function saveLevel() {
+    $(document).ready(function() {
+    $('#levelForm').on('submit', function(e) {
+        e.preventDefault();
         const id = $('#level_id').val();
         const data = {
             course: $('#course').val(), code: $('#code').val(), name: $('#name').val(),
-            order: parseInt($('#order').val()),
             use_course_duration: $('#use_course_duration').val() === 'true',
             custom_duration: $('#custom_duration').val() ? parseInt($('#custom_duration').val()) : null,
             estimated_sessions: parseInt($('#estimated_sessions').val()),
@@ -123,6 +159,7 @@
         const url = id ? `/api/v1/academics/levels/${id}/` : '/api/v1/academics/levels/';
         fetch(url, { method: method, credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}, body: JSON.stringify(data) })
             .then(r => r.ok ? location.reload() : r.json().then(j => showErrors([JSON.stringify(j)])));
-    }
+        });
+});
 </script>
 {% endblock %}

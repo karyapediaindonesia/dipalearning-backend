@@ -83,8 +83,9 @@
                 <h5 class="modal-title" id="modalTitle">Form Master Karyawan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="employeeForm">
             <div class="modal-body">
-                <form id="employeeForm">
+                
                     <input type="hidden" id="employee_id">
                     
                     <!-- 1. IDENTITAS -->
@@ -229,6 +230,10 @@
                             </div>
                         </div>
                     </div>
+    </div>
+    </div>
+    </div>
+    </div>
 {% endblock %}
 
 {% block master_js %}
@@ -301,7 +306,9 @@ $('.select2').select2({
         });
     }
 
-    function saveEmployee() {
+    $(document).ready(function() {
+    $('#employeeForm').on('submit', function(e) {
+        e.preventDefault();
         if(!$('#full_name').val() || !$('#job_title').val() || !$('#employee_type').val() || !$('#status').val()) {
             alert('Harap isi Nama Lengkap, Jenis Karyawan, Jabatan, dan Status!');
             return;
@@ -355,13 +362,14 @@ $('.select2').select2({
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
             data: JSON.stringify(payload),
             success: function() {
-                location.reload();
+                Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload());
             },
             error: function(xhr) {
                 alert('Terjadi kesalahan: ' + xhr.responseText);
             }
         });
-    }
+        });
+});
 
     function deleteEmployee(id, name) {
         hapusData(`/api/v1/hr/employees/${id}/`, name);

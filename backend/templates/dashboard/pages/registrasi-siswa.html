@@ -48,11 +48,11 @@
                                         </td>
                                         <td>{{ prospect.created_at|date:"d/m/Y" }}</td>
                                         <td>
-                                            {% if prospect.status == 'NEW' %}<span class="badge light badge-primary">Baru</span>
-                                            {% elif prospect.status == 'CONTACTED' %}<span class="badge light badge-warning">Dihubungi</span>
-                                            {% elif prospect.status == 'INTERESTED' %}<span class="badge light badge-info">Berminat</span>
-                                            {% elif prospect.status == 'ENROLLED' %}<span class="badge light badge-success">Mendaftar</span>
-                                            {% else %}<span class="badge light badge-danger">{{ prospect.status }}</span>{% endif %}
+                                            {% if prospect.status %}
+                                                <span class="badge light badge-{{ prospect.status.color|default:'primary' }}">{{ prospect.status.name }}</span>
+                                            {% else %}
+                                                <span class="badge light badge-secondary">Belum ada status</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <div class="d-flex">
@@ -61,19 +61,30 @@
                                                         onclick="editProspect(this)" title="Edit">
                                                     <i class="fas fa-pencil-alt"></i>
                                                 </button>
-                                                {% if prospect.status.code == 'REG_PAID' or prospect.status.code == 'ENROLLED' %}
+                                                {% if prospect.status.code == 'CONVERTED' %}
                                                 <button class="btn btn-success shadow btn-xs sharp me-1" onclick="convertToStudent('{{ prospect.id }}')" title="Konversi & Enroll Siswa">
                                                     <i class="fas fa-graduation-cap"></i>
                                                 </button>
-                                                {% else %}
-                                                    {% for inv in prospect.invoices.all %}
-                                                        {% if inv.status == 'UNPAID' %}
-                                                        <button class="btn btn-warning shadow btn-xs sharp me-1" onclick="openPaymentModal('{{ inv.id }}', '{{ inv.invoice_number }}', '{{ inv.total_amount }}')" title="Bayar Registrasi">
-                                                            <i class="fas fa-money-bill-wave"></i>
-                                                        </button>
-                                                        {% endif %}
-                                                    {% endfor %}
                                                 {% endif %}
+                                                
+                                                {% if prospect.status.code == 'DEAL' %}
+                                                    {% if prospect.invoices.all %}
+                                                        {% for inv in prospect.invoices.all %}
+                                                            {% if inv.status == 'UNPAID' %}
+                                                            <button class="btn btn-warning shadow btn-xs sharp me-1" onclick="openPaymentModal('{{ inv.id }}', '{{ inv.invoice_number }}', '{{ inv.total_amount }}')" title="Bayar Registrasi">
+                                                                <i class="fas fa-money-bill-wave"></i>
+                                                            </button>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <button class="btn btn-primary shadow btn-xs sharp me-1" onclick="openPaketModal('{{ prospect.id }}', '{{ prospect.full_name|escapejs }}')" title="Pilih Paket Belajar">
+                                                            <i class="fas fa-shopping-cart"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                {% endif %}
+                                                <button class="btn btn-info shadow btn-xs sharp me-1" onclick="openStatusModal('{{ prospect.id }}', '{{ prospect.status.code }}', '{{ prospect.full_name|escapejs }}')" title="Ubah Status">
+                                                    <i class="fas fa-tags"></i>
+                                                </button>
                                                 <button class="btn btn-danger shadow btn-xs sharp" onclick="deleteProspect('{{ prospect.id }}', '{{ prospect.full_name|escapejs }}')" title="Hapus">
                                                     <i class="fa fa-trash"></i>
                                                 </button>
@@ -165,22 +176,36 @@
                                     </select>
                                 </div>
                             </div>
+                            
+                            <hr>
+                            <h5 class="mb-3">Alamat Calon Siswa</h5>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Alamat Lengkap</label>
+                                    <textarea class="form-control" id="address" rows="2" placeholder="Contoh: Jl. Merdeka No. 45, RT 02/RW 03"></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Provinsi</label>
+                                    <select class="form-control" id="province" style="width: 100%;">
+                                        <option value="">Pilih Provinsi</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kota / Kabupaten</label>
+                                    <select class="form-control" id="city" style="width: 100%;" disabled>
+                                        <option value="">Pilih Kota/Kabupaten</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Tab 2: Orang Tua / Wali & Alamat -->
+                        <!-- Tab 2: Orang Tua / Wali -->
                         <div class="tab-pane fade" id="ortu" role="tabpanel">
                             <div class="row mb-3">
                                 <div class="col-12">
-                                    <label class="form-label fw-bold">Pendaftar adalah:</label>
-                                    <div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_parent" value="parent" checked onchange="toggleRegistrantType()">
-                                            <label class="form-check-label" for="type_parent">Orang Tua</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="registrant_type" id="type_guardian" value="guardian" onchange="toggleRegistrantType()">
-                                            <label class="form-check-label" for="type_guardian">Wali</label>
-                                        </div>
+                                    <div class="form-check custom-checkbox">
+                                        <input type="checkbox" class="form-check-input" id="use_guardian" onchange="toggleRegistrantType()">
+                                        <label class="form-check-label" for="use_guardian">Gunakan Data Wali (selain Orang Tua)</label>
                                     </div>
                                 </div>
                             </div>
@@ -216,27 +241,6 @@
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Alamat Wali</label>
                                     <textarea class="form-control" id="guardian_address" rows="2" placeholder="Contoh: Jl. Diponegoro No. 10"></textarea>
-                                </div>
-                            </div>
-                            
-                            <hr>
-                            <h5 class="mb-3">Alamat Calon Siswa</h5>
-                            <div class="row">
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Alamat Lengkap</label>
-                                    <textarea class="form-control" id="address" rows="2" placeholder="Contoh: Jl. Merdeka No. 45, RT 02/RW 03"></textarea>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Provinsi</label>
-                                    <select class="form-control" id="province" style="width: 100%;">
-                                        <option value="">Pilih Provinsi</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kota / Kabupaten</label>
-                                    <select class="form-control" id="city" style="width: 100%;" disabled>
-                                        <option value="">Pilih Kota/Kabupaten</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -299,8 +303,9 @@
                         <label class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
                         <select class="form-control" id="pay_method" required>
                             <option value="">Pilih Metode</option>
-                            <option value="CASH">Tunai (Cash)</option>
-                            <option value="TRANSFER">Transfer Bank</option>
+                            {% for method in payment_methods %}
+                            <option value="{{ method.id }}">{{ method.name }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -312,6 +317,91 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-success" id="btnSubmitPayment" onclick="submitPayment()"><i class="fa fa-check me-1"></i> Konfirmasi Pembayaran</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ubah Status -->
+<div class="modal fade" id="statusModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ubah Status Prospek</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <input type="hidden" id="status_prospect_id">
+                    <div class="mb-3">
+                        <label class="form-label">Calon Siswa</label>
+                        <input type="text" class="form-control bg-light" id="status_prospect_name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status Baru <span class="text-danger">*</span></label>
+                        <select class="form-control" id="status_id" required>
+                            <option value="">Pilih Status</option>
+                            {% for status in statuses %}
+                            <option value="{{ status.code }}">{{ status.name }} ({{ status.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSubmitStatus" onclick="submitStatus()"><i class="fa fa-save me-1"></i> Simpan Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="paketModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pilih Paket Belajar: <span id="paket_prospect_name" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paketForm">
+                    <input type="hidden" id="paket_prospect_id">
+                    <div class="mb-3">
+                        <label class="form-label">Kursus <span class="text-danger">*</span></label>
+                        <select class="form-control" id="paket_course" required>
+                            <option value="">Pilih Kursus</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Level <span class="text-danger">*</span></label>
+                        <select class="form-control" id="paket_level" required>
+                            <option value="">Pilih Level</option>
+                            {% for level in levels %}
+                            <option value="{{ level.id }}" data-course="{{ level.course.id }}">{{ level.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Paket Belajar <span class="text-danger">*</span></label>
+                        <select class="form-control" id="paket_package" required>
+                            <option value="">Pilih Paket</option>
+                            {% for package in packages %}
+                            <option value="{{ package.id }}">{{ package.name }} - Rp {{ package.price|floatformat:"0" }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Target Tanggal Mulai <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="paket_start_date" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="btnSubmitPaket" onclick="submitPaket()"><i class="fa fa-save me-1"></i> Simpan & Terbitkan Tagihan</button>
             </div>
         </div>
     </div>
@@ -652,6 +742,112 @@
                 alert(`Network error: ${err.message}`);
             });
         }
+    }
+
+    function openStatusModal(id, currentStatusId, name) {
+        $('#status_prospect_id').val(id);
+        $('#status_prospect_name').val(name);
+        $('#status_id').val(currentStatusId);
+        $('#statusModal').modal('show');
+    }
+
+    function submitStatus() {
+        const id = $('#status_prospect_id').val();
+        const status_id = $('#status_id').val();
+
+        if(!status_id) {
+            alert('Status baru wajib dipilih!');
+            return;
+        }
+
+        $('#btnSubmitStatus').prop('disabled', true).text('Menyimpan...');
+
+        fetch(`/api/v1/students/prospects/${id}/`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: status_id })
+        })
+        .then(async response => {
+            if(response.ok) {
+                location.reload();
+            } else {
+                const json = await response.json().catch(() => null);
+                alert(`Gagal menyimpan status. Error: ${JSON.stringify(json)}`);
+                $('#btnSubmitStatus').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Status');
+            }
+        })
+        .catch(err => {
+            alert(`Network error: ${err.message}`);
+            $('#btnSubmitStatus').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Status');
+        });
+    }
+
+    // Paket Modal Handlers
+    function openPaketModal(id, name) {
+        $('#paket_prospect_id').val(id);
+        $('#paket_prospect_name').text(name);
+        $('#paketForm')[0].reset();
+        $('#paketModal').modal('show');
+    }
+
+    // Filter Level based on Course Selection
+    $('#paket_course').change(function() {
+        const courseId = $(this).val();
+        $('#paket_level option').each(function() {
+            if($(this).val() === "") return;
+            if($(this).data('course') == courseId) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+        $('#paket_level').val('');
+    });
+
+    function submitPaket() {
+        const id = $('#paket_prospect_id').val();
+        const course = $('#paket_course').val();
+        const level = $('#paket_level').val();
+        const packageId = $('#paket_package').val();
+        const startDate = $('#paket_start_date').val();
+
+        if(!course || !level || !packageId || !startDate) {
+            alert('Semua field di form paket wajib diisi!');
+            return;
+        }
+
+        $('#btnSubmitPaket').prop('disabled', true).text('Menyimpan...');
+
+        fetch(`/api/v1/students/prospects/${id}/pilih_paket/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                course: course,
+                level: level,
+                package: packageId,
+                target_start_date: startDate
+            })
+        })
+        .then(async response => {
+            if(response.ok) {
+                alert('Paket berhasil dipilih dan Tagihan Resmi telah diterbitkan!');
+                location.reload();
+            } else {
+                const json = await response.json().catch(() => null);
+                alert(`Gagal: ${json?.detail || JSON.stringify(json)}`);
+                $('#btnSubmitPaket').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan & Terbitkan Tagihan');
+            }
+        })
+        .catch(err => {
+            alert(`Network error: ${err.message}`);
+            $('#btnSubmitPaket').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan & Terbitkan Tagihan');
+        });
     }
 </script>
 {% endblock %}
