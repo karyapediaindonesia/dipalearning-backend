@@ -15,6 +15,40 @@
         font-size: 14px;
     }
 </style>
+<!-- Modal Detail Karyawan -->
+<div class="modal fade" id="viewEmployeeModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Karyawan: <span id="view_full_name_title" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <img id="view_photo" src="" class="rounded-circle img-thumbnail" width="120" height="120" style="object-fit: cover; display: none;">
+                </div>
+                <table class="table table-borderless table-sm">
+                    <tr><td width="30%" class="text-muted">Nama Lengkap</td><td width="5%">:</td><td><strong id="view_full_name"></strong></td></tr>
+                    <tr><td class="text-muted">Nama Panggilan</td><td>:</td><td id="view_nickname"></td></tr>
+                    <tr><td class="text-muted">Jenis Kelamin</td><td>:</td><td id="view_gender"></td></tr>
+                    <tr><td class="text-muted">Tempat/Tanggal Lahir</td><td>:</td><td id="view_birth"></td></tr>
+                    <tr><td class="text-muted">NIK (KTP)</td><td>:</td><td id="view_nik"></td></tr>
+                    <tr><td class="text-muted">NPWP</td><td>:</td><td id="view_npwp"></td></tr>
+                    <tr><td class="text-muted">Telepon / WA</td><td>:</td><td id="view_contacts"></td></tr>
+                    <tr><td class="text-muted">Email (Pribadi / Kerja)</td><td>:</td><td id="view_emails"></td></tr>
+                    <tr><td class="text-muted">Alamat</td><td>:</td><td id="view_address"></td></tr>
+                    <tr><td class="text-muted">Tipe Karyawan</td><td>:</td><td id="view_type"></td></tr>
+                    <tr><td class="text-muted">Jabatan / Departemen</td><td>:</td><td id="view_job"></td></tr>
+                    <tr><td class="text-muted">Tanggal Bergabung</td><td>:</td><td id="view_join"></td></tr>
+                    <tr><td class="text-muted">Status</td><td>:</td><td id="view_status"></td></tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block master_title %}Daftar Karyawan{% endblock %}
@@ -51,7 +85,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ emp.job_title }}<br><small class="text-muted">{{ emp.department|default:"-" }}</small></td>
+                                        <td>{{ emp.job_position.name|default:"-" }}<br><small class="text-muted">{{ emp.department|default:"-" }}</small></td>
                                         <td>{{ emp.get_employee_type_display }}</td>
                                         <td>
                                             {% if emp.status == 'ACTIVE' %}<span class="badge light badge-success">Aktif</span>
@@ -59,6 +93,10 @@
                                         </td>
                                         <td>
                                             <div class="d-flex">
+                                                                                                <button class="btn btn-info shadow btn-xs sharp me-1" 
+                                                        onclick="viewEmployee('{{ emp.id }}')" title="Lihat Detail">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
                                                 <button class="btn btn-primary shadow btn-xs sharp me-1" 
                                                         data-id="{{ emp.id }}"
                                                         onclick="editEmployee(this)" title="Edit">
@@ -108,6 +146,11 @@
                             </select>
                         </div>
                         <div class="col-md-12 mb-3">
+                            <label class="form-label">Foto Karyawan</label>
+                            <input type="file" class="form-control" id="photo" accept="image/*">
+                            <small class="text-muted">Biarkan kosong jika tidak ingin mengubah foto.</small>
+                        </div>
+                        <div class="col-md-12 mb-3">
                             <label class="form-label">Jabatan <span class="text-danger">*</span></label>
                             <select class="form-control select2" id="job_position" required onchange="checkCoachProfile()">
                                 <option value="">-- Pilih Jabatan --</option>
@@ -116,18 +159,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Nama Panggilan</label>
-                            <input type="text" class="form-control" id="nickname">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Jenis Kelamin</label>
-                            <select class="form-control" id="gender">
-                                <option value="">-- Pilih --</option>
-                                <option value="L">Laki-laki</option>
-                                <option value="P">Perempuan</option>
-                            </select>
-                        </div>
+
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Tempat Lahir</label>
                             <input type="text" class="form-control" id="birth_place">
@@ -183,10 +215,7 @@
                                 <option value="INTERN">Intern</option>
                             </select>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label">Jabatan <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="job_title" placeholder="Misal: Coach, Branch Manager" required onkeyup="checkCoachProfile()">
-                        </div>
+
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Departemen</label>
                             <input type="text" class="form-control" id="department">
@@ -266,7 +295,8 @@ $('.select2').select2({
 
     function editEmployee(btn) {
         const id = $(btn).data('id');
-        $.get(`/api/v1/hr/employees/${id}/`, function(data) {
+        $.get(`/api/v1/hr/employees/${id}/`, function(response) {
+            const data = response.data || response;
             resetForm();
             $('#employee_id').val(data.id);
             $('#full_name').val(data.full_name);
@@ -285,7 +315,6 @@ $('.select2').select2({
             $('#work_email').val(data.work_email);
             $('#address').val(data.address);
             $('#employee_type').val(data.employee_type);
-            $('#job_title').val(data.job_title);
             $('#department').val(data.department);
             $('#status').val(data.status);
             $('#join_date').val(data.join_date);
@@ -309,7 +338,7 @@ $('.select2').select2({
     $(document).ready(function() {
     $('#employeeForm').on('submit', function(e) {
         e.preventDefault();
-        if(!$('#full_name').val() || !$('#job_title').val() || !$('#employee_type').val() || !$('#status').val()) {
+        if(!$('#full_name').val() || !$('#job_position').val() || !$('#employee_type').val() || !$('#status').val()) {
             alert('Harap isi Nama Lengkap, Jenis Karyawan, Jabatan, dan Status!');
             return;
         }
@@ -361,8 +390,31 @@ $('.select2').select2({
             contentType: 'application/json',
             headers: {'X-CSRFToken': '{{ csrf_token }}'},
             data: JSON.stringify(payload),
-            success: function() {
-                Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload());
+            success: function(resp) {
+                const empId = id ? id : (resp.data ? resp.data.id : resp.id);
+                const photoInput = $('#photo')[0];
+                if (photoInput && photoInput.files.length > 0) {
+                    const fd = new FormData();
+                    fd.append('photo', photoInput.files[0]);
+                    
+                    $.ajax({
+                        url: `/api/v1/hr/employees/${empId}/`,
+                        type: 'PATCH',
+                        data: fd,
+                        processData: false,
+                        contentType: false,
+                        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                        success: function() {
+                            Swal.fire('Berhasil!', 'Data dan foto berhasil disimpan.', 'success').then(() => location.reload());
+                        },
+                        error: function(xhr) {
+                            alert('Data tersimpan, tapi foto gagal diunggah: ' + xhr.responseText);
+                            location.reload();
+                        }
+                    });
+                } else {
+                    Swal.fire('Berhasil!', 'Data berhasil disimpan.', 'success').then(() => location.reload());
+                }
             },
             error: function(xhr) {
                 alert('Terjadi kesalahan: ' + xhr.responseText);
@@ -370,6 +422,42 @@ $('.select2').select2({
         });
         });
 });
+
+    function viewEmployee(id) {
+        $.get(`/api/v1/hr/employees/${id}/`, function(response) {
+            const data = response.data || response;
+            $('#view_full_name_title').text(data.full_name);
+            $('#view_full_name').text(data.full_name);
+            $('#view_nickname').text(data.nickname || '-');
+            $('#view_gender').text(data.gender === 'L' ? 'Laki-laki' : (data.gender === 'P' ? 'Perempuan' : '-'));
+            $('#view_birth').text((data.birth_place || '-') + ' / ' + (data.birth_date || '-'));
+            $('#view_nik').text(data.nik || '-');
+            $('#view_npwp').text(data.npwp || '-');
+            $('#view_contacts').text((data.phone || '-') + ' / ' + (data.whatsapp || '-'));
+            $('#view_emails').text((data.personal_email || '-') + ' / ' + (data.work_email || '-'));
+            $('#view_address').text(data.address || '-');
+            $('#view_type').text(data.employee_type || '-');
+            
+            // Wait, we just get job_position ID from the API. We can use selected text from the dropdown if we want,
+            // or we just show the ID if it's too much work. Since we only have the ID, let's look it up in the dropdown:
+            const jobText = $('#job_position option[value="'+data.job_position+'"]').text() || data.job_position;
+            
+            $('#view_job').text(jobText + ' / ' + (data.department || '-'));
+            $('#view_join').text(data.join_date || '-');
+            
+            let statusBadge = '<span class="badge light badge-success">Aktif</span>';
+            if(data.status === 'INACTIVE') statusBadge = '<span class="badge light badge-danger">Nonaktif</span>';
+            $('#view_status').html(statusBadge);
+
+            if (data.photo) {
+                $('#view_photo').attr('src', data.photo).show();
+            } else {
+                $('#view_photo').hide().attr('src', '');
+            }
+            
+            $('#viewEmployeeModal').modal('show');
+        });
+    }
 
     function deleteEmployee(id, name) {
         hapusData(`/api/v1/hr/employees/${id}/`, name);

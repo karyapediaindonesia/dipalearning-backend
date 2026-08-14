@@ -180,6 +180,16 @@
         var calendarEl = document.getElementById('calendar');
         var calendar = new FullCalendar.Calendar(calendarEl, {
             locale: 'id',
+            height: 'auto',
+            contentHeight: 'auto',
+            handleWindowResize: true,
+            windowResize: function(arg) {
+                if (window.innerWidth < 768) {
+                    calendar.changeView('listMonth');
+                } else {
+                    calendar.changeView('dayGridMonth');
+                }
+            },
             buttonText: {
                 today: 'Hari ini',
                 month: 'Bulan',
@@ -192,7 +202,7 @@
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            initialView: 'dayGridMonth',
+            initialView: window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth',
             selectable: true,
             selectMirror: true,
             select: function(arg) {
@@ -324,7 +334,8 @@
     }
 
     function editHoliday(id) {
-        $.get(apiBaseUrl + id + '/', function(data) {
+        $.get(apiBaseUrl + id + '/', function(response) {
+            const data = response.data || response;
             $('#holiday_id').val(data.id);
             $('#branch').val(data.branch).niceSelect('update');
             $('#name').val(data.name);

@@ -1,8 +1,4 @@
-import os
-
-file_path = r"c:\Users\Pipit Kiswieantoro\Desktop\Project\dipalearning\backend\templates\dashboard\pages\master-paket-edukasi.html"
-
-html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' %}
+{% extends 'dashboard/elements/layouts/master_list_base.html' %}
 {% load static %}
 
 {% block master_css %}
@@ -10,6 +6,11 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
     .drag-container {
         display: flex;
         gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .drag-container {
+            flex-direction: column;
+        }
     }
     .drag-box {
         flex: 1;
@@ -67,8 +68,8 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
                     {% endif %}
                 </span>
             </div>
-            <div class="card-body px-0 pb-0">
-                <div class="px-4 pb-3" style="min-height: 120px;">
+            <div class="card-body px-0 pb-0 d-flex flex-column">
+                <div class="px-4 pb-3 flex-grow-1" style="min-height: 120px;">
                     <ul class="list-group list-group-flush">
                         {% for lvl in pkg.levels.all %}
                         <li class="list-group-item px-0 py-2 border-0"><i class="fa fa-check text-primary me-2"></i> {{ lvl.course.name }} - {{ lvl.name }}</li>
@@ -77,9 +78,9 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
                         {% endfor %}
                     </ul>
                 </div>
-                <div class="bg-primary text-white text-center p-3">
-                    <h4 class="text-white mb-0">Rp {{ pkg.price|floatformat:0 }}</h4>
-                    <span class="fs-12">{{ pkg.meetings_quota }}x Pertemuan | {{ pkg.validity_days }} Hari</span>
+                <div class="bg-primary border-top text-center p-3">
+                    <h4 class="mb-0 font-w700" style="color: #1f2937;">Rp {{ pkg.price|floatformat:0 }}</h4>
+                    <span class="fs-12" style="color: #374151;">{{ pkg.meetings_quota }}x Pertemuan | {{ pkg.validity_days }} Hari</span>
                 </div>
             </div>
             <div class="card-footer d-flex justify-content-center">
@@ -176,7 +177,12 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
                                                 <span class="badge badge-sm badge-primary me-2">{{ lvl.course.code }}</span>
                                                 <span>{{ lvl.course.name }} - {{ lvl.name }} <small class="text-muted">({{ lvl.estimated_sessions|default:0 }} Jam)</small></span>
                                             </div>
-                                            <i class="fa fa-arrows-alt text-muted"></i>
+                                            <div class="d-flex align-items-center">
+                                                <button type="button" class="btn btn-xs btn-light px-2 py-1 me-2" onclick="moveItem(this)" title="Pindahkan">
+                                                    <i class="fa fa-plus text-success icon-action"></i>
+                                                </button>
+                                                <i class="fa fa-arrows-alt text-muted handle" style="cursor: grab;" title="Tarik"></i>
+                                            </div>
                                         </div>
                                         {% endfor %}
                                     </div>
@@ -285,8 +291,27 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
         $('#btnSimpan').prop('disabled', false).html('<i class="fa fa-save me-1"></i> Simpan Data');
         
         $('#availableLevels').html(initialLevelsHtml);
+        updateIcons();
         calculateTotalSessions();
         $('#selectedLevels').empty();
+    }
+
+    function updateIcons() {
+        $('#availableLevels .icon-action').removeClass('fa-minus text-danger').addClass('fa-plus text-success');
+        $('#selectedLevels .icon-action').removeClass('fa-plus text-success').addClass('fa-minus text-danger');
+    }
+
+    function moveItem(btn) {
+        const item = $(btn).closest('.drag-item');
+        const parentId = item.parent().attr('id');
+        
+        if (parentId === 'availableLevels') {
+            item.appendTo('#selectedLevels');
+        } else {
+            item.appendTo('#availableLevels');
+        }
+        updateIcons();
+        calculateTotalSessions();
     }
 
     function editPackage(btn) {
@@ -307,6 +332,7 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
                 $(this).appendTo('#selectedLevels');
             }
         });
+        updateIcons();
         
         $('#modalTitle').text('Edit Paket Edukasi');
         $('#packageModal').modal('show');
@@ -321,13 +347,21 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
         availableSortable = new Sortable(document.getElementById('availableLevels'), {
             group: 'shared',
             animation: 150,
-            onEnd: function() { calculateTotalSessions(); }
+            handle: '.handle',
+            onEnd: function() { 
+                updateIcons();
+                calculateTotalSessions(); 
+            }
         });
 
         selectedSortable = new Sortable(document.getElementById('selectedLevels'), {
             group: 'shared',
             animation: 150,
-            onEnd: function() { calculateTotalSessions(); }
+            handle: '.handle',
+            onEnd: function() { 
+                updateIcons();
+                calculateTotalSessions(); 
+            }
         });
 
         $('#pkg_meetings').on('input', function() { calculateTotalSessions(); });
@@ -401,9 +435,3 @@ html_content = """{% extends 'dashboard/elements/layouts/master_list_base.html' 
     });
 </script>
 {% endblock %}
-"""
-
-with open(file_path, 'w', encoding='utf-8') as f:
-    f.write(html_content)
-
-print("SUCCESS")

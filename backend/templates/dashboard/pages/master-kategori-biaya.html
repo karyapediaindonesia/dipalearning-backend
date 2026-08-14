@@ -175,7 +175,8 @@
     }
 
     function editCategory(id) {
-        $.get(apiBaseUrl + id + '/', function(data) {
+        $.get(apiBaseUrl + id + '/', function(response) {
+            const data = response.data || response;
             $('#category_id').val(data.id);
             $('#code').val(data.code);
             $('#name').val(data.name);

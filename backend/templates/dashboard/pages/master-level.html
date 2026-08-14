@@ -27,8 +27,8 @@
                                         <button class="btn btn-primary shadow btn-xs sharp me-1 btn-edit-level"
                                                 data-id="{{ level.id }}"
                                                 data-course="{{ level.course_id }}"
-                                                data-code="{{ level.code|escapejs }}"
-                                                data-name="{{ level.name|escapejs }}"
+                                                data-code="{{ level.code }}"
+                                                data-name="{{ level.name }}"
                                                                                                 data-prerequisite="{{ level.prerequisite_id|default:'' }}"
                                                 data-use-course-duration="{{ level.use_course_duration|yesno:'true,false' }}"
                                                 data-custom-duration="{{ level.custom_duration|default:'' }}"
@@ -39,7 +39,7 @@
                                         </button>
                                         <button class="btn btn-danger shadow btn-xs sharp btn-delete-level"
                                                 data-id="{{ level.id }}"
-                                                data-name="{{ level.name|escapejs }}"
+                                                data-name="{{ level.name }}"
                                                 title="Hapus">
                                             <i class="fa fa-trash"></i>
                                         </button>

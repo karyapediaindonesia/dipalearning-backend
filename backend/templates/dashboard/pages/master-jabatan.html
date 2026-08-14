@@ -176,7 +176,8 @@ $('.select2').select2({
 
     function editPosition(btn) {
         const id = $(btn).data('id');
-        $.get(`/api/v1/hr/job-positions/${id}/`, function(res) {
+        $.get(`/api/v1/hr/job-positions/${id}/`, function(response) {
+            const res = response.data || response;
             const data = res.data || res;
             resetForm();
             $('#pos_id').val(data.id);

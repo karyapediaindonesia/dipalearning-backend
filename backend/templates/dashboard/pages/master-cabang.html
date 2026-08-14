@@ -257,6 +257,68 @@
             </div>
             </div>
             </div>
+<!-- Modal Detail Cabang -->
+<div class="modal fade" id="viewBranchModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Cabang: <span id="view_code_title" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="la la-home me-2"></i> Identitas Cabang</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr><td width="35%" class="text-muted">Kode Cabang</td><td width="5%">:</td><td><strong id="view_code"></strong></td></tr>
+                            <tr><td class="text-muted">Nama Cabang</td><td>:</td><td><strong id="view_name"></strong></td></tr>
+                            <tr><td class="text-muted">Jenis Cabang</td><td>:</td><td id="view_branch_type"></td></tr>
+                            <tr><td class="text-muted">Status</td><td>:</td><td id="view_status"></td></tr>
+                            <tr><td class="text-muted">Tgl Operasional</td><td>:</td><td id="view_operational_date"></td></tr>
+                        </table>
+
+                        <h6 class="text-primary mb-3 mt-4"><i class="la la-user-tie me-2"></i> Penanggung Jawab</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr><td width="35%" class="text-muted">Nama PIC</td><td width="5%">:</td><td id="view_person_in_charge_name"></td></tr>
+                            <tr><td class="text-muted">Jabatan PIC</td><td>:</td><td id="view_pic_position"></td></tr>
+                            <tr><td class="text-muted">Kontak PIC</td><td>:</td><td id="view_pic_contact"></td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="la la-phone me-2"></i> Kontak & Alamat</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr><td width="35%" class="text-muted">WhatsApp</td><td width="5%">:</td><td>
+                                <span id="view_whatsapp_number"></span> 
+                                <a href="#" id="view_wa_link" target="_blank" class="btn btn-xs btn-success d-none ms-2"><i class="fab fa-whatsapp"></i> Chat</a>
+                            </td></tr>
+                            <tr><td class="text-muted">Email</td><td>:</td><td id="view_email"></td></tr>
+                            <tr><td class="text-muted">Alamat</td><td>:</td><td id="view_address"></td></tr>
+                            <tr><td class="text-muted">Provinsi</td><td>:</td><td id="view_province"></td></tr>
+                            <tr><td class="text-muted">Kota/Kabupaten</td><td>:</td><td id="view_city"></td></tr>
+                            <tr><td class="text-muted">Kecamatan</td><td>:</td><td id="view_district"></td></tr>
+                            <tr><td class="text-muted">Kode Pos</td><td>:</td><td id="view_postal_code"></td></tr>
+                            <tr><td class="text-muted">Link Gmaps</td><td>:</td><td>
+                                <span id="view_map_location"></span>
+                                <a href="#" id="view_map_link" target="_blank" class="btn btn-xs btn-primary d-none ms-2"><i class="fa fa-map-marker"></i> Buka Peta</a>
+                            </td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3"><i class="la la-sticky-note me-2"></i> Catatan</h6>
+                        <div class="p-3 bg-light rounded" id="view_notes"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block master_js %}

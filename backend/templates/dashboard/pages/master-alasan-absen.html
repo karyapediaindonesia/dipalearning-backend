@@ -179,7 +179,8 @@ $('#reasonForm').on('submit', function(e) {
     }
 
     function editReason(id) {
-        $.get(apiBaseUrl + id + '/', function(data) {
+        $.get(apiBaseUrl + id + '/', function(response) {
+            const data = response.data || response;
             $('#reason_id').val(data.id);
             $('#code').val(data.code);
             $('#name').val(data.name);
